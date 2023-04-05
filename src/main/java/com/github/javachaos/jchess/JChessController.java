@@ -72,26 +72,25 @@ public class JChessController {
         generateTiles();
         checkerGrid.widthProperty().addListener(this::widthChanged);
         checkerGrid.heightProperty().addListener(this::heightChanged);
-        Arrays.stream(panes).forEach(x -> Arrays.stream(x).forEach(n -> n.setOnMousePressed(this::handlePressed)));
+        Arrays.stream(panes).forEach(x -> Arrays.stream(x).forEach(n -> n.setOnMouseClicked(this::handlePressed)));
     }
 
     private void redrawPieces() {
-        IntStream.range(0, 8).forEach(x -> {
-            IntStream.range(0, 8).forEach(y -> {
-                Rectangle r = (Rectangle) panes[x][y].getChildren()
-                        .filtered(j -> j instanceof Rectangle).get(0);
-                panes[x][y].getChildren().clear();
-                panes[x][y].getChildren().add(r);
-                board.getPiece((char)('a' + x), (char)('1' + y))
-                        .ifPresent(p -> {
-                            Bounds b = checkerGrid.getCellBounds(x, y);
-                            ImageView img = board.getImageForPiece(p);
-                            img.setFitHeight(b.getHeight());
-                            img.setFitWidth(b.getWidth());
-                            panes[x][y].getChildren().add(img);
-                        });
-            });
-        });
+        IntStream.range(0, 8).forEach(x ->
+                IntStream.range(0, 8).forEach(y -> {
+            Rectangle r = (Rectangle) panes[x][y].getChildren()
+                    .filtered(j -> j instanceof Rectangle).get(0);
+            panes[x][y].getChildren().clear();
+            panes[x][y].getChildren().add(r);
+            board.getPiece((char)('a' + x), (char)('1' + y))
+                    .ifPresent(p -> {
+                        Bounds b = checkerGrid.getCellBounds(x, y);
+                        ImageView img = board.getImageForPiece(p);
+                        img.setFitHeight(b.getHeight());
+                        img.setFitWidth(b.getWidth());
+                        panes[x][y].getChildren().add(img);
+                    });
+        }));
     }
 
     private void generateTiles() {

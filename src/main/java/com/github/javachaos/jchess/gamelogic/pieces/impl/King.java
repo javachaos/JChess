@@ -1,7 +1,6 @@
 package com.github.javachaos.jchess.gamelogic.pieces.impl;
 
 import com.github.javachaos.jchess.gamelogic.Board;
-import com.github.javachaos.jchess.gamelogic.JChessException;
 import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.PiecePos;
@@ -11,7 +10,7 @@ import java.util.List;
 
 public class King extends AbstractPiece {
 
-    public King(Player p, char x, char y) throws JChessException {
+    public King(Player p, char x, char y) {
         super(p, x, y);
     }
 
@@ -70,7 +69,8 @@ public class King extends AbstractPiece {
         return true;
     }
 
+    @SuppressWarnings("unused")
     public void check() {
-        //TODO check for checkmate ect
+        Board.check();
     }
 }

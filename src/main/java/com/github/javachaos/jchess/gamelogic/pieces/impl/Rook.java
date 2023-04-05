@@ -19,31 +19,20 @@ public class Rook extends AbstractPiece {
         return PieceType.ROOK;
     }
 
-    @Override
     public List<PiecePos> potentialMoves(Board b) {
         List<PiecePos> potentials = new ArrayList<>();
-        PiecePos pp = new PiecePos((char)(getPos().x()+1), getPos().y());
-        while(b.isOnBoard(pp)) {
-            potentials.add(pp);
-            pp = new PiecePos((char)(pp.x()+1), pp.y());
-        }
-        PiecePos pp2 = new PiecePos(getPos().x(), (char)(getPos().y()+1));
-        while(b.isOnBoard(pp2)) {
-            potentials.add(pp2);
-            pp2 = new PiecePos(pp2.x(), (char)(pp2.y()+1));
-        }
-        PiecePos pp3 = new PiecePos((char)(getPos().x()-1), getPos().y());
-        while(b.isOnBoard(pp3)) {
-            potentials.add(pp3);
-            pp3 = new PiecePos((char)(pp3.x()-1), pp3.y());
-        }
-        PiecePos pp4 = new PiecePos(getPos().x(), (char)(getPos().y()-1));
-        while(b.isOnBoard(pp4)) {
-            potentials.add(pp4);
-            pp4 = new PiecePos(pp4.x(), (char)(pp4.y()-1));
+        int[][] directions = {{1, 0}, {0, 1}, {-1, 0}, {0, -1}};
+        for (int[] dir : directions) {
+            int dx = dir[0], dy = dir[1];
+            PiecePos pp = new PiecePos((char)(getPos().x() + dx), (char)(getPos().y() + dy));
+            while (b.isOnBoard(pp)) {
+                potentials.add(pp);
+                pp = new PiecePos((char)(pp.x() + dx), (char)(pp.y() + dy));
+            }
         }
         return potentials;
     }
+
 
     @Override
     public boolean canMove(Board b, PiecePos p) {
@@ -53,17 +42,12 @@ public class Rook extends AbstractPiece {
             pieces.remove(this);
             if (!pieces.isEmpty()) {
                 Piece piece = b.getPiece(p).orElse(null);
-                if (pieces.size() == 1
-                    && pieces.contains(piece)
-                    && piece != null
-                    && piece.getPlayer() != getPlayer()) {
-                    return true;
-                }
-                return false;
+                return pieces.size() == 1
+                        && pieces.contains(piece)
+                        && piece != null
+                        && piece.getPlayer() != getPlayer();
             }
-
-            // c. check if this move would put our king into check
-            return notInCheck(b, p);//TODO implement
+            return notInCheck(b, p);
         }
         return false;
     }

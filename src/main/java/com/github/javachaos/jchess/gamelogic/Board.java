@@ -41,6 +41,7 @@ public class Board {
     private final ArrayDeque<Move> undoStack = new ArrayDeque<>();
     private final ArrayDeque<Move> redoStack = new ArrayDeque<>();
 
+    @SuppressWarnings("unused")
     public enum GameState {
         START,
         STALEMATE,
@@ -55,18 +56,21 @@ public class Board {
     /**
      * The current pieces in play.
      */
-    List<Piece> currentPieces = new ArrayList<>();
+    private final List<Piece> currentPieces = new ArrayList<>();
 
-    List<PiecePos> allPositions = new ArrayList<>();
+    private final List<PiecePos> allPositions = new ArrayList<>();
 
     private GameState currentState;
+
 
     /**
      * Captured pieces.
      */
-    ArrayDeque<Piece> capturedPieces = new ArrayDeque<>();
+    @SuppressWarnings("all")
+    private final ArrayDeque<Piece> capturedPieces = new ArrayDeque<>();
 
-    private Move currentMove;
+    @SuppressWarnings("unused")
+    private static boolean isCheck;
 
     AbstractPiece.Player currentPlayer;
 
@@ -84,7 +88,7 @@ public class Board {
                 //Alerts.err("Sorry this move is invalid.");
                 LOGGER.debug("Invalid move for player {}: {}",p.get().getPlayer(), desiredPos);
             } else {
-                currentMove = new Move(p.get().getPlayer(), pos, desiredPos, p.get());
+                Move currentMove = new Move(p.get().getPlayer(), pos, desiredPos, p.get());
                 doMove(currentMove);
                 undoStack.push(currentMove);
             }
@@ -92,10 +96,6 @@ public class Board {
             Alerts.err("No piece at this position");
             LOGGER.info("Invalid move, piece does not exist at {}", pos);
         }
-    }
-
-    public Move getCurrentMove() {
-        return currentMove;
     }
 
     public void undo() {
@@ -149,6 +149,7 @@ public class Board {
         fromPiece.ifPresent(piece -> piece.move(t));
     }
 
+    @SuppressWarnings("unused")
     public Piece getKing(AbstractPiece.Player p) {
         return getPiece(allPositions.stream()
                 .filter(piecePos -> {
@@ -181,11 +182,10 @@ public class Board {
      * Reset the board to the default start state.
      */
     public void reset() throws JChessException {
-        IntStream.range(0, 8).forEach(x -> {
-            IntStream.range(0, 8).forEach(y -> {
-                allPositions.add(new PiecePos((char)('a' + x), (char)('1' + y)));
-            });
-        });
+        allPositions.clear();
+        IntStream.range(0, 8).forEach(x ->
+                IntStream.range(0, 8).forEach(y ->
+                        allPositions.add(new PiecePos((char)('a' + x), (char)('1' + y)))));
         currentState = GameState.NONE;
         currentPlayer = AbstractPiece.Player.WHITE;
         undoStack.clear();
@@ -343,6 +343,15 @@ public class Board {
 
     public boolean isOnBoard(char x, char y) {
         return (x <= 'h' && x >= 'a') && (y <= '8' && y >= '1');
+    }
+
+    public static void check() {
+        isCheck = true;
+    }
+
+    @SuppressWarnings("unused")
+    public static void uncheck() {
+        isCheck = false;
     }
 
 }

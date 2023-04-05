@@ -38,17 +38,13 @@ public class Bishop extends AbstractPiece {
         List<PiecePos> possibleMoves = potentialMoves(b);
         if (possibleMoves.contains(p)) {
             List<Piece> pieces = getPiecesDiagonal(b, getPos(), p);
-            LOGGER.debug(pieces);
             pieces.remove(this);
             if (!pieces.isEmpty()) {
                 Piece piece = b.getPiece(p).orElse(null);
-                if (pieces.size() == 1
+                return pieces.size() == 1
                         && pieces.contains(piece)
                         && piece != null
-                        && piece.getPlayer() != getPlayer()) {
-                    return true;
-                }
-                return false;
+                        && piece.getPlayer() != getPlayer();
             }
 
             // c. check if this move would put our king into check

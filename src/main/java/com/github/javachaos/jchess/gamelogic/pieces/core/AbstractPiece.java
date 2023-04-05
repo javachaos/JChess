@@ -4,15 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import com.github.javachaos.jchess.gamelogic.Board;
-import com.github.javachaos.jchess.gamelogic.JChessException;
 
 public abstract class AbstractPiece implements Piece {
-    protected static final Logger LOGGER = LogManager.getLogger(
-            Piece.class);
 
     public enum Player {
         BLACK,
@@ -24,16 +18,19 @@ public abstract class AbstractPiece implements Piece {
         BISHOP,
         KNIGHT,
         KING,
-        QUEEN,
-        EMPTY
+        QUEEN
     }
     protected PiecePos pos;
-    protected Player color;
+    protected final Player color;
     protected boolean isCaptured;
 
     public AbstractPiece(Player p, char x, char y) {
         this.color = p;
         this.pos = new PiecePos(x, y);
+    }
+
+    public AbstractPiece(Player p, PiecePos pp) {
+        this(p, pp.x(), pp.y());
     }
 
     /**
@@ -86,9 +83,9 @@ public abstract class AbstractPiece implements Piece {
         return pieces;
     }
 
+    @SuppressWarnings("unused")
     protected boolean notInCheck(Board b, PiecePos p) {
         //Piece piece = b.getPiece(p).orElseThrow();
-
         return true;
     }
 
@@ -143,11 +140,9 @@ public abstract class AbstractPiece implements Piece {
     
     @Override
     public String toString() {
-    	StringBuilder sb = new StringBuilder();
-    	sb.append(isBlack() ? "B_" : "W_");
-    	sb.append(getType().name());
-    	sb.append(getPos());
-    	return sb.toString();
+        return (isBlack() ? "B_" : "W_") +
+                getType().name() +
+                getPos();
     }
 
 }

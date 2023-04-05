@@ -15,14 +15,6 @@ public class JChessApplication extends Application {
     public static final Logger LOGGER = LogManager.getLogger(
             JChessApplication.class);
 
-    /**
-     * Run once upon JVM shutdown
-     * WARNING: no long-running tasks allowed in this block.
-     */
-    public static void onShutdown() {
-        LOGGER.info("Ending JChess.");
-    }
-
     @Override
     public void start(Stage stage) throws IOException {
         LOGGER.info("Starting JChess");
@@ -37,11 +29,11 @@ public class JChessApplication extends Application {
 
     public static void main(String[] args) {
         launch();
-        addShutdownHook();
+       // addShutdownHook();
     }
 
-    private static void addShutdownHook() {
-        Runtime.getRuntime().addShutdownHook(
-                new Thread(JChessApplication::onShutdown));
-    }
+//    private static void addShutdownHook() {
+//        Runtime.getRuntime().addShutdownHook(
+//                new Thread(JChessApplication::onShutdown));
+//    }
 }
