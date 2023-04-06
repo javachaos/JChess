@@ -37,7 +37,7 @@ public class BoardTest {
         testBlackPieces();
         testWhitePieces();
         assertEquals(
-                GameStateManager.GameState.START,
+                GameStateManager.GameState.NONE,
                 GameStateManager.getInstance().getCurrentState());
     }
 
