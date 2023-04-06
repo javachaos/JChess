@@ -8,9 +8,9 @@ package com.github.javachaos.jchess.gamelogic.pieces.core;
  * @param to the position to move
  * @param p the piece being moved
  */
-public record Move(AbstractPiece.Player player, PiecePos from, PiecePos to, Piece p) {
+public record Move(AbstractPiece.Player player, PiecePos from, PiecePos to, Piece p, Piece captive) {
 
     public Move reverse() {
-        return new Move(player, to, from, p);
+        return new Move(player, to, from, p, captive);
     }
 }

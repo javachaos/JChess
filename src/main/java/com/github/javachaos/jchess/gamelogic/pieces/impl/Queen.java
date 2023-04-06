@@ -60,7 +60,7 @@ public class Queen extends AbstractPiece {
                         && piece.getPlayer() != getPlayer();
             }
 
-            return notInCheck(b, this);
+            return true;
         }
         return false;
     }

@@ -90,8 +90,9 @@ public class Board {
                 //Alerts.err("Sorry this move is invalid.");
                 LOGGER.debug("Invalid move for player {}: {}",p.get().getPlayer(), desiredPos);
             } else {
-                Move currentMove = new Move(p.get().getPlayer(), pos, desiredPos, p.get());
-                doMove(currentMove);
+                Move currentMove = new Move(p.get().getPlayer(), pos, desiredPos, p.get(), null);
+                Piece captive = doMove(currentMove);
+                currentMove = new Move(p.get().getPlayer(), pos, desiredPos, p.get(), captive);
                 undoStack.push(currentMove);
             }
         } else {
@@ -100,8 +101,14 @@ public class Board {
         }
     }
 
-    public List<Piece> getPieces() {
+    @SuppressWarnings("unused")
+    public List<Piece> getAllPieces() {
         return List.copyOf(currentPieces);
+    }
+
+    public List<Piece> getPieces(AbstractPiece.Player p) {
+        return List.copyOf(currentPieces.stream().filter(piece ->
+                piece.getPlayer().equals(p)).toList());
     }
 
     public void undo() {
@@ -127,7 +134,8 @@ public class Board {
      *
      * @param m the move to do
      */
-    private void doMove(Move m) {
+    private Piece doMove(Move m) {
+        Piece captive = null;
         currentPlayer = m.player();
         PiecePos f = m.from();
         PiecePos t = m.to();
@@ -135,10 +143,12 @@ public class Board {
         Optional<Piece> toPiece = getPiece(t);
         if (toPiece.isPresent() && !toPiece.get().isKing()) {
             toPiece.get().capture();
-            currentPieces.remove(toPiece.get());
-            capturedPieces.add(toPiece.get());
+            captive = toPiece.get();
+            currentPieces.remove(captive);
+            capturedPieces.add(captive);
         }
         fromPiece.ifPresent(piece -> piece.move(t));
+        return captive;
     }
 
     private void undoMove(Move m) {
@@ -146,11 +156,10 @@ public class Board {
         PiecePos f = m.from();
         PiecePos t = m.to();
         Optional<Piece> fromPiece = getPiece(f);
-        Optional<Piece> toPiece = getPiece(t);
-        if (toPiece.isPresent() && !toPiece.get().isKing()) {
-            toPiece.get().resurrect();
-            currentPieces.add(toPiece.get());
-            capturedPieces.remove(toPiece.get());
+        if (m.captive() != null) {
+            m.captive().resurrect();
+            currentPieces.add(m.captive());
+            capturedPieces.remove(m.captive());
         }
         fromPiece.ifPresent(piece -> piece.move(t));
     }

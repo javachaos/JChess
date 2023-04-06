@@ -83,20 +83,17 @@ public abstract class AbstractPiece implements Piece {
         return pieces;
     }
 
+    @SuppressWarnings("unused")
     protected boolean notInCheck(Board b, Piece target) {
         boolean inCheck = false;
+        //return true;
         Piece king = b.getKing(getPlayer());
         if (king != null) {
             PiecePos kingPos = king.getPos();
-            List<Piece> pieces = b.getPieces();
+            List<Piece> pieces = b.getPieces(getPlayer() == Player.WHITE ? Player.BLACK : Player.WHITE);
             for (Piece piece : pieces) {
-                if (piece.equals(target)) {
-                    break;
-                }
-                if (piece.getPlayer() != getPlayer()) {
-                    if (b.getPotentialMoves(piece.getPos()).contains(kingPos)) {
-                        inCheck = true;
-                    }
+                if (b.getPotentialMoves(piece.getPos()).contains(kingPos)) {
+                    inCheck = true;
                 }
             }
         }

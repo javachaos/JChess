@@ -46,7 +46,7 @@ public class Bishop extends AbstractPiece {
                         && piece != null
                         && piece.getPlayer() != getPlayer();
             }
-            return notInCheck(b, this);
+            return true;
         }
         return false;
     }
