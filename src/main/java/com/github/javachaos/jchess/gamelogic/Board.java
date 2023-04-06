@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
 import org.apache.logging.log4j.LogManager;
@@ -40,6 +41,7 @@ public class Board {
             Board.class);
     private final ArrayDeque<Move> undoStack = new ArrayDeque<>();
     private final ArrayDeque<Move> redoStack = new ArrayDeque<>();
+
 
     @SuppressWarnings("unused")
     public enum GameState {
@@ -98,6 +100,10 @@ public class Board {
         }
     }
 
+    public List<Piece> getPieces() {
+        return List.copyOf(currentPieces);
+    }
+
     public void undo() {
         if (!undoStack.isEmpty()) {
             currentState = GameState.UNDO;
@@ -151,14 +157,13 @@ public class Board {
 
     @SuppressWarnings("unused")
     public Piece getKing(AbstractPiece.Player p) {
-        return getPiece(allPositions.stream()
-                .filter(piecePos -> {
-                    Optional<Piece> op = getPiece(piecePos);
-                    return op.isPresent() && op.get().isKing() && op.get().getPlayer() == p;
-                })
-                .findFirst()
-                .orElseThrow()).stream()
-                .findFirst().orElseThrow();
+        AtomicReference<Piece> ref = new AtomicReference<>();
+        currentPieces.forEach(piece -> {
+            if (piece.isKing() && piece.getPlayer() == p) {
+                ref.set(piece);
+            }
+        });
+        return ref.get();
     }
 
     public Optional<Piece> getPiece(PiecePos p) {

@@ -47,7 +47,7 @@ public class King extends AbstractPiece {
     @Override
     public boolean canMove(Board b, PiecePos p) {
 
-        if (notInCheck(b, p)) {
+        if (notInCheck(b, this)) {
             List<PiecePos> pom = potentialMoves(b);
             List<PiecePos> removals = new ArrayList<>();
             List<Piece> pieces = new ArrayList<>();

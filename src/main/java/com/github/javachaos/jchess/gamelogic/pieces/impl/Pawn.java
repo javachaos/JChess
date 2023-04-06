@@ -1,7 +1,6 @@
 package com.github.javachaos.jchess.gamelogic.pieces.impl;
 
 import com.github.javachaos.jchess.gamelogic.Board;
-import com.github.javachaos.jchess.gamelogic.JChessException;
 import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.PiecePos;
@@ -24,10 +23,8 @@ public class Pawn extends AbstractPiece {
 
     @Override
     public boolean canMove(Board b, PiecePos p) {
-        //TODO implement check scanning
-        // will need to check if this moves causes a check.
         //TODO implement en-passant later.
-        if (notInCheck(b, p)) {
+        if (notInCheck(b, this)) {
             if (!b.isOnBoard(p) || getPos().equals(p)) {
                 return false;
             }

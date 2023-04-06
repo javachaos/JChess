@@ -47,7 +47,7 @@ public class Rook extends AbstractPiece {
                         && piece != null
                         && piece.getPlayer() != getPlayer();
             }
-            return notInCheck(b, p);
+            return notInCheck(b, this);
         }
         return false;
     }

@@ -46,9 +46,7 @@ public class Bishop extends AbstractPiece {
                         && piece != null
                         && piece.getPlayer() != getPlayer();
             }
-
-            // c. check if this move would put our king into check
-            return notInCheck(b, p);//TODO implement
+            return notInCheck(b, this);
         }
         return false;
     }
