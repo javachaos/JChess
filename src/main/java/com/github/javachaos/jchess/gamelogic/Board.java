@@ -82,18 +82,27 @@ public class Board {
         loadImages();
     }
 
-    public void movePiece(PiecePos pos, PiecePos desiredPos) {
+    public void movePiece(PiecePos pos, PiecePos desiredPos) throws JChessException {
         Optional<Piece> p = getPiece(pos);
         if (p.isPresent()) {
             currentState = p.get().isWhite() ? GameState.WHITES_TURN : GameState.BLACKS_TURN;
             if (!p.get().canMove(this, desiredPos)) {
-                //Alerts.err("Sorry this move is invalid.");
                 LOGGER.debug("Invalid move for player {}: {}",p.get().getPlayer(), desiredPos);
             } else {
-                Move currentMove = new Move(p.get().getPlayer(), pos, desiredPos, p.get(), null);
+                Move currentMove = new Move(p.get().getPlayer(),p.get().getOpponent(),
+                        pos, desiredPos, p.get(), null);
                 Piece captive = doMove(currentMove);
-                currentMove = new Move(p.get().getPlayer(), pos, desiredPos, p.get(), captive);
+                currentMove = new Move(p.get().getPlayer(),p.get().getOpponent(),
+                        pos, desiredPos, p.get(), captive);
                 undoStack.push(currentMove);
+                //Check for check
+                King ourKing = (King) getKing(currentMove.player());
+                for (Piece enemyPiece : getPieces(currentMove.opponent())) {
+                    if (getPotentialMoves(enemyPiece.getPos()).contains(ourKing.getPos())) {
+                        undo();
+                        throw new JChessException("This move puts king in check.");
+                    }
+                }
             }
         } else {
             Alerts.err("No piece at this position");

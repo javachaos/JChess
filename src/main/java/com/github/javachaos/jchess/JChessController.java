@@ -1,6 +1,5 @@
 package com.github.javachaos.jchess;
 
-import com.github.javachaos.jchess.gamelogic.Alerts;
 import com.github.javachaos.jchess.gamelogic.Board;
 import com.github.javachaos.jchess.gamelogic.JChessException;
 import com.github.javachaos.jchess.gamelogic.pieces.core.PiecePos;
@@ -161,7 +160,7 @@ public class JChessController {
     //------------------------------------------ Action Events ---------------------------------------------------------
 
     void createNewGame() {
-        Alerts.info("Creating new game.");
+        clearSelection();
         try {
             board.reset();
             board.setCurrentState(Board.GameState.START);
@@ -205,8 +204,12 @@ public class JChessController {
         if(pieceSelected && currentlySelected.contains(sp)) {
             PiecePos from = (PiecePos) currentSelection.getUserData();
             //Try to do move
-            board.movePiece(from, p);
-            redrawPieces();
+            try {
+                board.movePiece(from, p);
+                redrawPieces();
+            } catch (JChessException e) {
+                LOGGER.debug(e);
+            }
         }
         clearSelection();
 

@@ -19,6 +19,12 @@ public interface Piece {
     AbstractPiece.Player getPlayer();
 
     /**
+     * Get the current opponent of this piece.
+     * @return the opponent of this piece.
+     */
+    AbstractPiece.Player getOpponent();
+
+    /**
      * Return the location of this piece on the board.
      * @return the location of this piece on the board
      */

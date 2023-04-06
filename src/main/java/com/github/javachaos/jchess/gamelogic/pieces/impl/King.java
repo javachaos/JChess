@@ -46,22 +46,18 @@ public class King extends AbstractPiece {
 
     @Override
     public boolean canMove(Board b, PiecePos p) {
-
-        if (notInCheck(b, this)) {
-            List<PiecePos> pom = potentialMoves(b);
-            List<PiecePos> removals = new ArrayList<>();
-            List<Piece> pieces = new ArrayList<>();
-            pom.forEach(pp -> b.getPiece(pp).ifPresent(pieces::add));
-            for (Piece piece : pieces) {
-                if (piece.getPlayer() == getPlayer()) {
-                    removals.add(piece.getPos());
-                }
+        List<PiecePos> pom = potentialMoves(b);
+        List<PiecePos> removals = new ArrayList<>();
+        List<Piece> pieces = new ArrayList<>();
+        pom.forEach(pp -> b.getPiece(pp).ifPresent(pieces::add));
+        for (Piece piece : pieces) {
+            if (piece.getPlayer() == getPlayer()) {
+                removals.add(piece.getPos());
             }
-            pom.removeAll(removals);
-
-            return pom.contains(p);
         }
-        return false;
+        pom.removeAll(removals);
+
+        return pom.contains(p);
     }
 
     @Override

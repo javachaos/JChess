@@ -83,23 +83,6 @@ public abstract class AbstractPiece implements Piece {
         return pieces;
     }
 
-    @SuppressWarnings("unused")
-    protected boolean notInCheck(Board b, Piece target) {
-        boolean inCheck = false;
-        //return true;
-        Piece king = b.getKing(getPlayer());
-        if (king != null) {
-            PiecePos kingPos = king.getPos();
-            List<Piece> pieces = b.getPieces(getPlayer() == Player.WHITE ? Player.BLACK : Player.WHITE);
-            for (Piece piece : pieces) {
-                if (b.getPotentialMoves(piece.getPos()).contains(kingPos)) {
-                    inCheck = true;
-                }
-            }
-        }
-        return !inCheck;
-    }
-
     @Override
     public void move(char x, char y) {
         this.pos = new PiecePos(x, y);
@@ -123,6 +106,11 @@ public abstract class AbstractPiece implements Piece {
     @Override
     public Player getPlayer() {
         return color;
+    }
+
+    @Override
+    public Player getOpponent() {
+        return isBlack() ? Player.WHITE : Player.BLACK;
     }
 
     @Override
