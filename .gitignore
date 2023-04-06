@@ -8,8 +8,8 @@ target/
 .idea/jarRepositories.xml
 .idea/compiler.xml
 .idea/libraries/
-.idea/sonarlint/issuestore
-.idea/sonarlint/securityhotspotstore
+.idea/sonarlint/issuestore/**/*
+.idea/sonarlint/securityhotspotstore/**/*
 .idea/sonarlint/
 
 **/*.log
