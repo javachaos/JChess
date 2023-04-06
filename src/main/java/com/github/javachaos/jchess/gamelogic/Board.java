@@ -93,7 +93,7 @@ public class Board {
      * @throws JChessException if the currentMove would put the player into check
      */
     private void inCheck(Move currentMove) throws JChessException {
-        Optional<Piece> p = getPiece(currentMove.from());
+        Optional<Piece> p = getPiece(currentMove.to());
         if (p.isPresent()) {
             King ourKing = (King) getKing(p.get().getPlayer());
             for (Piece enemyPiece : getPieces(p.get().getOpponent())) {
