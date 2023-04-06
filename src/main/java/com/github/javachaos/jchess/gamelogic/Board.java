@@ -39,16 +39,10 @@ public class Board {
 
     private final List<PiecePos> allPositions = new ArrayList<>();
 
-
-
     /**
      * Captured pieces.
      */
-    @SuppressWarnings("all")
-    private final ArrayDeque<Piece> capturedPieces = new ArrayDeque<>();
-
-    @SuppressWarnings("unused")
-    private static boolean isCheck;
+      private final ArrayDeque<Piece> capturedPieces = new ArrayDeque<>();
 
     AbstractPiece.Player currentPlayer;
 
@@ -123,6 +117,7 @@ public class Board {
         if (!redoStack.isEmpty()) {
             GameStateManager.getInstance().setState(REDO);
             Move lastMove = redoStack.pop();
+            LOGGER.info("Redoing move: {}", lastMove);
             doMove(lastMove);
             undoStack.push(lastMove);
         }
@@ -134,6 +129,7 @@ public class Board {
      * @param m the move to do
      */
     private Piece doMove(Move m) {
+        LOGGER.info("Attempting move: {}", m);
         Piece captive = null;
         currentPlayer = m.player();
         PiecePos f = m.from();
@@ -151,6 +147,7 @@ public class Board {
     }
 
     private void undoMove(Move m) {
+        LOGGER.info("Undoing move: {}", m);
         currentPlayer = m.player();
         PiecePos f = m.from();
         PiecePos t = m.to();
@@ -251,5 +248,19 @@ public class Board {
     public void addPiece(Piece a) {
         //Check if location is valid.
         currentPieces.add(a);
+    }
+
+    @SuppressWarnings("unused")
+    public List<Piece> getWhiteCaptives() {
+        return capturedPieces.stream().filter(Piece::isWhite).toList();
+    }
+
+    @SuppressWarnings("unused")
+    public List<Piece> getBlackCaptives() {
+        return capturedPieces.stream().filter(Piece::isBlack).toList();
+    }
+
+    public List<PiecePos> getAllPositions() {
+        return allPositions;
     }
 }
