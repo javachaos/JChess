@@ -31,7 +31,6 @@ To run the JChess application, you'll need to have Java and JavaFX installed on 
 ```
 ./mvnw javafx:run
 ```
-
 ## Usage
 
 To play JChess, simply start the application and begin playing! Use the mouse to click and drag pieces to move them on the board. To save a game, go to the "File" menu and select "Save". To load a saved game, go to the "File" menu and select "Load". To undo or redo a move, use the "Undo" and "Redo" buttons on the toolbar.
@@ -42,5 +41,5 @@ If you'd like to contribute to JChess, feel free to submit a pull request or ope
 
 ## License
 
-This project is licensed under the GPLv3 License - see the [LICENSE.md](LICENSE.md) file for details.
+This project is licensed under the GPLv3 License - see the [LICENSE](LICENSE) file for details.
 
