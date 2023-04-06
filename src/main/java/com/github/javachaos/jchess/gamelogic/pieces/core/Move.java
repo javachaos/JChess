@@ -14,4 +14,9 @@ public record Move(AbstractPiece.Player player, AbstractPiece.Player opponent,
     public Move reverse() {
         return new Move(player, opponent,  to, from, p, captive);
     }
+
+    @Override
+    public String toString() {
+        return p + " -> " + to;
+    }
 }

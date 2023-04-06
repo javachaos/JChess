@@ -29,11 +29,6 @@ public class JChessApplication extends Application {
 
     public static void main(String[] args) {
         launch();
-       // addShutdownHook();
     }
 
-//    private static void addShutdownHook() {
-//        Runtime.getRuntime().addShutdownHook(
-//                new Thread(JChessApplication::onShutdown));
-//    }
 }

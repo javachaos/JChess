@@ -2,15 +2,11 @@ package com.github.javachaos.jchess.gamelogic;
 
 
 import java.io.InputStream;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
+import com.github.javachaos.jchess.exceptions.JChessException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -34,8 +30,8 @@ import javafx.util.Pair;
  */
 public class Board {
 
-    private final HashMap<AbstractPiece.PieceType,
-            Pair<Image, Image>> images = new HashMap<>();
+    private final EnumMap<AbstractPiece.PieceType,
+            Pair<Image, Image>> images = new EnumMap<>(AbstractPiece.PieceType.class);
 
     private static final Logger LOGGER = LogManager.getLogger(
             Board.class);
@@ -96,17 +92,27 @@ public class Board {
                         pos, desiredPos, p.get(), captive);
                 undoStack.push(currentMove);
                 //Check for check
-                King ourKing = (King) getKing(currentMove.player());
-                for (Piece enemyPiece : getPieces(currentMove.opponent())) {
-                    if (getPotentialMoves(enemyPiece.getPos()).contains(ourKing.getPos())) {
-                        undo();
-                        throw new JChessException("This move puts king in check.");
-                    }
-                }
+                inCheck(currentMove);
             }
         } else {
             Alerts.err("No piece at this position");
             LOGGER.info("Invalid move, piece does not exist at {}", pos);
+        }
+    }
+
+    /**
+     * Check if the move currentMove would put the player into check.
+     *
+     * @param currentMove the current move.
+     * @throws JChessException if the currentMove would put the player into check
+     */
+    private void inCheck(Move currentMove) throws JChessException {
+        King ourKing = (King) getKing(currentMove.player());
+        for (Piece enemyPiece : getPieces(currentMove.opponent())) {
+            if (getPotentialMoves(enemyPiece.getPos()).contains(ourKing.getPos())) {
+                undo();
+                throw new JChessException("This move puts king in check. " + currentMove);
+            }
         }
     }
 
@@ -204,7 +210,7 @@ public class Board {
     /**
      * Reset the board to the default start state.
      */
-    public void reset() throws JChessException {
+    public void reset() {
         allPositions.clear();
         IntStream.range(0, 8).forEach(x ->
                 IntStream.range(0, 8).forEach(y ->
@@ -274,76 +280,7 @@ public class Board {
                new Image(getImg("queen_white")),
                new Image(getImg("queen_black"))));
     }
-
-    public void printBoardState() {
-        char[][] board = new char[8][8];
-        for (Piece piece : currentPieces) {
-            int row = piece.getPos().x() - 'a';
-            int col = piece.getPos().y() - '1';
-            board[row][col] = typeToChar(piece.getPlayer(), piece.getType());
-        }
-        StringBuilder line = new StringBuilder();
-            line.append(System.lineSeparator())
-                .append("---------------")
-                .append(System.lineSeparator());
-        for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < 8; j++) {
-                line.append(board[i][j] == 0 ? "." : board[i][j]).append(" ");
-            }
-            line.append(System.lineSeparator());
-        }
-        line.append("---------------").append(System.lineSeparator());
-        LOGGER.info("{}", line.toString());
-    }
-
-    private char typeToChar(AbstractPiece.Player p, AbstractPiece.PieceType t) {
-        switch (t) {
-            case PAWN -> {
-                if (p == AbstractPiece.Player.WHITE) {
-                    return 'p';
-                } else {
-                    return 'P';
-                }
-            }
-            case ROOK -> {
-                if (p == AbstractPiece.Player.BLACK) {
-                    return 'R';
-                } else {
-                    return 'r';
-                }
-            }
-            case BISHOP -> {
-                if (p == AbstractPiece.Player.BLACK) {
-                    return 'B';
-                } else {
-                    return 'b';
-                }
-            }
-            case KNIGHT -> {
-                if (p == AbstractPiece.Player.BLACK) {
-                    return 'N';
-                } else {
-                    return 'n';
-                }
-            }
-            case KING -> {
-                if (p == AbstractPiece.Player.BLACK) {
-                    return 'K';
-                } else {
-                    return 'k';
-                }
-            }
-            case QUEEN -> {
-                if (p == AbstractPiece.Player.BLACK) {
-                    return 'Q';
-                } else {
-                    return 'q';
-                }
-            }
-        }
-        return '.';
-    }
-
+    
     public ImageView getImageForPiece(Piece p) {
         if (p.isBlack()) {
             return new ImageView(images.get(p.getType()).getValue());
@@ -366,15 +303,6 @@ public class Board {
 
     public boolean isOnBoard(char x, char y) {
         return (x <= 'h' && x >= 'a') && (y <= '8' && y >= '1');
-    }
-
-    public static void check() {
-        isCheck = true;
-    }
-
-    @SuppressWarnings("unused")
-    public static void uncheck() {
-        isCheck = false;
     }
 
 }

@@ -2,8 +2,6 @@ package com.github.javachaos.jchess.gamelogic.pieces.core;
 
 import com.github.javachaos.jchess.gamelogic.Board;
 
-import java.util.List;
-
 public interface Piece {
 
     /**
@@ -83,7 +81,5 @@ public interface Piece {
      * @return true if this piece is the king
      */
     boolean isKing();
-
-    List<PiecePos> potentialMoves(Board b);
 
 }

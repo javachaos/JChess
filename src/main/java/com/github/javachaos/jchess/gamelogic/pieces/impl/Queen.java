@@ -19,8 +19,7 @@ public class Queen extends AbstractPiece {
         return PieceType.QUEEN;
     }
 
-    @Override
-    public List<PiecePos> potentialMoves(Board b) {
+    private List<PiecePos> potentialMoves(Board b) {
         List<PiecePos> potentials = new ArrayList<>();
         int[][] directions = {{1, 1}, {-1, 1}, {1, -1}, {-1, -1}, {1, 0}, {0, 1}, {-1, 0}, {0, -1}};
         for (int[] dir : directions) {

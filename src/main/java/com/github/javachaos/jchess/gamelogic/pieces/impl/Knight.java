@@ -19,8 +19,7 @@ public class Knight extends AbstractPiece {
         return PieceType.KNIGHT;
     }
 
-    @Override
-    public List<PiecePos> potentialMoves(Board b) {
+    private List<PiecePos> potentialMoves(Board b) {
         ArrayList<PiecePos> potentials = new ArrayList<>();
         int[][] offsets = {
                 {-2, 1},

@@ -1,9 +1,10 @@
 package com.github.javachaos.jchess;
 
 import com.github.javachaos.jchess.gamelogic.Board;
-import com.github.javachaos.jchess.gamelogic.JChessException;
+import com.github.javachaos.jchess.exceptions.JChessException;
 import com.github.javachaos.jchess.gamelogic.pieces.core.PiecePos;
 
+import com.github.javachaos.jchess.utils.ExceptionUtils;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.fxml.FXML;
@@ -78,7 +79,7 @@ public class JChessController {
         IntStream.range(0, 8).forEach(x ->
                 IntStream.range(0, 8).forEach(y -> {
             Rectangle r = (Rectangle) panes[x][y].getChildren()
-                    .filtered(j -> j instanceof Rectangle).get(0);
+                    .filtered(Rectangle.class::isInstance).get(0);
             panes[x][y].getChildren().clear();
             panes[x][y].getChildren().add(r);
             board.getPiece((char)('a' + x), (char)('1' + y))
@@ -98,20 +99,8 @@ public class JChessController {
                 Rectangle r = new Rectangle();
                 panes[x][y] = new StackPane();
                 panes[x][y].getChildren().add(r);
-                if (y == 7) {
-                    Label l = new Label(String.valueOf((char)('a' + x)));
-                    l.setTextFill(
-                            x % 2 == 0 ? Color.GRAY : Color.BLACK);
-                    l.setPadding(new Insets(r.getWidth(),r.getHeight()+50,0,0));
-                    panes[x][y].getChildren().add(l);
-                }
-                if (x == 0) {
-                    Label l = new Label(String.valueOf((char)('8' - y)));
-                    l.setTextFill(
-                            y % 2 == 0 ? Color.BLACK : Color.GRAY);
-                    l.setPadding(new Insets(r.getWidth(),r.getHeight()+35,0,0));
-                    panes[x][y].getChildren().add(l);
-                }
+                printLabelsX(x, y, r);
+                printLabelsY(x, y, r);
                 //Fill squares in checkered pattern
                 r.setFill((x % 2 == 0 && y % 2 == 0) || (x % 2 != 0 && y % 2 != 0) ? Color.GRAY : Color.BLACK);
                 r.setStroke(Color.BLACK);
@@ -120,6 +109,26 @@ public class JChessController {
             }
         }
         LOGGER.info("Done generating tiles.");
+    }
+
+    private void printLabelsY(int x, int y, Rectangle r) {
+        if (x == 0) {
+            Label l = new Label(String.valueOf((char)('8' - y)));
+            l.setTextFill(
+                    y % 2 == 0 ? Color.BLACK : Color.GRAY);
+            l.setPadding(new Insets(r.getWidth(), r.getHeight()+35,0,0));
+            panes[x][y].getChildren().add(l);
+        }
+    }
+
+    private void printLabelsX(int x, int y, Rectangle r) {
+        if (y == 7) {
+            Label l = new Label(String.valueOf((char)('a' + x)));
+            l.setTextFill(
+                    x % 2 == 0 ? Color.GRAY : Color.BLACK);
+            l.setPadding(new Insets(r.getWidth(), r.getHeight()+50,0,0));
+            panes[x][y].getChildren().add(l);
+        }
     }
 
     public void widthChanged(Observable e) {
@@ -161,14 +170,10 @@ public class JChessController {
 
     void createNewGame() {
         clearSelection();
-        try {
-            board.reset();
-            board.setCurrentState(Board.GameState.START);
-            checkerGrid.autosize();
-            redrawPieces();
-        } catch (JChessException e) {
-            throw new RuntimeException(e);
-        }
+        board.reset();
+        board.setCurrentState(Board.GameState.START);
+        checkerGrid.autosize();
+        redrawPieces();
     }
 
     void undoAction() {
@@ -203,13 +208,13 @@ public class JChessController {
 
         if(pieceSelected && currentlySelected.contains(sp)) {
             PiecePos from = (PiecePos) currentSelection.getUserData();
-            //Try to do move
+            
             try {
                 board.movePiece(from, p);
-                redrawPieces();
             } catch (JChessException e) {
-                LOGGER.debug(e);
+                ExceptionUtils.log(e);
             }
+            redrawPieces();
         }
         clearSelection();
 

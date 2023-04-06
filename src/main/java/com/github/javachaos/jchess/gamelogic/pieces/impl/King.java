@@ -20,8 +20,7 @@ public class King extends AbstractPiece {
     }
 
 
-    @Override
-    public List<PiecePos> potentialMoves(Board b) {
+    private List<PiecePos> potentialMoves(Board b) {
         List<PiecePos> potentials = new ArrayList<>();
         int[][] offsets = {
                 {1, 0},
@@ -65,8 +64,4 @@ public class King extends AbstractPiece {
         return true;
     }
 
-    @SuppressWarnings("unused")
-    public void check() {
-        Board.check();
-    }
 }

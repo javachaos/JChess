@@ -23,7 +23,8 @@ public class Rook extends AbstractPiece {
         List<PiecePos> potentials = new ArrayList<>();
         int[][] directions = {{1, 0}, {0, 1}, {-1, 0}, {0, -1}};
         for (int[] dir : directions) {
-            int dx = dir[0], dy = dir[1];
+            int dx = dir[0];
+            int dy = dir[1];
             PiecePos pp = new PiecePos((char)(getPos().x() + dx), (char)(getPos().y() + dy));
             while (b.isOnBoard(pp)) {
                 potentials.add(pp);

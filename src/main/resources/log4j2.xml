@@ -1,5 +1,5 @@
 <!DOCTYPE configuration>
-<Configuration status="warn">
+<configuration status="warn">
     <Properties>
         <Property name="basePath">./logs</Property>
     </Properties>
@@ -7,7 +7,7 @@
     <Appenders>
         <RollingFile name="fileLogger" fileName="${basePath}/jchess.log" filePattern="${basePath}/jchess-%d{yyyy-MM-dd}.log">
             <PatternLayout>
-                <pattern>[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n</pattern>
+                <pattern>[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n%throwable{1}</pattern>
             </PatternLayout>
             <Policies>
                 <TimeBasedTriggeringPolicy interval="1" modulate="true" />
@@ -15,7 +15,7 @@
         </RollingFile>
 
         <Console name="console" target="SYSTEM_OUT">
-            <PatternLayout   pattern="[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n" />
+            <PatternLayout pattern="[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n%throwable{1}" />
         </Console>
     </Appenders>
     <Loggers>
@@ -26,4 +26,4 @@
             <appender-ref ref="console" />
         </Root>
     </Loggers>
-</Configuration>
+</configuration>

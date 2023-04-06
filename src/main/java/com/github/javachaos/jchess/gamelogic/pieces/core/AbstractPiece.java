@@ -2,6 +2,7 @@ package com.github.javachaos.jchess.gamelogic.pieces.core;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.IntStream;
 
 import com.github.javachaos.jchess.gamelogic.Board;
@@ -24,12 +25,12 @@ public abstract class AbstractPiece implements Piece {
     protected final Player color;
     protected boolean isCaptured;
 
-    public AbstractPiece(Player p, char x, char y) {
+    protected AbstractPiece(Player p, char x, char y) {
         this.color = p;
         this.pos = new PiecePos(x, y);
     }
 
-    public AbstractPiece(Player p, PiecePos pp) {
+    protected AbstractPiece(Player p, PiecePos pp) {
         this(p, pp.x(), pp.y());
     }
 
@@ -127,16 +128,20 @@ public abstract class AbstractPiece implements Piece {
     }
 
     @Override
-    public boolean equals(Object other) {
-        if (other instanceof Piece p) {
-            return p.getType() == this.getType()
-                && p.getPlayer() == this.getPlayer()
-                && p.getPos().equals(getPos());
-        } else {
-            return false;
-        }
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        AbstractPiece that = (AbstractPiece) o;
+        return Objects.equals(pos, that.pos)
+                && color == that.color
+                && that.getType() == this.getType();
     }
-    
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(pos, color);
+    }
+
     @Override
     public String toString() {
         return (isBlack() ? "B_" : "W_") +

@@ -1,7 +1,7 @@
 package jchess;
 
 import com.github.javachaos.jchess.gamelogic.Board;
-import com.github.javachaos.jchess.gamelogic.JChessException;
+import com.github.javachaos.jchess.exceptions.JChessException;
 import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.PiecePos;
@@ -35,21 +35,17 @@ public class BoardTest {
     }
 
     @Test
-    public void testResetBoard() throws JChessException {
+    void testResetBoard() throws JChessException {
         BOARD.movePiece(new PiecePos('a', '2'), new PiecePos('a', '3'));
         BOARD.movePiece(new PiecePos('b', '2'), new PiecePos('b', '4'));
-        BOARD.printBoardState();
         BOARD.undo();//Works
-        BOARD.printBoardState();
         BOARD.redo();//Works
-        BOARD.printBoardState();
         BOARD.reset();//Works
         testBlackPieces();
         testWhitePieces();
         assertEquals(
-        		BOARD.getCurrentState(),
-        		Board.GameState.NONE);
-        BOARD.printBoardState();
+                Board.GameState.NONE,
+                BOARD.getCurrentState());
     }
 
     /**
@@ -83,14 +79,14 @@ public class BoardTest {
         assertTrue(f8.isPresent());
         assertTrue(g8.isPresent());
         assertTrue(h8.isPresent());
-        assertEquals(a8.get().getType(), AbstractPiece.PieceType.ROOK);
-        assertEquals(b8.get().getType(), AbstractPiece.PieceType.KNIGHT);
-        assertEquals(c8.get().getType(), AbstractPiece.PieceType.BISHOP);
-        assertEquals(d8.get().getType(), AbstractPiece.PieceType.QUEEN);
-        assertEquals(e8.get().getType(), AbstractPiece.PieceType.KING);
-        assertEquals(f8.get().getType(), AbstractPiece.PieceType.BISHOP);
-        assertEquals(g8.get().getType(), AbstractPiece.PieceType.KNIGHT);
-        assertEquals(h8.get().getType(), AbstractPiece.PieceType.ROOK);
+        assertEquals(AbstractPiece.PieceType.ROOK, a8.get().getType());
+        assertEquals(AbstractPiece.PieceType.KNIGHT, b8.get().getType());
+        assertEquals(AbstractPiece.PieceType.BISHOP, c8.get().getType());
+        assertEquals(AbstractPiece.PieceType.QUEEN, d8.get().getType());
+        assertEquals(AbstractPiece.PieceType.KING, e8.get().getType());
+        assertEquals(AbstractPiece.PieceType.BISHOP, f8.get().getType());
+        assertEquals(AbstractPiece.PieceType.KNIGHT, g8.get().getType());
+        assertEquals(AbstractPiece.PieceType.ROOK, h8.get().getType());
         assertTrue(a8.get().isBlack());
         assertTrue(b8.get().isBlack());
         assertTrue(c8.get().isBlack());
@@ -130,14 +126,14 @@ public class BoardTest {
         assertTrue(g7.get().isBlack());
         assertTrue(h7.get().isBlack());
 
-        assertEquals(a7.get().getType(), AbstractPiece.PieceType.PAWN);
-        assertEquals(b7.get().getType(), AbstractPiece.PieceType.PAWN);
-        assertEquals(c7.get().getType(), AbstractPiece.PieceType.PAWN);
-        assertEquals(d7.get().getType(), AbstractPiece.PieceType.PAWN);
-        assertEquals(e7.get().getType(), AbstractPiece.PieceType.PAWN);
-        assertEquals(f7.get().getType(), AbstractPiece.PieceType.PAWN);
-        assertEquals(g7.get().getType(), AbstractPiece.PieceType.PAWN);
-        assertEquals(h7.get().getType(), AbstractPiece.PieceType.PAWN);
+        assertEquals(AbstractPiece.PieceType.PAWN, a7.get().getType());
+        assertEquals(AbstractPiece.PieceType.PAWN, b7.get().getType());
+        assertEquals(AbstractPiece.PieceType.PAWN, c7.get().getType());
+        assertEquals(AbstractPiece.PieceType.PAWN, d7.get().getType());
+        assertEquals(AbstractPiece.PieceType.PAWN, e7.get().getType());
+        assertEquals(AbstractPiece.PieceType.PAWN, f7.get().getType());
+        assertEquals(AbstractPiece.PieceType.PAWN, g7.get().getType());
+        assertEquals(AbstractPiece.PieceType.PAWN, h7.get().getType());
     }
 
     private void testWhitePieces() {
@@ -157,14 +153,14 @@ public class BoardTest {
         assertTrue(f1.isPresent());
         assertTrue(g1.isPresent());
         assertTrue(h1.isPresent());
-        assertEquals(a1.get().getType(), AbstractPiece.PieceType.ROOK);
-        assertEquals(b1.get().getType(), AbstractPiece.PieceType.KNIGHT);
-        assertEquals(c1.get().getType(), AbstractPiece.PieceType.BISHOP);
-        assertEquals(d1.get().getType(), AbstractPiece.PieceType.QUEEN);
-        assertEquals(e1.get().getType(), AbstractPiece.PieceType.KING);
-        assertEquals(f1.get().getType(), AbstractPiece.PieceType.BISHOP);
-        assertEquals(g1.get().getType(), AbstractPiece.PieceType.KNIGHT);
-        assertEquals(h1.get().getType(), AbstractPiece.PieceType.ROOK);
+        assertEquals(AbstractPiece.PieceType.ROOK, a1.get().getType());
+        assertEquals(AbstractPiece.PieceType.KNIGHT, b1.get().getType());
+        assertEquals(AbstractPiece.PieceType.BISHOP, c1.get().getType());
+        assertEquals(AbstractPiece.PieceType.QUEEN, d1.get().getType());
+        assertEquals(AbstractPiece.PieceType.KING, e1.get().getType());
+        assertEquals(AbstractPiece.PieceType.BISHOP, f1.get().getType());
+        assertEquals(AbstractPiece.PieceType.KNIGHT, g1.get().getType());
+        assertEquals(AbstractPiece.PieceType.ROOK, h1.get().getType());
         assertTrue(a1.get().isWhite());
         assertTrue(b1.get().isWhite());
         assertTrue(c1.get().isWhite());
@@ -204,13 +200,13 @@ public class BoardTest {
         assertTrue(g2.get().isWhite());
         assertTrue(h2.get().isWhite());
 
-        assertEquals(a2.get().getType(), AbstractPiece.PieceType.PAWN);
-        assertEquals(b2.get().getType(), AbstractPiece.PieceType.PAWN);
-        assertEquals(c2.get().getType(), AbstractPiece.PieceType.PAWN);
-        assertEquals(d2.get().getType(), AbstractPiece.PieceType.PAWN);
-        assertEquals(e2.get().getType(), AbstractPiece.PieceType.PAWN);
-        assertEquals(f2.get().getType(), AbstractPiece.PieceType.PAWN);
-        assertEquals(g2.get().getType(), AbstractPiece.PieceType.PAWN);
-        assertEquals(h2.get().getType(), AbstractPiece.PieceType.PAWN);
+        assertEquals(AbstractPiece.PieceType.PAWN, a2.get().getType());
+        assertEquals(AbstractPiece.PieceType.PAWN, b2.get().getType());
+        assertEquals(AbstractPiece.PieceType.PAWN, c2.get().getType());
+        assertEquals(AbstractPiece.PieceType.PAWN, d2.get().getType());
+        assertEquals(AbstractPiece.PieceType.PAWN, e2.get().getType());
+        assertEquals(AbstractPiece.PieceType.PAWN, f2.get().getType());
+        assertEquals(AbstractPiece.PieceType.PAWN, g2.get().getType());
+        assertEquals(AbstractPiece.PieceType.PAWN, h2.get().getType());
     }
 }

@@ -19,8 +19,7 @@ public class Bishop extends AbstractPiece {
         return PieceType.BISHOP;
     }
 
-    @Override
-    public List<PiecePos> potentialMoves(Board b) {
+    private List<PiecePos> potentialMoves(Board b) {
         List<PiecePos> potentials = new ArrayList<>();
         int[][] directions = {{1, 1}, {-1, 1}, {1, -1}, {-1, -1}};
         for (int[] dir : directions) {
