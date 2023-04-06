@@ -19,7 +19,7 @@ public abstract class AbstractPiece implements Piece {
         BISHOP,
         KNIGHT,
         KING,
-        QUEEN
+        NONE, QUEEN
     }
     protected PiecePos pos;
     protected final Player color;

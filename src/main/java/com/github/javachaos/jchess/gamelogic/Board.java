@@ -21,6 +21,7 @@ import com.github.javachaos.jchess.gamelogic.pieces.impl.Queen;
 import com.github.javachaos.jchess.gamelogic.pieces.impl.Rook;
 
 import static com.github.javachaos.jchess.gamelogic.managers.GameStateManager.GameState.*;
+import static com.github.javachaos.jchess.gamelogic.managers.GameStateManager.GameState.NONE;
 
 /**
  * Defines a simple 8x8 chess board.
@@ -67,11 +68,13 @@ public class Board {
                 LOGGER.debug("Invalid move for player {}: {}",
                         p.get().getPlayer(), desiredPos);
             } else {
-                Move currentMove = new Move(p.get().getPlayer(),p.get().getOpponent(),
-                        pos, desiredPos, p.get(), null);
+                Move currentMove = new Move(pos, desiredPos,
+                        AbstractPiece.PieceType.NONE, p.get().getPlayer());
                 Piece captive = doMove(currentMove);
-                currentMove = new Move(p.get().getPlayer(),p.get().getOpponent(),
-                        pos, desiredPos, p.get(), captive);
+                if (captive != null) {
+                    currentMove = new Move(
+                            pos, desiredPos, captive.getType(), captive.getPlayer());
+                }
                 undoStack.push(currentMove);
                 //Check for check
                 inCheck(currentMove);
@@ -90,12 +93,15 @@ public class Board {
      * @throws JChessException if the currentMove would put the player into check
      */
     private void inCheck(Move currentMove) throws JChessException {
-        King ourKing = (King) getKing(currentMove.player());
-        for (Piece enemyPiece : getPieces(currentMove.opponent())) {
-            if (getPotentialMoves(enemyPiece.getPos()).contains(ourKing.getPos())) {
-                undo();
-                GameStateManager.getInstance().changeTurns();
-                throw new JChessException("This move puts king in check. " + currentMove);
+        Optional<Piece> p = getPiece(currentMove.from());
+        if (p.isPresent()) {
+            King ourKing = (King) getKing(p.get().getPlayer());
+            for (Piece enemyPiece : getPieces(p.get().getOpponent())) {
+                if (getPotentialMoves(enemyPiece.getPos()).contains(ourKing.getPos())) {
+                    undo();
+                    GameStateManager.getInstance().changeTurns();
+                    throw new JChessException("This move puts king in check. " + currentMove);
+                }
             }
         }
     }
@@ -157,12 +163,42 @@ public class Board {
         PiecePos f = m.from();
         PiecePos t = m.to();
         Optional<Piece> fromPiece = getPiece(f);
-        if (m.captive() != null) {
-            m.captive().resurrect();
-            currentPieces.add(m.captive());
-            capturedPieces.remove(m.captive());
+        if (m.type() != AbstractPiece.PieceType.NONE) {
+            Piece p = createPiece(m.type(), m.p(), m.to());
+            assert p != null;
+            p.resurrect();
+            currentPieces.add(p);
+            capturedPieces.remove(p);
         }
         fromPiece.ifPresent(piece -> piece.move(t));
+    }
+
+    private Piece createPiece(AbstractPiece.PieceType type, AbstractPiece.Player p, PiecePos piecePos) {
+
+        switch (type) {
+            case PAWN -> {
+                return new Pawn(p, piecePos.x(), piecePos.y());
+            }
+            case ROOK -> {
+                return new Rook(p, piecePos.x(), piecePos.y());
+            }
+            case BISHOP -> {
+                return new Bishop(p, piecePos.x(), piecePos.y());
+            }
+            case KNIGHT -> {
+                return new Knight(p, piecePos.x(), piecePos.y());
+            }
+            case KING -> {
+                return new King(p, piecePos.x(), piecePos.y());
+            }
+            case QUEEN -> {
+                return new Queen(p, piecePos.x(), piecePos.y());
+            }
+            case NONE -> {
+                return null;
+            }
+        }
+        return null;
     }
 
     @SuppressWarnings("unused")
@@ -273,5 +309,19 @@ public class Board {
 
     public Deque<Move> getRedos() {
         return new ArrayDeque<>(redoStack);
+    }
+
+    public void setUndos(Deque<Move> undos) {
+        if (undos != null) {
+            this.undoStack.clear();
+            this.undoStack.addAll(undos);
+        }
+    }
+
+    public void setRedos(Deque<Move> redos) {
+        if (redos != null) {
+            this.redoStack.clear();
+            this.redoStack.addAll(redos);
+        }
     }
 }

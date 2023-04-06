@@ -204,11 +204,16 @@ public class JChessController {
     void loadButtonHandler() {
         Deque<Move> redos = saveLoadManager.loadRedos();
         Deque<Move> undos = saveLoadManager.loadUndos();
-        clearSelection();
-        board.reset();
-        while(!undos.isEmpty()) {
-            Move m = undos.getLast();
-            board.doMove(m);
+        if (undos != null) {
+            clearSelection();
+            board.reset();
+            board.setUndos(undos);
+            board.setRedos(redos);
+            while (!undos.isEmpty()) {
+                Move m = undos.pollLast();
+                board.doMove(m);
+            }
+            redrawPieces();
         }
     }
 
