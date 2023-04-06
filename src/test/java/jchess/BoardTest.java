@@ -2,11 +2,10 @@ package jchess;
 
 import com.github.javachaos.jchess.gamelogic.Board;
 import com.github.javachaos.jchess.exceptions.JChessException;
+import com.github.javachaos.jchess.gamelogic.GameStateManager;
 import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.PiecePos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -20,18 +19,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 public class BoardTest {
 
-    public static final Logger LOGGER = LogManager.getLogger(
-            BoardTest.class);
-
     private static Board BOARD;
 
     @BeforeAll
     public static void createBoard() {
-        try {
-            BOARD = new Board();
-        } catch (JChessException e) {
-            LOGGER.error(e);
-        }
+        BOARD = new Board();
+        BOARD.start();
     }
 
     @Test
@@ -44,8 +37,8 @@ public class BoardTest {
         testBlackPieces();
         testWhitePieces();
         assertEquals(
-                Board.GameState.NONE,
-                BOARD.getCurrentState());
+                GameStateManager.GameState.START,
+                GameStateManager.getInstance().getCurrentState());
     }
 
     /**

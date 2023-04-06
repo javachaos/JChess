@@ -1,7 +1,5 @@
 package com.github.javachaos.jchess.gamelogic;
 
-
-import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
@@ -21,35 +19,18 @@ import com.github.javachaos.jchess.gamelogic.pieces.impl.Pawn;
 import com.github.javachaos.jchess.gamelogic.pieces.impl.Queen;
 import com.github.javachaos.jchess.gamelogic.pieces.impl.Rook;
 
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.util.Pair;
+import static com.github.javachaos.jchess.gamelogic.GameStateManager.GameState.*;
 
 /**
  * Defines a simple 8x8 chess board.
  */
 public class Board {
 
-    private final EnumMap<AbstractPiece.PieceType,
-            Pair<Image, Image>> images = new EnumMap<>(AbstractPiece.PieceType.class);
-
     private static final Logger LOGGER = LogManager.getLogger(
             Board.class);
     private final ArrayDeque<Move> undoStack = new ArrayDeque<>();
     private final ArrayDeque<Move> redoStack = new ArrayDeque<>();
 
-
-    @SuppressWarnings("unused")
-    public enum GameState {
-        START,
-        STALEMATE,
-        MATE,
-        BLACKS_TURN,
-        WHITES_TURN,
-        UNDO,
-        REDO,
-        NONE
-    }
 
     /**
      * The current pieces in play.
@@ -58,7 +39,6 @@ public class Board {
 
     private final List<PiecePos> allPositions = new ArrayList<>();
 
-    private GameState currentState;
 
 
     /**
@@ -72,16 +52,20 @@ public class Board {
 
     AbstractPiece.Player currentPlayer;
 
-    public Board() throws JChessException {
-        currentState = GameState.NONE;
+    public Board() {
+        //Unused
+    }
+
+    public void start() {
+        GameStateManager.getInstance().setState(NONE);
         reset();
-        loadImages();
     }
 
     public void movePiece(PiecePos pos, PiecePos desiredPos) throws JChessException {
         Optional<Piece> p = getPiece(pos);
         if (p.isPresent()) {
-            currentState = p.get().isWhite() ? GameState.WHITES_TURN : GameState.BLACKS_TURN;
+            GameStateManager.getInstance().setState(
+                    p.get().isWhite() ? WHITES_TURN : BLACKS_TURN);
             if (!p.get().canMove(this, desiredPos)) {
                 LOGGER.debug("Invalid move for player {}: {}",p.get().getPlayer(), desiredPos);
             } else {
@@ -128,7 +112,7 @@ public class Board {
 
     public void undo() {
         if (!undoStack.isEmpty()) {
-            currentState = GameState.UNDO;
+            GameStateManager.getInstance().setState(UNDO);
             Move lastMove = undoStack.pop();
             undoMove(lastMove.reverse());
             redoStack.push(lastMove);
@@ -137,7 +121,7 @@ public class Board {
 
     public void redo() {
         if (!redoStack.isEmpty()) {
-            currentState = GameState.REDO;
+            GameStateManager.getInstance().setState(REDO);
             Move lastMove = redoStack.pop();
             doMove(lastMove);
             undoStack.push(lastMove);
@@ -215,7 +199,7 @@ public class Board {
         IntStream.range(0, 8).forEach(x ->
                 IntStream.range(0, 8).forEach(y ->
                         allPositions.add(new PiecePos((char)('a' + x), (char)('1' + y)))));
-        currentState = GameState.NONE;
+        GameStateManager.getInstance().setState(NONE);
         currentPlayer = AbstractPiece.Player.WHITE;
         undoStack.clear();
         currentPieces.clear();
@@ -256,47 +240,6 @@ public class Board {
         ));
     }
 
-    private InputStream getImg(String name) {
-        return getClass().getResourceAsStream("/img/" + name + ".png");
-    }
-
-    private void loadImages() {
-        images.put(AbstractPiece.PieceType.PAWN, new Pair<>(
-               new Image(getImg("pawn_white")),
-               new Image(getImg("pawn_black"))));
-        images.put(AbstractPiece.PieceType.BISHOP, new Pair<>(
-                new Image(getImg("bishop_white")),
-                new Image(getImg("bishop_black"))));
-        images.put(AbstractPiece.PieceType.ROOK, new Pair<>(
-                new Image(getImg("rook_white")),
-                new Image(getImg("rook_black"))));
-        images.put(AbstractPiece.PieceType.KNIGHT, new Pair<>(
-                new Image(getImg("knight_white")),
-                new Image(getImg("knight_black"))));
-        images.put(AbstractPiece.PieceType.KING, new Pair<>(
-                new Image(getImg("king_white")),
-                new Image(getImg("king_black"))));
-        images.put(AbstractPiece.PieceType.QUEEN, new Pair<>(
-               new Image(getImg("queen_white")),
-               new Image(getImg("queen_black"))));
-    }
-    
-    public ImageView getImageForPiece(Piece p) {
-        if (p.isBlack()) {
-            return new ImageView(images.get(p.getType()).getValue());
-        } else {
-            return new ImageView(images.get(p.getType()).getKey());
-        }
-    }
-
-    public GameState getCurrentState() {
-        return currentState;
-    }
-
-    public void setCurrentState(GameState currentState) {
-        this.currentState = currentState;
-    }
-
     public boolean isOnBoard(PiecePos p) {
         return isOnBoard(p.x(), p.y());
     }
@@ -305,4 +248,8 @@ public class Board {
         return (x <= 'h' && x >= 'a') && (y <= '8' && y >= '1');
     }
 
+    public void addPiece(Piece a) {
+        //Check if location is valid.
+        currentPieces.add(a);
+    }
 }

@@ -2,6 +2,9 @@ package com.github.javachaos.jchess;
 
 import com.github.javachaos.jchess.gamelogic.Board;
 import com.github.javachaos.jchess.exceptions.JChessException;
+import com.github.javachaos.jchess.gamelogic.GameStateManager;
+import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
+import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.PiecePos;
 
 import com.github.javachaos.jchess.utils.ExceptionUtils;
@@ -14,18 +17,24 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.effect.Effect;
 import javafx.scene.effect.InnerShadow;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.util.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.stream.IntStream;
+
+import static com.github.javachaos.jchess.gamelogic.GameStateManager.GameState.START;
 
 public class JChessController {
 
@@ -59,9 +68,14 @@ public class JChessController {
 
     private boolean pieceSelected;
 
+    private final EnumMap<AbstractPiece.PieceType,
+            Pair<Image, Image>> images = new EnumMap<>(AbstractPiece.PieceType.class);
+
     @FXML
-    void initialize() throws JChessException {
+    void initialize() {
+        loadImages();
         board = new Board();
+        board.start();
         assert exitBtn != null : "fx:id=\"exitBtn\" was not injected: check your FXML file 'jchess.fxml'.";
         assert redoBtn != null : "fx:id=\"redoBtn\" was not injected: check your FXML file 'jchess.fxml'.";
         assert undoBtn != null : "fx:id=\"undoBtn\" was not injected: check your FXML file 'jchess.fxml'.";
@@ -85,7 +99,7 @@ public class JChessController {
             board.getPiece((char)('a' + x), (char)('1' + y))
                     .ifPresent(p -> {
                         Bounds b = checkerGrid.getCellBounds(x, y);
-                        ImageView img = board.getImageForPiece(p);
+                        ImageView img = getImageForPiece(p);
                         img.setFitHeight(b.getHeight());
                         img.setFitWidth(b.getWidth());
                         panes[x][y].getChildren().add(img);
@@ -132,7 +146,7 @@ public class JChessController {
     }
 
     public void widthChanged(Observable e) {
-        if (board.getCurrentState() == Board.GameState.START) {
+        if (GameStateManager.getInstance().isStart()) {
             checkerGrid.getChildren().forEach(x -> {
                 if (x instanceof StackPane r) {
                     r.getChildren().forEach(c -> {
@@ -146,7 +160,7 @@ public class JChessController {
     }
 
     public void heightChanged(Observable e) {
-        if (board.getCurrentState() == Board.GameState.START) {
+        if (GameStateManager.getInstance().isStart()) {
             checkerGrid.getChildren().forEach(x -> {
                 if (x instanceof StackPane r) {
                     r.getChildren().forEach(c -> {
@@ -171,7 +185,7 @@ public class JChessController {
     void createNewGame() {
         clearSelection();
         board.reset();
-        board.setCurrentState(Board.GameState.START);
+        GameStateManager.getInstance().setState(START);
         checkerGrid.autosize();
         redrawPieces();
     }
@@ -240,4 +254,37 @@ public class JChessController {
         return innerShadow;
     }
 
+    private InputStream getImg(String name) {
+        return getClass().getResourceAsStream("/img/" + name + ".png");
+    }
+
+    private void loadImages() {
+        images.put(AbstractPiece.PieceType.PAWN, new Pair<>(
+                new Image(getImg("pawn_white")),
+                new Image(getImg("pawn_black"))));
+        images.put(AbstractPiece.PieceType.BISHOP, new Pair<>(
+                new Image(getImg("bishop_white")),
+                new Image(getImg("bishop_black"))));
+        images.put(AbstractPiece.PieceType.ROOK, new Pair<>(
+                new Image(getImg("rook_white")),
+                new Image(getImg("rook_black"))));
+        images.put(AbstractPiece.PieceType.KNIGHT, new Pair<>(
+                new Image(getImg("knight_white")),
+                new Image(getImg("knight_black"))));
+        images.put(AbstractPiece.PieceType.KING, new Pair<>(
+                new Image(getImg("king_white")),
+                new Image(getImg("king_black"))));
+        images.put(AbstractPiece.PieceType.QUEEN, new Pair<>(
+                new Image(getImg("queen_white")),
+                new Image(getImg("queen_black"))));
+    }
+
+
+    private ImageView getImageForPiece(Piece p) {
+        if (p.isBlack()) {
+            return new ImageView(images.get(p.getType()).getValue());
+        } else {
+            return new ImageView(images.get(p.getType()).getKey());
+        }
+    }
 }
