@@ -42,9 +42,8 @@ public class Board {
     /**
      * Captured pieces.
      */
-      private final ArrayDeque<Piece> capturedPieces = new ArrayDeque<>();
+    private final ArrayDeque<Piece> capturedPieces = new ArrayDeque<>();
 
-    AbstractPiece.Player currentPlayer;
 
     public Board() {
         //Unused
@@ -53,15 +52,21 @@ public class Board {
     public void start() {
         GameStateManager.getInstance().setState(NONE);
         reset();
+        GameStateManager.getInstance().setCurrentPlayer(AbstractPiece.Player.WHITE);
     }
 
     public void movePiece(PiecePos pos, PiecePos desiredPos) throws JChessException {
         Optional<Piece> p = getPiece(pos);
         if (p.isPresent()) {
+            if (GameStateManager.getInstance().getCurrentPlayer() == p.get().getPlayer()) {
+                throw new JChessException("Not your turn.");
+            }
+            GameStateManager.getInstance().setCurrentPlayer(p.get().getOpponent());
             GameStateManager.getInstance().setState(
                     p.get().isWhite() ? WHITES_TURN : BLACKS_TURN);
             if (!p.get().canMove(this, desiredPos)) {
-                LOGGER.debug("Invalid move for player {}: {}",p.get().getPlayer(), desiredPos);
+                LOGGER.debug("Invalid move for player {}: {}",
+                        p.get().getPlayer(), desiredPos);
             } else {
                 Move currentMove = new Move(p.get().getPlayer(),p.get().getOpponent(),
                         pos, desiredPos, p.get(), null);
@@ -131,7 +136,7 @@ public class Board {
     private Piece doMove(Move m) {
         LOGGER.info("Attempting move: {}", m);
         Piece captive = null;
-        currentPlayer = m.player();
+        GameStateManager.getInstance().setCurrentPlayer(m.player());
         PiecePos f = m.from();
         PiecePos t = m.to();
         Optional<Piece> fromPiece = getPiece(f);
@@ -148,7 +153,7 @@ public class Board {
 
     private void undoMove(Move m) {
         LOGGER.info("Undoing move: {}", m);
-        currentPlayer = m.player();
+        GameStateManager.getInstance().setCurrentPlayer(m.player());
         PiecePos f = m.from();
         PiecePos t = m.to();
         Optional<Piece> fromPiece = getPiece(f);
@@ -196,8 +201,6 @@ public class Board {
         IntStream.range(0, 8).forEach(x ->
                 IntStream.range(0, 8).forEach(y ->
                         allPositions.add(new PiecePos((char)('a' + x), (char)('1' + y)))));
-        GameStateManager.getInstance().setState(NONE);
-        currentPlayer = AbstractPiece.Player.WHITE;
         undoStack.clear();
         currentPieces.clear();
         currentPieces.addAll(Arrays.asList(

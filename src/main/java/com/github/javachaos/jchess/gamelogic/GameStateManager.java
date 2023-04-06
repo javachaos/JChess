@@ -1,6 +1,11 @@
 package com.github.javachaos.jchess.gamelogic;
 
+import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
+
 public class GameStateManager {
+
+    private AbstractPiece.Player currentPlayer;
+
 
     @SuppressWarnings("unused")
     public enum GameState {
@@ -42,4 +47,11 @@ public class GameStateManager {
         return currentState;
     }
 
+    public void setCurrentPlayer(AbstractPiece.Player player) {
+        this.currentPlayer = player;
+    }
+
+    public AbstractPiece.Player getCurrentPlayer() {
+        return currentPlayer;
+    }
 }
