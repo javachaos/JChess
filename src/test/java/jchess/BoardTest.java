@@ -2,7 +2,7 @@ package jchess;
 
 import com.github.javachaos.jchess.gamelogic.Board;
 import com.github.javachaos.jchess.exceptions.JChessException;
-import com.github.javachaos.jchess.gamelogic.GameStateManager;
+import com.github.javachaos.jchess.gamelogic.managers.GameStateManager;
 import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.PiecePos;

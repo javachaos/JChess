@@ -41,3 +41,5 @@ build/
 
 ### Mac OS ###
 .DS_Store
+/jchess_redo.json
+/jchess_undo.json

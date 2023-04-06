@@ -2,8 +2,10 @@ package com.github.javachaos.jchess;
 
 import com.github.javachaos.jchess.gamelogic.Board;
 import com.github.javachaos.jchess.exceptions.JChessException;
-import com.github.javachaos.jchess.gamelogic.GameStateManager;
+import com.github.javachaos.jchess.gamelogic.managers.GameStateManager;
+import com.github.javachaos.jchess.gamelogic.managers.SaveLoadManager;
 import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
+import com.github.javachaos.jchess.gamelogic.pieces.core.Move;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.PiecePos;
 
@@ -28,13 +30,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.EnumMap;
-import java.util.List;
+import java.util.*;
 import java.util.stream.IntStream;
 
-import static com.github.javachaos.jchess.gamelogic.GameStateManager.GameState.START;
+import static com.github.javachaos.jchess.gamelogic.managers.GameStateManager.GameState.START;
 
 public class JChessController {
 
@@ -56,6 +55,9 @@ public class JChessController {
     private Button saveBtn;
 
     @FXML
+    private Button loadBtn;
+
+    @FXML
     private Button undoBtn;
 
     private Board board;
@@ -71,15 +73,22 @@ public class JChessController {
     private final EnumMap<AbstractPiece.PieceType,
             Pair<Image, Image>> images = new EnumMap<>(AbstractPiece.PieceType.class);
 
+    private SaveLoadManager saveLoadManager;
+
     @FXML
     void initialize() {
         loadImages();
         board = new Board();
         board.start();
+        saveLoadManager = new SaveLoadManager("./jchess_undo.json",
+                "./jchess_redo.json");
+
+
         assert exitBtn != null : "fx:id=\"exitBtn\" was not injected: check your FXML file 'jchess.fxml'.";
         assert redoBtn != null : "fx:id=\"redoBtn\" was not injected: check your FXML file 'jchess.fxml'.";
         assert undoBtn != null : "fx:id=\"undoBtn\" was not injected: check your FXML file 'jchess.fxml'.";
         assert saveBtn != null : "fx:id=\"saveBtn\" was not injected: check your FXML file 'jchess.fxml'.";
+        assert loadBtn != null : "fx:id=\"loadBtn\" was not injected: check your FXML file 'jchess.fxml'.";
         assert checkerGrid != null : "fx:id=\"checkerGrid\" was not injected: check your FXML file 'jchess.fxml'.";
 
         setupActions();
@@ -178,6 +187,8 @@ public class JChessController {
         newgameBtn.setOnAction(x -> createNewGame());
         undoBtn.setOnAction(x -> undoAction());
         redoBtn.setOnAction(x -> redoAction());
+        saveBtn.setOnAction(x -> saveButtonHandler());
+        loadBtn.setOnAction(x -> loadButtonHandler());
     }
 
     //------------------------------------------ Action Events ---------------------------------------------------------
@@ -188,6 +199,17 @@ public class JChessController {
         GameStateManager.getInstance().setState(START);
         checkerGrid.autosize();
         redrawPieces();
+    }
+
+    void loadButtonHandler() {
+        Deque<Move> redos = saveLoadManager.loadRedos();
+        Deque<Move> undos = saveLoadManager.loadUndos();
+        clearSelection();
+        board.reset();
+        while(!undos.isEmpty()) {
+            Move m = undos.getLast();
+            board.doMove(m);
+        }
     }
 
     void undoAction() {
@@ -204,6 +226,12 @@ public class JChessController {
 
     void exitApplication() {
         Platform.exit();
+    }
+
+    void saveButtonHandler() {
+        saveLoadManager.setUndoMoves(board.getUndos());
+        saveLoadManager.setRedoMoves(board.getRedos());
+        saveLoadManager.save();
     }
 
     private void clearSelection() {
@@ -248,9 +276,9 @@ public class JChessController {
 
     private Effect getSelectedEffect() {
         InnerShadow innerShadow = new InnerShadow();
-        innerShadow.setRadius(15.0);
-        innerShadow.setChoke(0.65);
-        innerShadow.setColor(Color.color(1.0, 1.0, 1.0)); // Set the color of the inner glow
+        innerShadow.setRadius(35.0);
+        innerShadow.setChoke(0.25);
+        innerShadow.setColor(Color.color(0.0, 1.0, 1.0)); // Set the color of the inner glow
         return innerShadow;
     }
 

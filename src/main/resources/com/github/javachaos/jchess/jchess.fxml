@@ -19,6 +19,7 @@
           <Button fx:id="undoBtn" mnemonicParsing="false" text="Undo"/>
           <Button fx:id="redoBtn" mnemonicParsing="false" text="Redo"/>
           <Button fx:id="saveBtn" mnemonicParsing="false" text="Save"/>
+          <Button fx:id="loadBtn" mnemonicParsing="false" text="Load"/>
           <Button fx:id="exitBtn" mnemonicParsing="false" text="Exit"/>
       </buttons>
         <padding>

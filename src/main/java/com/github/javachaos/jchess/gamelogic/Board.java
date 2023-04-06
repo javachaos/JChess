@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
 import com.github.javachaos.jchess.exceptions.JChessException;
+import com.github.javachaos.jchess.gamelogic.managers.GameStateManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -19,7 +20,7 @@ import com.github.javachaos.jchess.gamelogic.pieces.impl.Pawn;
 import com.github.javachaos.jchess.gamelogic.pieces.impl.Queen;
 import com.github.javachaos.jchess.gamelogic.pieces.impl.Rook;
 
-import static com.github.javachaos.jchess.gamelogic.GameStateManager.GameState.*;
+import static com.github.javachaos.jchess.gamelogic.managers.GameStateManager.GameState.*;
 
 /**
  * Defines a simple 8x8 chess board.
@@ -28,8 +29,8 @@ public class Board {
 
     private static final Logger LOGGER = LogManager.getLogger(
             Board.class);
-    private final ArrayDeque<Move> undoStack = new ArrayDeque<>();
-    private final ArrayDeque<Move> redoStack = new ArrayDeque<>();
+    private final Deque<Move> undoStack = new ArrayDeque<>();
+    private final Deque<Move> redoStack = new ArrayDeque<>();
 
 
     /**
@@ -133,7 +134,7 @@ public class Board {
      *
      * @param m the move to do
      */
-    private Piece doMove(Move m) {
+    public Piece doMove(Move m) {
         LOGGER.info("Attempting move: {}", m);
         Piece captive = null;
         PiecePos f = m.from();
@@ -264,5 +265,13 @@ public class Board {
 
     public List<PiecePos> getAllPositions() {
         return allPositions;
+    }
+
+    public Deque<Move> getUndos() {
+        return new ArrayDeque<>(undoStack);
+    }
+
+    public Deque<Move> getRedos() {
+        return new ArrayDeque<>(redoStack);
     }
 }

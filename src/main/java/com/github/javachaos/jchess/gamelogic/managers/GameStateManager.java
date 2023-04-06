@@ -1,4 +1,4 @@
-package com.github.javachaos.jchess.gamelogic;
+package com.github.javachaos.jchess.gamelogic.managers;
 
 import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
 import org.apache.logging.log4j.LogManager;

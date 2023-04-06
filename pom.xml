@@ -19,6 +19,7 @@
         <jvm.target>20</jvm.target>
         <mvn.compile.version>3.10.1</mvn.compile.version>
         <javafx.maven.version>0.0.8</javafx.maven.version>
+        <gson.version>2.10.1</gson.version>
         <main.class>com.github.javachaos.jchess.JChessApplication</main.class>
     </properties>
 
@@ -33,7 +34,11 @@
             <artifactId>javafx-fxml</artifactId>
             <version>${javafx.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>${gson.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
