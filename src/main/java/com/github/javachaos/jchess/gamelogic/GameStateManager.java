@@ -1,8 +1,12 @@
 package com.github.javachaos.jchess.gamelogic;
 
 import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class GameStateManager {
+
+    private static final Logger LOGGER = LogManager.getLogger(GameStateManager.class);
 
     private AbstractPiece.Player currentPlayer;
 
@@ -45,6 +49,15 @@ public class GameStateManager {
 
     public GameState getCurrentState() {
         return currentState;
+    }
+
+    public void changeTurns() {
+        LOGGER.info("Turn: {}", currentPlayer);
+        if (getCurrentPlayer() == AbstractPiece.Player.WHITE) {
+            setCurrentPlayer(AbstractPiece.Player.BLACK);
+        } else {
+            setCurrentPlayer(AbstractPiece.Player.WHITE);
+        }
     }
 
     public void setCurrentPlayer(AbstractPiece.Player player) {

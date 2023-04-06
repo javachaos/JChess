@@ -52,7 +52,7 @@ public class Board {
     public void start() {
         GameStateManager.getInstance().setState(NONE);
         reset();
-        GameStateManager.getInstance().setCurrentPlayer(AbstractPiece.Player.WHITE);
+        GameStateManager.getInstance().setCurrentPlayer(AbstractPiece.Player.BLACK);
     }
 
     public void movePiece(PiecePos pos, PiecePos desiredPos) throws JChessException {
@@ -61,9 +61,7 @@ public class Board {
             if (GameStateManager.getInstance().getCurrentPlayer() == p.get().getPlayer()) {
                 throw new JChessException("Not your turn.");
             }
-            GameStateManager.getInstance().setCurrentPlayer(p.get().getOpponent());
-            GameStateManager.getInstance().setState(
-                    p.get().isWhite() ? WHITES_TURN : BLACKS_TURN);
+
             if (!p.get().canMove(this, desiredPos)) {
                 LOGGER.debug("Invalid move for player {}: {}",
                         p.get().getPlayer(), desiredPos);
@@ -76,6 +74,7 @@ public class Board {
                 undoStack.push(currentMove);
                 //Check for check
                 inCheck(currentMove);
+                GameStateManager.getInstance().changeTurns();
             }
         } else {
             Alerts.err("No piece at this position");
@@ -94,6 +93,7 @@ public class Board {
         for (Piece enemyPiece : getPieces(currentMove.opponent())) {
             if (getPotentialMoves(enemyPiece.getPos()).contains(ourKing.getPos())) {
                 undo();
+                GameStateManager.getInstance().changeTurns();
                 throw new JChessException("This move puts king in check. " + currentMove);
             }
         }
@@ -136,7 +136,6 @@ public class Board {
     private Piece doMove(Move m) {
         LOGGER.info("Attempting move: {}", m);
         Piece captive = null;
-        GameStateManager.getInstance().setCurrentPlayer(m.player());
         PiecePos f = m.from();
         PiecePos t = m.to();
         Optional<Piece> fromPiece = getPiece(f);
@@ -153,7 +152,7 @@ public class Board {
 
     private void undoMove(Move m) {
         LOGGER.info("Undoing move: {}", m);
-        GameStateManager.getInstance().setCurrentPlayer(m.player());
+        GameStateManager.getInstance().changeTurns();
         PiecePos f = m.from();
         PiecePos t = m.to();
         Optional<Piece> fromPiece = getPiece(f);
