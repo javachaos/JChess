@@ -1,5 +1,7 @@
 # JChess
 
+## I made this in the last two days, there are flaws, it's a work in progress.
+
 JChess is a Java application that lets you play chess with a graphical user interface (GUI) built using JavaFX. This chess game comes with several features such as the ability to save and load games to JSON files, and undo and redo moves.
 
 ![JChess Img](src/main/resources/img.png)
