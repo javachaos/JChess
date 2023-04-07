@@ -55,6 +55,10 @@ public class GameStateManager {
         return currentPlayer == Player.BLACK;
     }
 
+    public boolean isPlayerTurn() {
+        return !isAITurn();
+    }
+
     @SuppressWarnings("unused")
     public enum GameState {
         START,
