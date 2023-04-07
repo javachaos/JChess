@@ -4,6 +4,8 @@ import com.github.javachaos.jchess.gamelogic.Board;
 import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.PiecePos;
+import com.github.javachaos.jchess.gamelogic.pieces.core.player.AIPlayer;
+import com.github.javachaos.jchess.gamelogic.pieces.core.player.Player;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -68,9 +70,6 @@ public class Pawn extends AbstractPiece {
         return new PawnLocations(oneAhead, twoAhead, right, left);
     }
 
-    private record PawnLocations(PiecePos oneAhead, PiecePos twoAhead, PiecePos right, PiecePos left) {
-    }
-
     private boolean testDiag(Board b, PiecePos p, PiecePos right) {
         //Test diagonal right
         Optional<Piece> op = b.getPiece(right);
@@ -88,6 +87,7 @@ public class Pawn extends AbstractPiece {
     public boolean isKing() {
         return false;
     }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -100,6 +100,9 @@ public class Pawn extends AbstractPiece {
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(), start);
+    }
+
+    private record PawnLocations(PiecePos oneAhead, PiecePos twoAhead, PiecePos right, PiecePos left) {
     }
 
 }

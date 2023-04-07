@@ -1,30 +1,18 @@
 package com.github.javachaos.jchess.gamelogic.pieces.core;
 
+import com.github.javachaos.jchess.gamelogic.Board;
+import com.github.javachaos.jchess.gamelogic.pieces.core.player.Player;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.IntStream;
 
-import com.github.javachaos.jchess.gamelogic.Board;
-
 public abstract class AbstractPiece implements Piece {
 
-    public enum Player {
-        BLACK,
-        WHITE
-    }
-    public enum PieceType {
-        PAWN,
-        ROOK,
-        BISHOP,
-        KNIGHT,
-        KING,
-        NONE, QUEEN
-    }
-    protected PiecePos pos;
     protected final Player color;
+    protected PiecePos pos;
     protected boolean isCaptured;
-
     protected AbstractPiece(Player p, char x, char y) {
         this.color = p;
         this.pos = new PiecePos(x, y);
@@ -38,8 +26,7 @@ public abstract class AbstractPiece implements Piece {
      * Get the pieces between from and to.
      *
      * @param from the from pos
-     * @param to the to pos
-     *
+     * @param to   the to pos
      * @return the list of pieces between from and to positions
      */
     protected List<Piece> getPiecesLateral(Board b, PiecePos from, PiecePos to) {
@@ -48,21 +35,21 @@ public abstract class AbstractPiece implements Piece {
         if (from.x() == to.x()) {
             IntStream.rangeClosed(from.y(), to.y())
                     .forEachOrdered(v -> b.getPiece(
-                            new PiecePos(from.x(), (char)v))
+                                    new PiecePos(from.x(), (char) v))
                             .ifPresent(pieces::add));
             IntStream.rangeClosed(to.y(), from.y())
                     .forEachOrdered(v -> b.getPiece(
-                                    new PiecePos(from.x(), (char)v))
+                                    new PiecePos(from.x(), (char) v))
                             .ifPresent(pieces::add));
         }
         if (from.y() == to.y()) {
             IntStream.rangeClosed(from.x(), to.x())
                     .forEachOrdered(v -> b.getPiece(
-                                    new PiecePos((char)v, from.y()))
+                                    new PiecePos((char) v, from.y()))
                             .ifPresent(pieces::add));
             IntStream.rangeClosed(to.x(), from.x())
                     .forEachOrdered(v -> b.getPiece(
-                                    new PiecePos((char)v, from.y()))
+                                    new PiecePos((char) v, from.y()))
                             .ifPresent(pieces::add));
         }
 
@@ -118,10 +105,12 @@ public abstract class AbstractPiece implements Piece {
     public boolean isBlack() {
         return color == Player.BLACK;
     }
+
     @Override
     public boolean isWhite() {
         return color == Player.WHITE;
     }
+
     @Override
     public PiecePos getPos() {
         return pos;
@@ -147,6 +136,16 @@ public abstract class AbstractPiece implements Piece {
         return (isBlack() ? "B_" : "W_") +
                 getType().name() +
                 getPos();
+    }
+
+    public enum PieceType {
+        PAWN,
+        ROOK,
+        BISHOP,
+        KNIGHT,
+        KING,
+        QUEEN,
+        NONE
     }
 
 }

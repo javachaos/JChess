@@ -1,29 +1,34 @@
 package com.github.javachaos.jchess.gamelogic.pieces.core;
 
 import com.github.javachaos.jchess.gamelogic.Board;
+import com.github.javachaos.jchess.gamelogic.pieces.core.player.Player;
 
 public interface Piece {
 
     /**
      * Return the type of this piece
+     *
      * @return the type of this piece
      */
     AbstractPiece.PieceType getType();
 
     /**
      * Get the current owner of this piece.
+     *
      * @return the current owner of this piece
      */
-    AbstractPiece.Player getPlayer();
+    Player getPlayer();
 
     /**
      * Get the current opponent of this piece.
+     *
      * @return the opponent of this piece.
      */
-    AbstractPiece.Player getOpponent();
+    Player getOpponent();
 
     /**
      * Return the location of this piece on the board.
+     *
      * @return the location of this piece on the board
      */
     PiecePos getPos();
@@ -33,7 +38,6 @@ public interface Piece {
      *
      * @param x the desired x position
      * @param y the desired y position
-     *
      */
     void move(char x, char y);
 
@@ -57,12 +61,14 @@ public interface Piece {
 
     /**
      * True if this pieces is a black player piece.
+     *
      * @return whether this piece is a black piece
      */
     boolean isBlack();
 
     /**
      * True if this piece is a white player piece.
+     *
      * @return whether this piece is a white piece
      */
     boolean isWhite();
@@ -70,7 +76,7 @@ public interface Piece {
     /**
      * Validate if a move is valid.
      *
-     * @param board the board
+     * @param board      the board
      * @param desiredPos the desired new position
      * @return true if the move is valid
      */
@@ -78,6 +84,7 @@ public interface Piece {
 
     /**
      * Check if this piece is the king.
+     *
      * @return true if this piece is the king
      */
     boolean isKing();

@@ -1,14 +1,16 @@
 package com.github.javachaos.jchess;
 
-import com.github.javachaos.jchess.gamelogic.Board;
 import com.github.javachaos.jchess.exceptions.JChessException;
+import com.github.javachaos.jchess.gamelogic.Board;
 import com.github.javachaos.jchess.gamelogic.managers.GameStateManager;
 import com.github.javachaos.jchess.gamelogic.managers.SaveLoadManager;
 import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Move;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.PiecePos;
-
+import com.github.javachaos.jchess.gamelogic.pieces.core.player.AIPlayer;
+import com.github.javachaos.jchess.gamelogic.pieces.core.player.MinimaxAIPlayer;
+import com.github.javachaos.jchess.gamelogic.pieces.core.player.Player;
 import com.github.javachaos.jchess.utils.ExceptionUtils;
 import javafx.application.Platform;
 import javafx.beans.Observable;
@@ -22,7 +24,8 @@ import javafx.scene.effect.InnerShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.*;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Pair;
@@ -31,6 +34,9 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.InputStream;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
 import static com.github.javachaos.jchess.gamelogic.managers.GameStateManager.GameState.START;
@@ -39,46 +45,33 @@ public class JChessController {
 
     public static final Logger LOGGER = LogManager.getLogger(
             JChessController.class);
-    @FXML
-    public Button newgameBtn;
-
-    @FXML
-    private GridPane checkerGrid;
-
-    @FXML
-    private Button exitBtn;
-
-    @FXML
-    private Button redoBtn;
-
-    @FXML
-    private Button saveBtn;
-
-    @FXML
-    private Button loadBtn;
-
-    @FXML
-    private Button undoBtn;
-
-    private Board board;
-
     private final StackPane[][] panes = new StackPane[8][8];
-
     private final List<StackPane> currentlySelected = new ArrayList<>();
-
-    private StackPane currentSelection;
-
-    private boolean pieceSelected;
-
     private final EnumMap<AbstractPiece.PieceType,
             Pair<Image, Image>> images = new EnumMap<>(AbstractPiece.PieceType.class);
-
+    @FXML
+    public Button newgameBtn;
+    @FXML
+    private GridPane checkerGrid;
+    @FXML
+    private Button exitBtn;
+    @FXML
+    private Button redoBtn;
+    @FXML
+    private Button saveBtn;
+    @FXML
+    private Button loadBtn;
+    @FXML
+    private Button undoBtn;
+    private Board board;
+    private StackPane currentSelection;
+    private boolean pieceSelected;
     private SaveLoadManager saveLoadManager;
 
     @FXML
     void initialize() {
         loadImages();
-        board = new Board();
+        board = new Board(new MinimaxAIPlayer(Player.BLACK));
         board.start();
         saveLoadManager = new SaveLoadManager("./jchess_undo.json",
                 "./jchess_redo.json");
@@ -101,19 +94,19 @@ public class JChessController {
     private void redrawPieces() {
         IntStream.range(0, 8).forEach(x ->
                 IntStream.range(0, 8).forEach(y -> {
-            Rectangle r = (Rectangle) panes[x][y].getChildren()
-                    .filtered(Rectangle.class::isInstance).get(0);
-            panes[x][y].getChildren().clear();
-            panes[x][y].getChildren().add(r);
-            board.getPiece((char)('a' + x), (char)('1' + y))
-                    .ifPresent(p -> {
-                        Bounds b = checkerGrid.getCellBounds(x, y);
-                        ImageView img = getImageForPiece(p);
-                        img.setFitHeight(b.getHeight());
-                        img.setFitWidth(b.getWidth());
-                        panes[x][y].getChildren().add(img);
-                    });
-        }));
+                    Rectangle r = (Rectangle) panes[x][y].getChildren()
+                            .filtered(Rectangle.class::isInstance).get(0);
+                    panes[x][y].getChildren().clear();
+                    panes[x][y].getChildren().add(r);
+                    board.getPiece((char) ('a' + x), (char) ('1' + y))
+                            .ifPresent(p -> {
+                                Bounds b = checkerGrid.getCellBounds(x, y);
+                                ImageView img = getImageForPiece(p);
+                                img.setFitHeight(b.getHeight());
+                                img.setFitWidth(b.getWidth());
+                                panes[x][y].getChildren().add(img);
+                            });
+                }));
     }
 
     private void generateTiles() {
@@ -128,7 +121,7 @@ public class JChessController {
                 r.setFill((x % 2 == 0 && y % 2 == 0) || (x % 2 != 0 && y % 2 != 0) ? Color.GRAY : Color.BLACK);
                 r.setStroke(Color.BLACK);
                 checkerGrid.add(panes[x][y], x, y);
-                panes[x][y].setUserData(new PiecePos((char)('a' + x), (char)('1' + y)));
+                panes[x][y].setUserData(new PiecePos((char) ('a' + x), (char) ('1' + y)));
             }
         }
         LOGGER.info("Done generating tiles.");
@@ -136,20 +129,20 @@ public class JChessController {
 
     private void printLabelsY(int x, int y, Rectangle r) {
         if (x == 0) {
-            Label l = new Label(String.valueOf((char)('8' - y)));
+            Label l = new Label(String.valueOf((char) ('8' - y)));
             l.setTextFill(
                     y % 2 == 0 ? Color.BLACK : Color.GRAY);
-            l.setPadding(new Insets(r.getWidth(), r.getHeight()+35,0,0));
+            l.setPadding(new Insets(r.getWidth(), r.getHeight() + 35, 0, 0));
             panes[x][y].getChildren().add(l);
         }
     }
 
     private void printLabelsX(int x, int y, Rectangle r) {
         if (y == 7) {
-            Label l = new Label(String.valueOf((char)('a' + x)));
+            Label l = new Label(String.valueOf((char) ('a' + x)));
             l.setTextFill(
                     x % 2 == 0 ? Color.GRAY : Color.BLACK);
-            l.setPadding(new Insets(r.getWidth(), r.getHeight()+50,0,0));
+            l.setPadding(new Insets(r.getWidth(), r.getHeight() + 50, 0, 0));
             panes[x][y].getChildren().add(l);
         }
     }
@@ -248,14 +241,21 @@ public class JChessController {
         }
     }
 
+    private void doAITurn() {
+        if (GameStateManager.getInstance().isAITurn()) {
+            board.doAIMove();
+            redrawPieces();
+            clearSelection();
+        }
+    }
+
     public void handlePressed(MouseEvent mouseEvent) {
 
-        StackPane sp = (StackPane)mouseEvent.getSource();
+        StackPane sp = (StackPane) mouseEvent.getSource();
         PiecePos p = (PiecePos) sp.getUserData();
-
-        if(pieceSelected && currentlySelected.contains(sp)) {
+        if (pieceSelected && currentlySelected.contains(sp)) {
             PiecePos from = (PiecePos) currentSelection.getUserData();
-            
+
             try {
                 board.movePiece(from, p);
             } catch (JChessException e) {
@@ -274,9 +274,11 @@ public class JChessController {
             });
             pieceSelected = true;
         }
+
         currentlySelected.forEach(x -> x.setEffect(getSelectedEffect()));
         currentSelection = sp;
         sp.setEffect(getSelectedEffect());
+        doAITurn();
     }
 
     private Effect getSelectedEffect() {

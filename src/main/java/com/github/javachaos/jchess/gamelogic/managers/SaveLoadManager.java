@@ -9,7 +9,10 @@ import com.google.gson.stream.JsonReader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.text.DateFormat;
 import java.util.ArrayDeque;
@@ -24,11 +27,9 @@ public class SaveLoadManager {
 
     private final String undoFilename;
     private final String redoFilename;
-
+    private final Gson gsonBuilder;
     private Deque<Move> undoMoves;
     private Deque<Move> redoMoves;
-
-    private final Gson gsonBuilder;
 
     public SaveLoadManager(String undoFilename, String redoFilename) {
         gsonBuilder = new GsonBuilder()

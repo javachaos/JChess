@@ -3,6 +3,7 @@ package com.github.javachaos.jchess.gamelogic;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
+
 import java.util.Optional;
 
 /**
@@ -18,6 +19,7 @@ public final class Alerts {
 
     /**
      * Get the user password.
+     *
      * @param prompt the password prompt show the user
      * @return the user password
      */
@@ -39,6 +41,7 @@ public final class Alerts {
 
     /**
      * Show an info Alert.
+     *
      * @param s the info to display on the alert
      */
     public static void info(final String s) {
@@ -49,6 +52,7 @@ public final class Alerts {
 
     /**
      * Show an info Alert.
+     *
      * @param s the info to display on the alert
      */
     public static void err(final String s) {

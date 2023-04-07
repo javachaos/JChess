@@ -1,33 +1,15 @@
 package com.github.javachaos.jchess.gamelogic.managers;
 
-import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
+import com.github.javachaos.jchess.gamelogic.pieces.core.player.Player;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class GameStateManager {
 
     private static final Logger LOGGER = LogManager.getLogger(GameStateManager.class);
-
-    private AbstractPiece.Player currentPlayer;
-
-
-    @SuppressWarnings("unused")
-    public enum GameState {
-        START,
-        STALEMATE,
-        MATE,
-        WHITE_CHECK,
-        BLACK_CHECK,
-        BLACKS_TURN,
-        WHITES_TURN,
-        UNDO,
-        REDO,
-        NONE
-    }
-
-    private GameState currentState;
     private static GameStateManager instance;
-
+    private Player currentPlayer;
+    private GameState currentState;
     private GameStateManager() {
         //Unused
     }
@@ -53,18 +35,38 @@ public class GameStateManager {
 
     public void changeTurns() {
         LOGGER.info("Turn: {}", currentPlayer);
-        if (getCurrentPlayer() == AbstractPiece.Player.WHITE) {
-            setCurrentPlayer(AbstractPiece.Player.BLACK);
+        if (getTurn() == Player.WHITE) {
+            setCurrentPlayer(Player.BLACK);
         } else {
-            setCurrentPlayer(AbstractPiece.Player.WHITE);
+            setCurrentPlayer(Player.WHITE);
         }
     }
 
-    public void setCurrentPlayer(AbstractPiece.Player player) {
+    public Player getTurn() {
+        return currentPlayer;
+    }
+
+    public void setCurrentPlayer(Player player) {
         this.currentPlayer = player;
     }
 
-    public AbstractPiece.Player getCurrentPlayer() {
-        return currentPlayer;
+    public boolean isAITurn() {
+        //TODO Consider adding an initializer here to choose which color the AI is.
+        return currentPlayer == Player.BLACK;
+    }
+
+    @SuppressWarnings("unused")
+    public enum GameState {
+        START,
+        STALEMATE,
+        MATE,
+        WHITE_CHECK,
+        BLACK_CHECK,
+        BLACKS_TURN,
+        WHITES_TURN,
+        UNDO,
+        REDO,
+        GAMEOVER,
+        NONE
     }
 }

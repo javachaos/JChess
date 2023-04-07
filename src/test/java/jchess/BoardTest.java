@@ -1,11 +1,13 @@
 package jchess;
 
-import com.github.javachaos.jchess.gamelogic.Board;
 import com.github.javachaos.jchess.exceptions.JChessException;
+import com.github.javachaos.jchess.gamelogic.Board;
 import com.github.javachaos.jchess.gamelogic.managers.GameStateManager;
 import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.PiecePos;
+import com.github.javachaos.jchess.gamelogic.pieces.core.player.MinimaxAIPlayer;
+import com.github.javachaos.jchess.gamelogic.pieces.core.player.Player;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -23,7 +25,7 @@ public class BoardTest {
 
     @BeforeAll
     public static void createBoard() {
-        BOARD = new Board();
+        BOARD = new Board(new MinimaxAIPlayer(Player.BLACK));
         BOARD.start();
     }
 
@@ -43,7 +45,7 @@ public class BoardTest {
 
     /**
      * Chess board.
-     *   +------------------------+
+     * +------------------------+
      * 8 | r  n  b  q  k  b  n  r |
      * 7 | p  p  p  p  p  p  p  p |
      * 6 | .  .  .  .  .  .  .  . |
@@ -52,8 +54,8 @@ public class BoardTest {
      * 3 | .  .  .  .  .  .  .  . |
      * 2 | P  P  P  P  P  P  P  P |
      * 1 | R  N  B  Q  K  B  N  R |
-     *   +------------------------+
-     *     a  b  c  d  e  f  g  h
+     * +------------------------+
+     * a  b  c  d  e  f  g  h
      */
     private void testBlackPieces() {
         Optional<Piece> a8 = BOARD.getPiece('a', '8');//Black ROOK

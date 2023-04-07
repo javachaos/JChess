@@ -1,12 +1,13 @@
 package com.github.javachaos.jchess.gamelogic.pieces.impl;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.github.javachaos.jchess.gamelogic.Board;
 import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.PiecePos;
+import com.github.javachaos.jchess.gamelogic.pieces.core.player.Player;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class Queen extends AbstractPiece {
 
@@ -23,10 +24,10 @@ public class Queen extends AbstractPiece {
         List<PiecePos> potentials = new ArrayList<>();
         int[][] directions = {{1, 1}, {-1, 1}, {1, -1}, {-1, -1}, {1, 0}, {0, 1}, {-1, 0}, {0, -1}};
         for (int[] dir : directions) {
-            PiecePos pp = new PiecePos((char)(getPos().x() + dir[0]), (char)(getPos().y() + dir[1]));
+            PiecePos pp = new PiecePos((char) (getPos().x() + dir[0]), (char) (getPos().y() + dir[1]));
             while (b.isOnBoard(pp)) {
                 potentials.add(pp);
-                pp = new PiecePos((char)(pp.x() + dir[0]), (char)(pp.y() + dir[1]));
+                pp = new PiecePos((char) (pp.x() + dir[0]), (char) (pp.y() + dir[1]));
             }
         }
         return potentials;

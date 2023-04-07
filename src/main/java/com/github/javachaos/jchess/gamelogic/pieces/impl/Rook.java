@@ -4,6 +4,7 @@ import com.github.javachaos.jchess.gamelogic.Board;
 import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.PiecePos;
+import com.github.javachaos.jchess.gamelogic.pieces.core.player.Player;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,10 +26,10 @@ public class Rook extends AbstractPiece {
         for (int[] dir : directions) {
             int dx = dir[0];
             int dy = dir[1];
-            PiecePos pp = new PiecePos((char)(getPos().x() + dx), (char)(getPos().y() + dy));
+            PiecePos pp = new PiecePos((char) (getPos().x() + dx), (char) (getPos().y() + dy));
             while (b.isOnBoard(pp)) {
                 potentials.add(pp);
-                pp = new PiecePos((char)(pp.x() + dx), (char)(pp.y() + dy));
+                pp = new PiecePos((char) (pp.x() + dx), (char) (pp.y() + dy));
             }
         }
         return potentials;

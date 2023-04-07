@@ -43,3 +43,4 @@ build/
 .DS_Store
 /jchess_redo.json
 /jchess_undo.json
+.idea/inspectionProfiles/

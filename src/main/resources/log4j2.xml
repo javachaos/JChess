@@ -5,25 +5,26 @@
     </Properties>
 
     <Appenders>
-        <RollingFile name="fileLogger" fileName="${basePath}/jchess.log" filePattern="${basePath}/jchess-%d{yyyy-MM-dd}.log">
+        <RollingFile name="fileLogger" fileName="${basePath}/jchess.log"
+                     filePattern="${basePath}/jchess-%d{yyyy-MM-dd}.log">
             <PatternLayout>
                 <pattern>[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n%throwable{1}</pattern>
             </PatternLayout>
             <Policies>
-                <TimeBasedTriggeringPolicy interval="1" modulate="true" />
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
             </Policies>
         </RollingFile>
 
         <Console name="console" target="SYSTEM_OUT">
-            <PatternLayout pattern="[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n%throwable{1}" />
+            <PatternLayout pattern="[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n%throwable{1}"/>
         </Console>
     </Appenders>
     <Loggers>
         <Logger name="com.github.javachaos.jchess" level="debug" additivity="true">
-            <appender-ref ref="fileLogger" level="debug" />
+            <appender-ref ref="fileLogger" level="debug"/>
         </Logger>
         <Root level="debug" additivity="false">
-            <appender-ref ref="console" />
+            <appender-ref ref="console"/>
         </Root>
     </Loggers>
 </configuration>

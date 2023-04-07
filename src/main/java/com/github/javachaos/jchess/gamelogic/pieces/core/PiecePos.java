@@ -8,9 +8,9 @@ package com.github.javachaos.jchess.gamelogic.pieces.core;
  * @param y the y co-ordinate
  */
 public record PiecePos(char x, char y) {
-	
-	@Override
-	public String toString() {
-		return "["+x+","+y+"]";
-	}
+
+    @Override
+    public String toString() {
+        return "[" + x + "," + y + "]";
+    }
 }

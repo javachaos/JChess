@@ -1,27 +1,23 @@
 package com.github.javachaos.jchess.gamelogic;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.IntStream;
-
 import com.github.javachaos.jchess.exceptions.JChessException;
 import com.github.javachaos.jchess.gamelogic.managers.GameStateManager;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Move;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.PiecePos;
-import com.github.javachaos.jchess.gamelogic.pieces.impl.Bishop;
-import com.github.javachaos.jchess.gamelogic.pieces.impl.King;
-import com.github.javachaos.jchess.gamelogic.pieces.impl.Knight;
-import com.github.javachaos.jchess.gamelogic.pieces.impl.Pawn;
-import com.github.javachaos.jchess.gamelogic.pieces.impl.Queen;
-import com.github.javachaos.jchess.gamelogic.pieces.impl.Rook;
+import com.github.javachaos.jchess.gamelogic.pieces.core.player.AIPlayer;
+import com.github.javachaos.jchess.gamelogic.pieces.core.player.Player;
+import com.github.javachaos.jchess.gamelogic.pieces.impl.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.IntStream;
 
 import static com.github.javachaos.jchess.gamelogic.managers.GameStateManager.GameState.*;
-import static com.github.javachaos.jchess.gamelogic.managers.GameStateManager.GameState.NONE;
 
 /**
  * Defines a simple 8x8 chess board.
@@ -32,35 +28,38 @@ public class Board {
             Board.class);
     private final Deque<Move> undoStack = new ArrayDeque<>();
     private final Deque<Move> redoStack = new ArrayDeque<>();
-
-
     /**
      * The current pieces in play.
      */
     private final List<Piece> currentPieces = new ArrayList<>();
-
     private final List<PiecePos> allPositions = new ArrayList<>();
-
     /**
      * Captured pieces.
      */
     private final ArrayDeque<Piece> capturedPieces = new ArrayDeque<>();
+    private final AIPlayer ai;
 
-
-    public Board() {
-        //Unused
+    public Board(AIPlayer ai) {
+        this.ai = ai;
     }
 
     public void start() {
         GameStateManager.getInstance().setState(NONE);
         reset();
-        GameStateManager.getInstance().setCurrentPlayer(AbstractPiece.Player.BLACK);
+        GameStateManager.getInstance().setCurrentPlayer(Player.WHITE);
+    }
+
+    public void doAIMove() {
+        if (GameStateManager.getInstance().getTurn() == ai.getColor()) {
+            Move nextMove = ai.getNextMove(this);
+            move(nextMove);
+        }
     }
 
     public void movePiece(PiecePos pos, PiecePos desiredPos) throws JChessException {
         Optional<Piece> p = getPiece(pos);
         if (p.isPresent()) {
-            if (GameStateManager.getInstance().getCurrentPlayer() == p.get().getPlayer()) {
+            if (GameStateManager.getInstance().getTurn() != p.get().getPlayer()) {
                 throw new JChessException("Not your turn.");
             }
 
@@ -106,20 +105,26 @@ public class Board {
         }
     }
 
-    @SuppressWarnings("unused")
     public List<Piece> getAllPieces() {
         return List.copyOf(currentPieces);
     }
 
-    public List<Piece> getPieces(AbstractPiece.Player p) {
+    public List<Piece> getPieces(Player p) {
         return List.copyOf(currentPieces.stream().filter(piece ->
                 piece.getPlayer().equals(p)).toList());
+    }
+
+    public void move(Move m) {
+        doMove(m);
+        undoStack.push(m);
+        GameStateManager.getInstance().changeTurns();
     }
 
     public void undo() {
         if (!undoStack.isEmpty()) {
             GameStateManager.getInstance().setState(UNDO);
             Move lastMove = undoStack.pop();
+            GameStateManager.getInstance().changeTurns();
             undoMove(lastMove.reverse());
             redoStack.push(lastMove);
         }
@@ -157,9 +162,8 @@ public class Board {
         return captive;
     }
 
-    private void undoMove(Move m) {
+    public void undoMove(Move m) {
         LOGGER.info("Undoing move: {}", m);
-        GameStateManager.getInstance().changeTurns();
         PiecePos f = m.from();
         PiecePos t = m.to();
         Optional<Piece> fromPiece = getPiece(f);
@@ -173,7 +177,7 @@ public class Board {
         fromPiece.ifPresent(piece -> piece.move(t));
     }
 
-    private Piece createPiece(AbstractPiece.PieceType type, AbstractPiece.Player p, PiecePos piecePos) {
+    private Piece createPiece(AbstractPiece.PieceType type, Player p, PiecePos piecePos) {
 
         switch (type) {
             case PAWN -> {
@@ -202,7 +206,7 @@ public class Board {
     }
 
     @SuppressWarnings("unused")
-    public Piece getKing(AbstractPiece.Player p) {
+    public Piece getKing(Player p) {
         AtomicReference<Piece> ref = new AtomicReference<>();
         currentPieces.forEach(piece -> {
             if (piece.isKing() && piece.getPlayer() == p) {
@@ -236,43 +240,43 @@ public class Board {
         allPositions.clear();
         IntStream.range(0, 8).forEach(x ->
                 IntStream.range(0, 8).forEach(y ->
-                        allPositions.add(new PiecePos((char)('a' + x), (char)('1' + y)))));
+                        allPositions.add(new PiecePos((char) ('a' + x), (char) ('1' + y)))));
         undoStack.clear();
         currentPieces.clear();
         currentPieces.addAll(Arrays.asList(
-                new Pawn(AbstractPiece.Player.WHITE, 'a', '2'),
-                new Pawn(AbstractPiece.Player.WHITE, 'b', '2'),
-                new Pawn(AbstractPiece.Player.WHITE, 'c', '2'),
-                new Pawn(AbstractPiece.Player.WHITE, 'd', '2'),
-                new Pawn(AbstractPiece.Player.WHITE, 'e', '2'),
-                new Pawn(AbstractPiece.Player.WHITE, 'f', '2'),
-                new Pawn(AbstractPiece.Player.WHITE, 'g', '2'),
-                new Pawn(AbstractPiece.Player.WHITE, 'h', '2'),
-                new Rook(AbstractPiece.Player.WHITE, 'a', '1'),
-                new Rook(AbstractPiece.Player.WHITE, 'h', '1'),
-                new Knight(AbstractPiece.Player.WHITE, 'b', '1'),
-                new Knight(AbstractPiece.Player.WHITE, 'g', '1'),
-                new Bishop(AbstractPiece.Player.WHITE, 'c', '1'),
-                new Bishop(AbstractPiece.Player.WHITE, 'f', '1'),
-                new Queen(AbstractPiece.Player.WHITE, 'd', '1'),
-                new King(AbstractPiece.Player.WHITE, 'e', '1'),
+                new Pawn(Player.WHITE, 'a', '2'),
+                new Pawn(Player.WHITE, 'b', '2'),
+                new Pawn(Player.WHITE, 'c', '2'),
+                new Pawn(Player.WHITE, 'd', '2'),
+                new Pawn(Player.WHITE, 'e', '2'),
+                new Pawn(Player.WHITE, 'f', '2'),
+                new Pawn(Player.WHITE, 'g', '2'),
+                new Pawn(Player.WHITE, 'h', '2'),
+                new Rook(Player.WHITE, 'a', '1'),
+                new Rook(Player.WHITE, 'h', '1'),
+                new Knight(Player.WHITE, 'b', '1'),
+                new Knight(Player.WHITE, 'g', '1'),
+                new Bishop(Player.WHITE, 'c', '1'),
+                new Bishop(Player.WHITE, 'f', '1'),
+                new Queen(Player.WHITE, 'd', '1'),
+                new King(Player.WHITE, 'e', '1'),
 
-                new Pawn(AbstractPiece.Player.BLACK, 'a', '7'),
-                new Pawn(AbstractPiece.Player.BLACK, 'b', '7'),
-                new Pawn(AbstractPiece.Player.BLACK, 'c', '7'),
-                new Pawn(AbstractPiece.Player.BLACK, 'd', '7'),
-                new Pawn(AbstractPiece.Player.BLACK, 'e', '7'),
-                new Pawn(AbstractPiece.Player.BLACK, 'f', '7'),
-                new Pawn(AbstractPiece.Player.BLACK, 'g', '7'),
-                new Pawn(AbstractPiece.Player.BLACK, 'h', '7'),
-                new Rook(AbstractPiece.Player.BLACK, 'a', '8'),
-                new Rook(AbstractPiece.Player.BLACK, 'h', '8'),
-                new Knight(AbstractPiece.Player.BLACK, 'b', '8'),
-                new Knight(AbstractPiece.Player.BLACK, 'g', '8'),
-                new Bishop(AbstractPiece.Player.BLACK, 'c', '8'),
-                new Bishop(AbstractPiece.Player.BLACK, 'f', '8'),
-                new Queen(AbstractPiece.Player.BLACK, 'd', '8'),
-                new King(AbstractPiece.Player.BLACK, 'e', '8')
+                new Pawn(Player.BLACK, 'a', '7'),
+                new Pawn(Player.BLACK, 'b', '7'),
+                new Pawn(Player.BLACK, 'c', '7'),
+                new Pawn(Player.BLACK, 'd', '7'),
+                new Pawn(Player.BLACK, 'e', '7'),
+                new Pawn(Player.BLACK, 'f', '7'),
+                new Pawn(Player.BLACK, 'g', '7'),
+                new Pawn(Player.BLACK, 'h', '7'),
+                new Rook(Player.BLACK, 'a', '8'),
+                new Rook(Player.BLACK, 'h', '8'),
+                new Knight(Player.BLACK, 'b', '8'),
+                new Knight(Player.BLACK, 'g', '8'),
+                new Bishop(Player.BLACK, 'c', '8'),
+                new Bishop(Player.BLACK, 'f', '8'),
+                new Queen(Player.BLACK, 'd', '8'),
+                new King(Player.BLACK, 'e', '8')
         ));
     }
 
@@ -307,10 +311,6 @@ public class Board {
         return new ArrayDeque<>(undoStack);
     }
 
-    public Deque<Move> getRedos() {
-        return new ArrayDeque<>(redoStack);
-    }
-
     public void setUndos(Deque<Move> undos) {
         if (undos != null) {
             this.undoStack.clear();
@@ -318,10 +318,59 @@ public class Board {
         }
     }
 
+    public Deque<Move> getRedos() {
+        return new ArrayDeque<>(redoStack);
+    }
+
     public void setRedos(Deque<Move> redos) {
         if (redos != null) {
             this.redoStack.clear();
             this.redoStack.addAll(redos);
         }
+    }
+
+    public int boardScore() {
+        //TODO add more heuristics for king position pawn structure ect.
+
+        AtomicInteger whiteScore = new AtomicInteger();
+        AtomicInteger blackScore = new AtomicInteger();
+
+        getAllPieces().forEach(p -> {
+            switch (p.getType()) {
+                case PAWN -> {
+                    if (p.isWhite()) {
+                        whiteScore.addAndGet(1);
+                    } else {
+                        blackScore.addAndGet(1);
+                    }
+                }
+                case ROOK -> {
+                    if (p.isWhite()) {
+                        whiteScore.addAndGet(5);
+                    } else {
+                        blackScore.addAndGet(5);
+                    }
+                }
+                case BISHOP, KNIGHT -> {
+                    if (p.isWhite()) {
+                        whiteScore.addAndGet(3);
+                    } else {
+                        blackScore.addAndGet(3);
+                    }
+                }
+                case QUEEN -> {
+                    if (p.isWhite()) {
+                        whiteScore.addAndGet(9);
+                    } else {
+                        blackScore.addAndGet(9);
+                    }
+                }
+                default -> {
+                }
+            }
+        });
+
+
+        return whiteScore.get() - blackScore.get();
     }
 }
