@@ -1,8 +1,10 @@
 # JChess
 
-JChess is a Java application that lets you play chess with a graphical user interface (GUI) built using JavaFX. This
-chess game comes with several features such as the ability to save and load games to JSON files, and undo and redo
-moves.
+[![CodeQL](https://github.com/javachaos/JChess/actions/workflows/codeql.yml/badge.svg)](https://github.com/javachaos/JChess/actions/workflows/codeql.yml)
+
+## I made this in the last two days, there are flaws, it's a work in progress.
+
+JChess is a Java application that lets you play chess with a graphical user interface (GUI) built using JavaFX. This chess game comes with several features such as the ability to save and load games to JSON files, and undo and redo moves.
 
 ![JChess Img](src/main/resources/img.png)
 
@@ -33,12 +35,9 @@ To run the JChess application, you'll need to have Java and JavaFX installed on 
 ```
 ./mvnw javafx:run
 ```
-
 ## Usage
 
-To play JChess, simply start the application and begin playing! Use the mouse to click and drag pieces to move them on
-the board. To save a game, go to the "File" menu and select "Save". To load a saved game, go to the "File" menu and
-select "Load". To undo or redo a move, use the "Undo" and "Redo" buttons on the toolbar.
+To play JChess, simply start the application and begin playing! Use the mouse to click and drag pieces to move them on the board. To save a game, go to the "File" menu and select "Save". To load a saved game, go to the "File" menu and select "Load". To undo or redo a move, use the "Undo" and "Redo" buttons on the toolbar.
 
 ## Contributing
 
