@@ -20,16 +20,14 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
 import static com.github.javachaos.jchess.gamelogic.managers.GSM.GameState.*;
+import static com.github.javachaos.jchess.gamelogic.managers.GSM.GameState.NONE;
 
 /**
  * Defines a simple 8x8 chess board.
  */
-public class Board {
-
+public class ChessBoard implements Board {
     private static final Logger LOGGER = LogManager.getLogger(
-            Board.class);
-    private final Deque<Move> undoStack = new ArrayDeque<>();
-    private final Deque<Move> redoStack = new ArrayDeque<>();
+            ChessBoard.class);
     /**
      * The current pieces in play.
      */
@@ -41,7 +39,7 @@ public class Board {
     private final ArrayDeque<Piece> capturedPieces = new ArrayDeque<>();
     private final AIPlayer ai;
 
-    public Board(AIPlayer ai) {
+    public ChessBoard(AIPlayer ai) {
         this.ai = ai;
         GSM.instance().setAIColor(ai.getColor());
     }
@@ -77,7 +75,7 @@ public class Board {
                     currentMove = new Move(
                             pos, desiredPos, captive.getType(), captive.getPlayer());
                 }
-                undoStack.push(currentMove);
+                GSM.instance().makeMove(currentMove);
                 //Check for check
                 inCheck(currentMove);
                 GSM.instance().changeTurns();
@@ -100,7 +98,7 @@ public class Board {
             King ourKing = (King) getKing(p.get().getPlayer());
             for (Piece enemyPiece : getPieces(p.get().getOpponent())) {
                 if (getPotentialMoves(enemyPiece.getPos()).contains(ourKing.getPos())) {
-                    undo();
+                    GSM.instance().undo(this);
                     GSM.instance().changeTurns();
                     throw new JChessException("This move puts king in check. " + currentMove);
                 }
@@ -121,31 +119,7 @@ public class Board {
 		}
     }
 
-    public void undo() {
-        if (!undoStack.isEmpty()) {
-            GSM.instance().setState(UNDO);
-            Move lastMove = undoStack.pop();
-            GSM.instance().changeTurns();
-            undoMove(lastMove.reverse());
-            redoStack.push(lastMove);
-        }
-    }
-
-    public void redo() {
-        if (!redoStack.isEmpty()) {
-            GSM.instance().setState(REDO);
-            Move lastMove = redoStack.pop();
-            LOGGER.info("Redoing move: {}", lastMove);
-            doMove(lastMove);
-            undoStack.push(lastMove);
-        }
-    }
-
-    /**
-     * Helper function to move pieces on this board.
-     *
-     * @param m the move to do
-     */
+    @Override
     public Piece doMove(Move m) {
         LOGGER.info("Attempting move: {}", m);
         Piece captive = null;
@@ -162,13 +136,14 @@ public class Board {
         return captive;
     }
 
+    @Override
     public void undoMove(Move m) {
         LOGGER.info("Undoing move: {}", m);
         PiecePos f = m.from();
         PiecePos t = m.to();
         Optional<Piece> fromPiece = getPiece(f);
         if (m.type() != AbstractPiece.PieceType.NONE) {
-            Piece p = createPiece(m.type(), m.p(), m.to());
+            Piece p = createPiece(m.type(), m.color(), f);
             assert p != null;
             currentPieces.add(p);
             capturedPieces.remove(p);
@@ -176,26 +151,26 @@ public class Board {
         fromPiece.ifPresent(piece -> piece.move(t));
     }
 
-    private Piece createPiece(AbstractPiece.PieceType type, Player p, PiecePos piecePos) {
+    private Piece createPiece(AbstractPiece.PieceType type, Player color, PiecePos piecePos) {
 
         switch (type) {
             case PAWN -> {
-                return new Pawn(p, piecePos.x(), piecePos.y());
+                return new Pawn(color, piecePos.x(), piecePos.y());
             }
             case ROOK -> {
-                return new Rook(p, piecePos.x(), piecePos.y());
+                return new Rook(color, piecePos.x(), piecePos.y());
             }
             case BISHOP -> {
-                return new Bishop(p, piecePos.x(), piecePos.y());
+                return new Bishop(color, piecePos.x(), piecePos.y());
             }
             case KNIGHT -> {
-                return new Knight(p, piecePos.x(), piecePos.y());
+                return new Knight(color, piecePos.x(), piecePos.y());
             }
             case KING -> {
-                return new King(p, piecePos.x(), piecePos.y());
+                return new King(color, piecePos.x(), piecePos.y());
             }
             case QUEEN -> {
-                return new Queen(p, piecePos.x(), piecePos.y());
+                return new Queen(color, piecePos.x(), piecePos.y());
             }
             case NONE -> {
                 return null;
@@ -231,15 +206,13 @@ public class Board {
         return potentials;
     }
 
-    /**
-     * Reset the board to the default start state.
-     */
+
+    @Override
     public void reset() {
         allPositions.clear();
         IntStream.range(0, 8).forEach(x ->
                 IntStream.range(0, 8).forEach(y ->
                         allPositions.add(new PiecePos((char) ('a' + x), (char) ('8' - y)))));
-        undoStack.clear();
         currentPieces.clear();
         currentPieces.addAll(Arrays.asList(
                 new Pawn(Player.WHITE, 'a', '2'),
@@ -304,71 +277,69 @@ public class Board {
     public List<PiecePos> getAllPositions() {
         return allPositions;
     }
-
-    public Deque<Move> getUndos() {
-        return new ArrayDeque<>(undoStack);
-    }
-
-    public void setUndos(Deque<Move> undos) {
-        if (undos != null) {
-            this.undoStack.clear();
-            this.undoStack.addAll(undos);
-        }
-    }
-
-    public Deque<Move> getRedos() {
-        return new ArrayDeque<>(redoStack);
-    }
-
-    public void setRedos(Deque<Move> redos) {
-        if (redos != null) {
-            this.redoStack.clear();
-            this.redoStack.addAll(redos);
-        }
-    }
-
+//
+//    public int boardScore() {
+//
+//        AtomicInteger whiteScore = new AtomicInteger();
+//        AtomicInteger blackScore = new AtomicInteger();
+//
+//        currentPieces.forEach(p -> {
+//            switch (p.getType()) {
+//                case PAWN -> {
+//                    if (p.isWhite()) {
+//                        whiteScore.addAndGet(1);
+//                    } else {
+//                        blackScore.addAndGet(1);
+//                    }
+//                }
+//                case ROOK -> {
+//                    if (p.isWhite()) {
+//                        whiteScore.addAndGet(5);
+//                    } else {
+//                        blackScore.addAndGet(5);
+//                    }
+//                }
+//                case BISHOP, KNIGHT -> {
+//                    if (p.isWhite()) {
+//                        whiteScore.addAndGet(3);
+//                    } else {
+//                        blackScore.addAndGet(3);
+//                    }
+//                }
+//                case QUEEN -> {
+//                    if (p.isWhite()) {
+//                        whiteScore.addAndGet(9);
+//                    } else {
+//                        blackScore.addAndGet(9);
+//                    }
+//                }
+//            }
+//        });
+//
+//
+//        return whiteScore.get() - blackScore.get();
+//    }
     public int boardScore() {
-        //TODO add more heuristics for king position pawn structure ect.
+        int whiteScore = 0;
+        int blackScore = 0;
 
-        AtomicInteger whiteScore = new AtomicInteger();
-        AtomicInteger blackScore = new AtomicInteger();
+        for (Piece p : currentPieces) {
+            int score = switch (p.getType()) {
+                case PAWN -> 1;
+                case ROOK -> 5;
+                case BISHOP, KNIGHT -> 3;
+                case KING -> 0;
+                case QUEEN -> 9;
+                case NONE -> 0;
+            };
 
-        currentPieces.forEach(p -> {
-            switch (p.getType()) {
-                case PAWN -> {
-                    if (p.isWhite()) {
-                        whiteScore.addAndGet(1);
-                    } else {
-                        blackScore.addAndGet(1);
-                    }
-                }
-                case ROOK -> {
-                    if (p.isWhite()) {
-                        whiteScore.addAndGet(5);
-                    } else {
-                        blackScore.addAndGet(5);
-                    }
-                }
-                case BISHOP, KNIGHT -> {
-                    if (p.isWhite()) {
-                        whiteScore.addAndGet(3);
-                    } else {
-                        blackScore.addAndGet(3);
-                    }
-                }
-                case QUEEN -> {
-                    if (p.isWhite()) {
-                        whiteScore.addAndGet(9);
-                    } else {
-                        blackScore.addAndGet(9);
-                    }
-                }
-                default -> {
-                }
+            if (p.isWhite()) {
+                whiteScore += score;
+            } else {
+                blackScore += score;
             }
-        });
-
-
-        return whiteScore.get() - blackScore.get();
+        }
+        return whiteScore - blackScore;
     }
+
 }

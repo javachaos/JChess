@@ -7,13 +7,14 @@ import com.github.javachaos.jchess.gamelogic.pieces.core.player.Player;
  *
  * @param from the position from which to move
  * @param to   the position to move
- * @param p    the piece being moved
+ * @param type the type of piece captured if there was a capture
+ * @param color    the piece being moved
  */
 public record Move(PiecePos from, PiecePos to,
-                   AbstractPiece.PieceType type, Player p) {
+                   AbstractPiece.PieceType type, Player color) {
 
     public Move reverse() {
-        return new Move(to, from, type, p);
+        return new Move(to, from, type, color);
     }
 
     @Override

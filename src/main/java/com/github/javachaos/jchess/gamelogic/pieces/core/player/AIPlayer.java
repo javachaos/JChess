@@ -1,10 +1,7 @@
 package com.github.javachaos.jchess.gamelogic.pieces.core.player;
 
-import com.github.javachaos.jchess.gamelogic.Board;
+import com.github.javachaos.jchess.gamelogic.ChessBoard;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Move;
-import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
-
-import java.util.List;
 
 /**
  * The player interface.
@@ -18,14 +15,7 @@ public interface AIPlayer {
      * @param b the board on which to execute the move.
      * @return the move this player should make
      */
-    Move getNextMove(Board b);
-
-    /**
-     * Returns the list of captured enemy pieces for this player.
-     *
-     * @return the list of captured enemy pieces
-     */
-    List<Piece> getCapturedPieces();
+    Move getNextMove(ChessBoard b);
 
     /**
      * Get the color of this player.
@@ -35,9 +25,8 @@ public interface AIPlayer {
     Player getColor();
 
     /**
-     * Return the opposing player color.
-     *
-     * @return the opponents color
+     * Return the opponent.
+     * @return the opponent
      */
     Player getOpponent();
 

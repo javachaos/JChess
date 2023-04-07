@@ -1,6 +1,6 @@
 package com.github.javachaos.jchess.gamelogic.pieces.impl;
 
-import com.github.javachaos.jchess.gamelogic.Board;
+import com.github.javachaos.jchess.gamelogic.ChessBoard;
 import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.PiecePos;
@@ -20,7 +20,7 @@ public class Rook extends AbstractPiece {
         return PieceType.ROOK;
     }
 
-    public List<PiecePos> potentialMoves(Board b) {
+    public List<PiecePos> potentialMoves(ChessBoard b) {
         List<PiecePos> potentials = new ArrayList<>();
         int[][] directions = {{1, 0}, {0, 1}, {-1, 0}, {0, -1}};
         for (int[] dir : directions) {
@@ -37,7 +37,7 @@ public class Rook extends AbstractPiece {
 
 
     @Override
-    public boolean canMove(Board b, PiecePos p) {
+    public boolean canMove(ChessBoard b, PiecePos p) {
         List<PiecePos> pom = potentialMoves(b);
         if (pom.contains(p)) {
             List<Piece> pieces = getPiecesLateral(b, getPos(), p);

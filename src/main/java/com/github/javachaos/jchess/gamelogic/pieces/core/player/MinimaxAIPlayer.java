@@ -1,9 +1,12 @@
 package com.github.javachaos.jchess.gamelogic.pieces.core.player;
 
-import com.github.javachaos.jchess.gamelogic.Board;
+import com.github.javachaos.jchess.exceptions.JChessException;
+import com.github.javachaos.jchess.gamelogic.ChessBoard;
+import com.github.javachaos.jchess.gamelogic.managers.GSM;
 import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Move;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
+import com.github.javachaos.jchess.utils.ExceptionUtils;
 
 import java.util.*;
 
@@ -12,22 +15,23 @@ import java.util.*;
  */
 public class MinimaxAIPlayer extends AbstractAIPlayer implements AIPlayer {
 
-    private List<Move> allPossibleMoves = new ArrayList<>();
-
     public MinimaxAIPlayer(Player c) {
         super(c);
     }
 
-
     @Override
-    public Move getNextMove(Board b) {
+    public Move getNextMove(ChessBoard b) {
         Map<Move, Integer> moveScores = new HashMap<>();
-        getAllPossibleMoves(b);
-        for (Move m : allPossibleMoves) {
-            b.move(m);
+        for (Move m : getAllPossibleMoves(b)) {
+        	try {
+    			b.movePiece(m.from(), m.to());
+    		} catch (JChessException e) {
+    			ExceptionUtils.log(e);
+    			continue;
+    		}
             int score = b.boardScore();
-            //TODO Figure out why we are losing pieces here.
-            b.undo();
+
+            GSM.instance().undo(b);
             moveScores.put(m, score);
         }
         if (getColor() == Player.WHITE) {
@@ -39,24 +43,14 @@ public class MinimaxAIPlayer extends AbstractAIPlayer implements AIPlayer {
         }
     }
 
-    @Override
-    public List<Piece> getCapturedPieces() {
-        return null;
-    }
-
-    @Override
-    public Player getOpponent() {
-        return null;
-    }
-
     /**
      * Return a list of all potential moves for this player
      * given the board b.
      *
      * @param b the board
      */
-    private void getAllPossibleMoves(Board b) {
-        allPossibleMoves.clear();
+    private List<Move> getAllPossibleMoves(ChessBoard b) {
+        List<Move> moves = new ArrayList<>();
         for (Piece p : b.getPieces(getColor())) {
             b.getPotentialMoves(p.getPos()).forEach(pot -> {
                 AbstractPiece.PieceType type = AbstractPiece.PieceType.NONE;
@@ -64,8 +58,9 @@ public class MinimaxAIPlayer extends AbstractAIPlayer implements AIPlayer {
                 if (op.isPresent()) {
                     type = op.get().getType();
                 }
-                allPossibleMoves.add(new Move(p.getPos(), pot, type, getColor()));
+                moves.add(new Move(p.getPos(), pot, type, getColor()));
             });
         }
+        return moves;
     }
 }

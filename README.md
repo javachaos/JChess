@@ -37,7 +37,7 @@ To run the JChess application, you'll need to have Java and JavaFX installed on 
 ```
 ## Usage
 
-To play JChess, simply start the application and begin playing! Use the mouse to click and drag pieces to move them on the board. To save a game, go to the "File" menu and select "Save". To load a saved game, go to the "File" menu and select "Load". To undo or redo a move, use the "Undo" and "Redo" buttons on the toolbar.
+To play JChess, simply start the application and begin playing! Use the mouse to click and drag pieces to move them on the chessBoard. To save a game, go to the "File" menu and select "Save". To load a saved game, go to the "File" menu and select "Load". To undo or redo a move, use the "Undo" and "Redo" buttons on the toolbar.
 
 ## Contributing
 

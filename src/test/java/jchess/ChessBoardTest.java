@@ -1,7 +1,7 @@
 package jchess;
 
 import com.github.javachaos.jchess.exceptions.JChessException;
-import com.github.javachaos.jchess.gamelogic.Board;
+import com.github.javachaos.jchess.gamelogic.ChessBoard;
 import com.github.javachaos.jchess.gamelogic.managers.GSM;
 import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
@@ -19,23 +19,23 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Tests a simple 8x8 chess board.
  */
-public class BoardTest {
+public class ChessBoardTest {
 
-    private static Board BOARD;
+    private static ChessBoard board;
 
     @BeforeAll
     public static void createBoard() {
-        BOARD = new Board(new MinimaxAIPlayer(Player.BLACK));
-        BOARD.start();
+        board = new ChessBoard(new MinimaxAIPlayer(Player.BLACK));
+        board.start();
     }
 
     @Test
     void testResetBoard() throws JChessException {
-        BOARD.movePiece(new PiecePos('a', '2'), new PiecePos('a', '3'));
-        BOARD.movePiece(new PiecePos('b', '2'), new PiecePos('b', '4'));
-        BOARD.undo();//Works
-        BOARD.redo();//Works
-        BOARD.reset();//Works
+        board.movePiece(new PiecePos('a', '2'), new PiecePos('a', '3'));
+        board.movePiece(new PiecePos('b', '2'), new PiecePos('b', '4'));
+        GSM.instance().undo(board);//Works
+        GSM.instance().redo(board);//Works
+        board.reset();//Works
         testBlackPieces();
         testWhitePieces();
         assertEquals(
@@ -47,7 +47,7 @@ public class BoardTest {
      * Chess board.
      * +------------------------+
      * 8 | r  n  b  q  k  b  n  r |
-     * 7 | p  p  p  p  p  p  p  p |
+     * 7 | color  color  color  color  color  color  color  color |
      * 6 | .  .  .  .  .  .  .  . |
      * 5 | .  .  .  .  .  .  .  . |
      * 4 | .  .  .  .  .  .  .  . |
@@ -58,14 +58,14 @@ public class BoardTest {
      * a  b  c  d  e  f  g  h
      */
     private void testBlackPieces() {
-        Optional<Piece> a8 = BOARD.getPiece('a', '8');//Black ROOK
-        Optional<Piece> b8 = BOARD.getPiece('b', '8');//Black KNIGHT
-        Optional<Piece> c8 = BOARD.getPiece('c', '8');//Black BISHOP
-        Optional<Piece> d8 = BOARD.getPiece('d', '8');//Black QUEEN
-        Optional<Piece> e8 = BOARD.getPiece('e', '8');//Black KING
-        Optional<Piece> f8 = BOARD.getPiece('f', '8');//Black BISHOP
-        Optional<Piece> g8 = BOARD.getPiece('g', '8');//Black KNIGHT
-        Optional<Piece> h8 = BOARD.getPiece('h', '8');//Black ROOK
+        Optional<Piece> a8 = board.getPiece('a', '8');//Black ROOK
+        Optional<Piece> b8 = board.getPiece('b', '8');//Black KNIGHT
+        Optional<Piece> c8 = board.getPiece('c', '8');//Black BISHOP
+        Optional<Piece> d8 = board.getPiece('d', '8');//Black QUEEN
+        Optional<Piece> e8 = board.getPiece('e', '8');//Black KING
+        Optional<Piece> f8 = board.getPiece('f', '8');//Black BISHOP
+        Optional<Piece> g8 = board.getPiece('g', '8');//Black KNIGHT
+        Optional<Piece> h8 = board.getPiece('h', '8');//Black ROOK
         assertTrue(a8.isPresent());
         assertTrue(b8.isPresent());
         assertTrue(c8.isPresent());
@@ -95,14 +95,14 @@ public class BoardTest {
 
     private void testBlackPawns() {
         //---------- Pawns ------------------
-        Optional<Piece> a7 = BOARD.getPiece('a', '7');
-        Optional<Piece> b7 = BOARD.getPiece('b', '7');
-        Optional<Piece> c7 = BOARD.getPiece('c', '7');
-        Optional<Piece> d7 = BOARD.getPiece('d', '7');
-        Optional<Piece> e7 = BOARD.getPiece('e', '7');
-        Optional<Piece> f7 = BOARD.getPiece('f', '7');
-        Optional<Piece> g7 = BOARD.getPiece('g', '7');
-        Optional<Piece> h7 = BOARD.getPiece('h', '7');
+        Optional<Piece> a7 = board.getPiece('a', '7');
+        Optional<Piece> b7 = board.getPiece('b', '7');
+        Optional<Piece> c7 = board.getPiece('c', '7');
+        Optional<Piece> d7 = board.getPiece('d', '7');
+        Optional<Piece> e7 = board.getPiece('e', '7');
+        Optional<Piece> f7 = board.getPiece('f', '7');
+        Optional<Piece> g7 = board.getPiece('g', '7');
+        Optional<Piece> h7 = board.getPiece('h', '7');
         assertTrue(a7.isPresent());
         assertTrue(b7.isPresent());
         assertTrue(c7.isPresent());
@@ -132,14 +132,14 @@ public class BoardTest {
     }
 
     private void testWhitePieces() {
-        Optional<Piece> a1 = BOARD.getPiece('a', '1');//White ROOK
-        Optional<Piece> b1 = BOARD.getPiece('b', '1');//White KNIGHT
-        Optional<Piece> c1 = BOARD.getPiece('c', '1');//White BISHOP
-        Optional<Piece> d1 = BOARD.getPiece('d', '1');//White QUEEN
-        Optional<Piece> e1 = BOARD.getPiece('e', '1');//White KING
-        Optional<Piece> f1 = BOARD.getPiece('f', '1');//White BISHOP
-        Optional<Piece> g1 = BOARD.getPiece('g', '1');//White KNIGHT
-        Optional<Piece> h1 = BOARD.getPiece('h', '1');//White ROOK
+        Optional<Piece> a1 = board.getPiece('a', '1');//White ROOK
+        Optional<Piece> b1 = board.getPiece('b', '1');//White KNIGHT
+        Optional<Piece> c1 = board.getPiece('c', '1');//White BISHOP
+        Optional<Piece> d1 = board.getPiece('d', '1');//White QUEEN
+        Optional<Piece> e1 = board.getPiece('e', '1');//White KING
+        Optional<Piece> f1 = board.getPiece('f', '1');//White BISHOP
+        Optional<Piece> g1 = board.getPiece('g', '1');//White KNIGHT
+        Optional<Piece> h1 = board.getPiece('h', '1');//White ROOK
         assertTrue(a1.isPresent());
         assertTrue(b1.isPresent());
         assertTrue(c1.isPresent());
@@ -169,14 +169,14 @@ public class BoardTest {
 
     private void testWhitePawns() {
         //---------- Pawns ------------------
-        Optional<Piece> a2 = BOARD.getPiece('a', '2');
-        Optional<Piece> b2 = BOARD.getPiece('b', '2');
-        Optional<Piece> c2 = BOARD.getPiece('c', '2');
-        Optional<Piece> d2 = BOARD.getPiece('d', '2');
-        Optional<Piece> e2 = BOARD.getPiece('e', '2');
-        Optional<Piece> f2 = BOARD.getPiece('f', '2');
-        Optional<Piece> g2 = BOARD.getPiece('g', '2');
-        Optional<Piece> h2 = BOARD.getPiece('h', '2');
+        Optional<Piece> a2 = board.getPiece('a', '2');
+        Optional<Piece> b2 = board.getPiece('b', '2');
+        Optional<Piece> c2 = board.getPiece('c', '2');
+        Optional<Piece> d2 = board.getPiece('d', '2');
+        Optional<Piece> e2 = board.getPiece('e', '2');
+        Optional<Piece> f2 = board.getPiece('f', '2');
+        Optional<Piece> g2 = board.getPiece('g', '2');
+        Optional<Piece> h2 = board.getPiece('h', '2');
         assertTrue(a2.isPresent());
         assertTrue(b2.isPresent());
         assertTrue(c2.isPresent());

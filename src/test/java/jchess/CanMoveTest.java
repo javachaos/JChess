@@ -1,9 +1,8 @@
 package jchess;
 
-import com.github.javachaos.jchess.gamelogic.Board;
+import com.github.javachaos.jchess.gamelogic.ChessBoard;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.PiecePos;
-import com.github.javachaos.jchess.gamelogic.pieces.core.player.AIPlayer;
 import com.github.javachaos.jchess.gamelogic.pieces.core.player.MinimaxAIPlayer;
 import com.github.javachaos.jchess.gamelogic.pieces.core.player.Player;
 import com.github.javachaos.jchess.gamelogic.pieces.impl.*;
@@ -16,30 +15,30 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class CanMoveTest {
 
-    private static Board generateNewBoard(Piece b) {
-        Board board = new Board(new MinimaxAIPlayer(Player.BLACK));
-        board.addPiece(b);
-        Optional<Piece> p = board.getPiece('a', '1');
+    private static ChessBoard generateNewBoard(Piece b) {
+        ChessBoard chessBoard = new ChessBoard(new MinimaxAIPlayer(Player.BLACK));
+        chessBoard.addPiece(b);
+        Optional<Piece> p = chessBoard.getPiece('a', '1');
         p.ifPresent(piece -> assertEquals(piece, b));
-        return board;
+        return chessBoard;
     }
 
-    private static void testAllPositions(List<PiecePos> validMoves, Board board, Piece b) {
+    private static void testAllPositions(List<PiecePos> validMoves, ChessBoard chessBoard, Piece b) {
 
-        List<PiecePos> allPositions = board.getAllPositions();
+        List<PiecePos> allPositions = chessBoard.getAllPositions();
         //Test all possible moves.
         allPositions.forEach(pos -> {
             if (validMoves.contains(pos)) {
-                assertTrue(b.canMove(board, pos));
+                assertTrue(b.canMove(chessBoard, pos));
             } else {
-                assertFalse(b.canMove(board, pos));
+                assertFalse(b.canMove(chessBoard, pos));
             }
         });
     }
 
     @Test
     void testCanMove() {
-        Board board;
+        ChessBoard chessBoard;
         Piece p;
         List<PiecePos> validBishopMoves = List.of(new PiecePos('b', '2'),
                 new PiecePos('c', '3'),
@@ -49,24 +48,24 @@ class CanMoveTest {
                 new PiecePos('g', '7'),
                 new PiecePos('h', '8'));
         p = new Bishop(Player.WHITE, 'a', '1');
-        board = generateNewBoard(p);
-        testAllPositions(validBishopMoves, board, p);
+        chessBoard = generateNewBoard(p);
+        testAllPositions(validBishopMoves, chessBoard, p);
 
         p = new King(Player.WHITE, 'a', '1');
-        board = generateNewBoard(p);
-        testAllPositions(validBishopMoves, board, p);
+        chessBoard = generateNewBoard(p);
+        testAllPositions(validBishopMoves, chessBoard, p);
 
         p = new Queen(Player.WHITE, 'a', '1');
-        board = generateNewBoard(p);
-        testAllPositions(validBishopMoves, board, p);
+        chessBoard = generateNewBoard(p);
+        testAllPositions(validBishopMoves, chessBoard, p);
 
         p = new Rook(Player.WHITE, 'a', '1');
-        board = generateNewBoard(p);
-        testAllPositions(validBishopMoves, board, p);
+        chessBoard = generateNewBoard(p);
+        testAllPositions(validBishopMoves, chessBoard, p);
 
         p = new Pawn(Player.WHITE, 'a', '1');
-        board = generateNewBoard(p);
-        testAllPositions(validBishopMoves, board, p);
+        chessBoard = generateNewBoard(p);
+        testAllPositions(validBishopMoves, chessBoard, p);
 
     }
 }

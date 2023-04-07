@@ -1,6 +1,6 @@
 package com.github.javachaos.jchess.gamelogic.pieces.core;
 
-import com.github.javachaos.jchess.gamelogic.Board;
+import com.github.javachaos.jchess.gamelogic.ChessBoard;
 import com.github.javachaos.jchess.gamelogic.pieces.core.player.Player;
 
 import java.util.ArrayList;
@@ -12,7 +12,6 @@ public abstract class AbstractPiece implements Piece {
 
     protected final Player color;
     protected PiecePos pos;
-    protected boolean isCaptured;
     protected AbstractPiece(Player p, char x, char y) {
         this.color = p;
         this.pos = new PiecePos(x, y);
@@ -29,7 +28,7 @@ public abstract class AbstractPiece implements Piece {
      * @param to   the to pos
      * @return the list of pieces between from and to positions
      */
-    protected List<Piece> getPiecesLateral(Board b, PiecePos from, PiecePos to) {
+    protected List<Piece> getPiecesLateral(ChessBoard b, PiecePos from, PiecePos to) {
         List<Piece> pieces = new ArrayList<>();
         //check if this is a horizontal or vertical scan
         if (from.x() == to.x()) {
@@ -56,7 +55,7 @@ public abstract class AbstractPiece implements Piece {
         return pieces;
     }
 
-    protected List<Piece> getPiecesDiagonal(Board b, PiecePos from, PiecePos to) {
+    protected List<Piece> getPiecesDiagonal(ChessBoard b, PiecePos from, PiecePos to) {
         List<Piece> pieces = new ArrayList<>();
         int dx = Integer.compare(to.x() - from.x(), 0);
         int dy = Integer.compare(to.y() - from.y(), 0);
@@ -79,16 +78,6 @@ public abstract class AbstractPiece implements Piece {
     @Override
     public void move(PiecePos p) {
         this.move(p.x(), p.y());
-    }
-
-    @Override
-    public void capture() {
-        isCaptured = true;
-    }
-
-    @Override
-    public void resurrect() {
-        isCaptured = false;
     }
 
     @Override
@@ -118,12 +107,13 @@ public abstract class AbstractPiece implements Piece {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || o.getClass() != getClass()) {
+            return false;
+        }
         AbstractPiece that = (AbstractPiece) o;
-        return Objects.equals(pos, that.pos)
+        return  pos.equals(that.getPos())
                 && color == that.color
-                && that.getType() == this.getType();
+                && that.getType() == getType();
     }
 
     @Override

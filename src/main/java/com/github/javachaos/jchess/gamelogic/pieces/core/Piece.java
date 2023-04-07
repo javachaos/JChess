@@ -1,6 +1,6 @@
 package com.github.javachaos.jchess.gamelogic.pieces.core;
 
-import com.github.javachaos.jchess.gamelogic.Board;
+import com.github.javachaos.jchess.gamelogic.ChessBoard;
 import com.github.javachaos.jchess.gamelogic.pieces.core.player.Player;
 
 public interface Piece {
@@ -49,17 +49,6 @@ public interface Piece {
     void move(PiecePos p);
 
     /**
-     * Called when this piece has been captured.
-     * Removing it from the game.
-     */
-    void capture();
-
-    /**
-     * Called when this piece is brought back into play.
-     */
-    void resurrect();
-
-    /**
      * True if this pieces is a black player piece.
      *
      * @return whether this piece is a black piece
@@ -76,11 +65,11 @@ public interface Piece {
     /**
      * Validate if a move is valid.
      *
-     * @param board      the board
+     * @param chessBoard      the board
      * @param desiredPos the desired new position
      * @return true if the move is valid
      */
-    boolean canMove(Board board, PiecePos desiredPos);
+    boolean canMove(ChessBoard chessBoard, PiecePos desiredPos);
 
     /**
      * Check if this piece is the king.

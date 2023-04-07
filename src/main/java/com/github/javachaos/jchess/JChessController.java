@@ -1,54 +1,41 @@
 package com.github.javachaos.jchess;
 
 import com.github.javachaos.jchess.exceptions.JChessException;
-import com.github.javachaos.jchess.gamelogic.Board;
-import com.github.javachaos.jchess.gamelogic.managers.GameStateManager;
+import com.github.javachaos.jchess.gamelogic.ChessBoard;
+import com.github.javachaos.jchess.gamelogic.managers.GSM;
 import com.github.javachaos.jchess.gamelogic.managers.SaveLoadManager;
-import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Move;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.PiecePos;
-import com.github.javachaos.jchess.gamelogic.pieces.core.player.AIPlayer;
 import com.github.javachaos.jchess.gamelogic.pieces.core.player.MinimaxAIPlayer;
 import com.github.javachaos.jchess.gamelogic.pieces.core.player.Player;
+import com.github.javachaos.jchess.utils.Constants;
 import com.github.javachaos.jchess.utils.ExceptionUtils;
+import com.github.javachaos.jchess.utils.ImageLoader;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.fxml.FXML;
 import javafx.geometry.Bounds;
-import javafx.geometry.Insets;
 import javafx.scene.control.Button;
-import javafx.scene.control.Label;
 import javafx.scene.effect.Effect;
 import javafx.scene.effect.InnerShadow;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
-import javafx.util.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.InputStream;
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.IntStream;
-
-import static com.github.javachaos.jchess.gamelogic.managers.GameStateManager.GameState.START;
 
 public class JChessController {
 
     public static final Logger LOGGER = LogManager.getLogger(
             JChessController.class);
-    private final StackPane[][] panes = new StackPane[8][8];
-    private final List<StackPane> currentlySelected = new ArrayList<>();
-    private final EnumMap<AbstractPiece.PieceType,
-            Pair<Image, Image>> images = new EnumMap<>(AbstractPiece.PieceType.class);
+    private List<StackPane> highlightedPanes;
+
     @FXML
     public Button newgameBtn;
     @FXML
@@ -63,116 +50,132 @@ public class JChessController {
     private Button loadBtn;
     @FXML
     private Button undoBtn;
-    private Board board;
+    private ChessBoard board;
     private StackPane currentSelection;
     private boolean pieceSelected;
     private SaveLoadManager saveLoadManager;
+    private ImageLoader imLoader;
 
     @FXML
     void initialize() {
-        loadImages();
-        board = new Board(new MinimaxAIPlayer(Player.BLACK));
-        board.start();
-        saveLoadManager = new SaveLoadManager("./jchess_undo.json",
-                "./jchess_redo.json");
+        initLists();
+        initFiles();
+        initChessBoard();
+        initComponents();
+        generateTiles();
+        setupActions();
+    }
 
-
+    private void initComponents() {
         assert exitBtn != null : "fx:id=\"exitBtn\" was not injected: check your FXML file 'jchess.fxml'.";
         assert redoBtn != null : "fx:id=\"redoBtn\" was not injected: check your FXML file 'jchess.fxml'.";
         assert undoBtn != null : "fx:id=\"undoBtn\" was not injected: check your FXML file 'jchess.fxml'.";
         assert saveBtn != null : "fx:id=\"saveBtn\" was not injected: check your FXML file 'jchess.fxml'.";
         assert loadBtn != null : "fx:id=\"loadBtn\" was not injected: check your FXML file 'jchess.fxml'.";
         assert checkerGrid != null : "fx:id=\"checkerGrid\" was not injected: check your FXML file 'jchess.fxml'.";
+    }
 
-        setupActions();
-        generateTiles();
-        checkerGrid.widthProperty().addListener(this::widthChanged);
-        checkerGrid.heightProperty().addListener(this::heightChanged);
-        Arrays.stream(panes).forEach(x -> Arrays.stream(x).forEach(n -> n.setOnMouseClicked(this::handlePressed)));
+    private void initChessBoard() {
+        board = new ChessBoard(new MinimaxAIPlayer(Player.BLACK));
+        board.start();
+    }
+
+    private void initLists() {
+        highlightedPanes = new ArrayList<>();
+    }
+
+    private void initFiles() {
+        imLoader = new ImageLoader();
+        saveLoadManager = new SaveLoadManager(Constants.UNDO_SAVEFILE,
+                Constants.REDO_SAVEFILE);
     }
 
     private void redrawPieces() {
-        IntStream.range(0, 8).forEach(x ->
-                IntStream.range(0, 8).forEach(y -> {
-                    Rectangle r = (Rectangle) panes[x][y].getChildren()
-                            .filtered(Rectangle.class::isInstance).get(0);
-                    panes[x][y].getChildren().clear();
-                    panes[x][y].getChildren().add(r);
-                    board.getPiece((char) ('a' + x), (char) ('1' + y))
-                            .ifPresent(p -> {
-                                Bounds b = checkerGrid.getCellBounds(x, y);
-                                ImageView img = getImageForPiece(p);
-                                img.setFitHeight(b.getHeight());
-                                img.setFitWidth(b.getWidth());
-                                panes[x][y].getChildren().add(img);
-                            });
-                }));
+        for (int x = 0; x < 8; x++) {
+            for (int y = 0; y < 8; y++) {
+                drawCheckeredTiles(x, y);
+                int finalX = x;
+                int finalY = y;
+                board.getPiece((char) ('a' + x), (char) ('1' + y))
+                        .ifPresent(p -> renderPiece(finalX, finalY, p));
+            }
+        }
+    }
+
+    private void renderPiece(int x, int y, Piece p) {
+        Bounds b = checkerGrid.getCellBounds(x, y);
+        ImageView img = imLoader.getImageForPiece(p);
+        img.setFitHeight(b.getHeight());
+        img.setFitWidth(b.getWidth());
+        StackPane stackPane = getPane(x, y);
+        if (stackPane != null) {
+            stackPane.getChildren().add(img);
+        }
+    }
+
+    private void drawCheckeredTiles(int x, int y) {
+        StackPane stackPane = getPane(x, y);
+        if (stackPane != null) {
+            Rectangle r = (Rectangle) stackPane.getChildren()
+                    .filtered(Rectangle.class::isInstance).get(0);
+            stackPane.getChildren().clear();
+            stackPane.getChildren().add(r);
+        }
     }
 
     private void generateTiles() {
         for (int x = 0; x < 8; x++) {
             for (int y = 0; y < 8; y++) {
-                Rectangle r = new Rectangle();
-                panes[x][y] = new StackPane();
-                panes[x][y].getChildren().add(r);
-                printLabelsX(x, y, r);
-                printLabelsY(x, y, r);
-                //Fill squares in checkered pattern
-                r.setFill((x % 2 == 0 && y % 2 == 0) || (x % 2 != 0 && y % 2 != 0) ? Color.GRAY : Color.BLACK);
-                r.setStroke(Color.BLACK);
-                checkerGrid.add(panes[x][y], x, y);
-                panes[x][y].setUserData(new PiecePos((char) ('a' + x), (char) ('1' + y)));
+                StackPane stackPane = drawTile(x, y);
+                checkerGrid.add(stackPane, x, y);
+                PiecePos pp = new PiecePos((char) ('a' + x), (char) ('1' + y));
+                LOGGER.debug("Adding tile: {}", pp);
+                stackPane.setUserData(pp);
             }
         }
         LOGGER.info("Done generating tiles.");
     }
 
-    private void printLabelsY(int x, int y, Rectangle r) {
-        if (x == 0) {
-            Label l = new Label(String.valueOf((char) ('8' - y)));
-            l.setTextFill(
-                    y % 2 == 0 ? Color.BLACK : Color.GRAY);
-            l.setPadding(new Insets(r.getWidth(), r.getHeight() + 35, 0, 0));
-            panes[x][y].getChildren().add(l);
-        }
+    private StackPane drawTile(int x, int y) {
+        Rectangle r = new Rectangle();
+        StackPane sp = new StackPane();
+        sp.getChildren().add(r);
+        //Fill squares in checkered pattern
+        r.setFill((x % 2 == 0 && y % 2 == 0)
+                || (x % 2 != 0 && y % 2 != 0) ? Color.GRAY : Color.BLACK);
+        r.setStroke(Color.BLACK);
+        return sp;
     }
 
-    private void printLabelsX(int x, int y, Rectangle r) {
-        if (y == 7) {
-            Label l = new Label(String.valueOf((char) ('a' + x)));
-            l.setTextFill(
-                    x % 2 == 0 ? Color.GRAY : Color.BLACK);
-            l.setPadding(new Insets(r.getWidth(), r.getHeight() + 50, 0, 0));
-            panes[x][y].getChildren().add(l);
-        }
+    private StackPane getPane(int x, int y) {
+        return (StackPane) checkerGrid.getChildren().stream()
+                .filter(c -> GridPane.getColumnIndex(c) == x && GridPane.getRowIndex(c) == y)
+                .findFirst()
+                .orElse(null);
     }
 
     public void widthChanged(Observable e) {
-        if (GameStateManager.getInstance().isStart()) {
-            checkerGrid.getChildren().forEach(x -> {
-                if (x instanceof StackPane r) {
-                    r.getChildren().forEach(c -> {
-                        if (c instanceof Rectangle n) {
-                            n.setWidth(checkerGrid.getWidth() / checkerGrid.getColumnCount());
-                        }
-                    });
-                }
-            });
-        }
+        checkerGrid.getChildren().forEach(x -> {
+            if (x instanceof StackPane r) {
+                r.getChildren().forEach(c -> {
+                    if (c instanceof Rectangle n) {
+                        n.setWidth(checkerGrid.getWidth() / checkerGrid.getColumnCount());
+                    }
+                });
+            }
+        });
     }
 
     public void heightChanged(Observable e) {
-        if (GameStateManager.getInstance().isStart()) {
-            checkerGrid.getChildren().forEach(x -> {
-                if (x instanceof StackPane r) {
-                    r.getChildren().forEach(c -> {
-                        if (c instanceof Rectangle n) {
-                            n.setHeight(checkerGrid.getHeight() / checkerGrid.getRowCount());
-                        }
-                    });
-                }
-            });
-        }
+        checkerGrid.getChildren().forEach(x -> {
+            if (x instanceof StackPane r) {
+                r.getChildren().forEach(c -> {
+                    if (c instanceof Rectangle n) {
+                        n.setHeight(checkerGrid.getHeight() / checkerGrid.getRowCount());
+                    }
+                });
+            }
+        });
     }
 
     void setupActions() {
@@ -182,26 +185,29 @@ public class JChessController {
         redoBtn.setOnAction(x -> redoAction());
         saveBtn.setOnAction(x -> saveButtonHandler());
         loadBtn.setOnAction(x -> loadButtonHandler());
+        checkerGrid.widthProperty().addListener(this::widthChanged);
+        checkerGrid.heightProperty().addListener(this::heightChanged);
+        checkerGrid.getChildren().filtered(StackPane.class::isInstance)
+                .forEach(g -> g.setOnMouseClicked(this::handlePressed));
     }
 
-    //------------------------------------------ Action Events ---------------------------------------------------------
-
     void createNewGame() {
+        LOGGER.info("Creating new game.");
         clearSelection();
         board.reset();
-        GameStateManager.getInstance().setState(START);
         checkerGrid.autosize();
         redrawPieces();
     }
 
     void loadButtonHandler() {
+        LOGGER.info("Loading saved game.");
         Deque<Move> redos = saveLoadManager.loadRedos();
         Deque<Move> undos = saveLoadManager.loadUndos();
         if (undos != null) {
             clearSelection();
             board.reset();
-            board.setUndos(undos);
-            board.setRedos(redos);
+            GSM.instance().setUndos(undos);
+            GSM.instance().setRedos(redos);
             while (!undos.isEmpty()) {
                 Move m = undos.pollLast();
                 board.doMove(m);
@@ -211,51 +217,60 @@ public class JChessController {
     }
 
     void undoAction() {
+        LOGGER.info("User selected undo.");
         clearSelection();
-        board.undo();
+        GSM.instance().undo(board);
         redrawPieces();
     }
 
     void redoAction() {
+        LOGGER.info("User selected redo.");
         clearSelection();
-        board.redo();
+        GSM.instance().redo(board);
         redrawPieces();
     }
 
     void exitApplication() {
+        LOGGER.info("User requested exit.");
         Platform.exit();
     }
 
     void saveButtonHandler() {
-        saveLoadManager.setUndoMoves(board.getUndos());
-        saveLoadManager.setRedoMoves(board.getRedos());
+        LOGGER.info("Saving game.");
+        saveLoadManager.setUndoMoves(GSM.instance().getUndos());
+        saveLoadManager.setRedoMoves(GSM.instance().getRedos());
         saveLoadManager.save();
     }
 
     private void clearSelection() {
         if (currentSelection != null) {
             currentSelection.setEffect(null);
-            currentlySelected.forEach(x -> x.setEffect(null));
-            currentlySelected.clear();
+            highlightedPanes.forEach(x -> x.setEffect(null));
+            highlightedPanes.clear();
             pieceSelected = false;
         }
     }
 
-    private void doAITurn() {
-        if (GameStateManager.getInstance().isAITurn()) {
-            board.doAIMove();
-            redrawPieces();
-            clearSelection();
+    private void highlightSquares(StackPane selectedPane, PiecePos selectedPiece) {
+        if (selectedPiece != null) {
+            List<PiecePos> potentialMoves = board.getPotentialMoves(selectedPiece);
+            potentialMoves.forEach(potentialMove -> {
+                if (board.isOnBoard(potentialMove)) {
+                    StackPane stackPane =
+                            getPane(potentialMove.x() - 'a',
+                                    potentialMove.y() - '1');
+                    highlightedPanes.add(stackPane);
+                }
+            });
+            pieceSelected = true;
         }
+        applySelectedEffect(selectedPane);
     }
 
-    public void handlePressed(MouseEvent mouseEvent) {
-
-        StackPane sp = (StackPane) mouseEvent.getSource();
-        PiecePos p = (PiecePos) sp.getUserData();
-        if (pieceSelected && currentlySelected.contains(sp)) {
+    private void attemptPlayerMove(StackPane selectedPane, PiecePos p) {
+        if (pieceSelected && highlightedPanes.contains(selectedPane) &&
+        GSM.instance().isPlayerTurn()) {
             PiecePos from = (PiecePos) currentSelection.getUserData();
-
             try {
                 board.movePiece(from, p);
             } catch (JChessException e) {
@@ -263,63 +278,41 @@ public class JChessController {
             }
             redrawPieces();
         }
-        clearSelection();
+    }
 
-        if (p != null) {
-            List<PiecePos> allPm = board.getPotentialMoves(p);
-            allPm.forEach(pm -> {
-                if (board.isOnBoard(pm)) {
-                    currentlySelected.add(panes[pm.x() - 'a'][pm.y() - '1']);
-                }
-            });
-            pieceSelected = true;
+    private void doAITurn() {
+        if (GSM.instance().isAITurn()) {
+            board.doAIMove();
+            clearSelection();
+            redrawPieces();
         }
+    }
 
-        currentlySelected.forEach(x -> x.setEffect(getSelectedEffect()));
-        currentSelection = sp;
-        sp.setEffect(getSelectedEffect());
+    public void handlePressed(MouseEvent mouseEvent) {
+        StackPane selectedPane = (StackPane) mouseEvent.getSource();
+        PiecePos selectedPiece = (PiecePos) selectedPane.getUserData();
+
+        attemptPlayerMove(selectedPane, selectedPiece);
+        clearSelection();
+        highlightSquares(selectedPane, selectedPiece);
+
         doAITurn();
+    }
+
+    private void applySelectedEffect(StackPane selectedPane) {
+        highlightedPanes.forEach(x -> x.setEffect(getSelectedEffect()));
+        currentSelection = selectedPane;
+        selectedPane.setEffect(getSelectedEffect());
     }
 
     private Effect getSelectedEffect() {
         InnerShadow innerShadow = new InnerShadow();
         innerShadow.setRadius(35.0);
         innerShadow.setChoke(0.25);
-        innerShadow.setColor(Color.color(0.0, 1.0, 1.0)); // Set the color of the inner glow
+        // Set the color of the inner glow
+        innerShadow.setColor(Color.color(0.0, 1.0, 1.0));
         return innerShadow;
     }
 
-    private InputStream getImg(String name) {
-        return getClass().getResourceAsStream("/img/" + name + ".png");
-    }
 
-    private void loadImages() {
-        images.put(AbstractPiece.PieceType.PAWN, new Pair<>(
-                new Image(getImg("pawn_white")),
-                new Image(getImg("pawn_black"))));
-        images.put(AbstractPiece.PieceType.BISHOP, new Pair<>(
-                new Image(getImg("bishop_white")),
-                new Image(getImg("bishop_black"))));
-        images.put(AbstractPiece.PieceType.ROOK, new Pair<>(
-                new Image(getImg("rook_white")),
-                new Image(getImg("rook_black"))));
-        images.put(AbstractPiece.PieceType.KNIGHT, new Pair<>(
-                new Image(getImg("knight_white")),
-                new Image(getImg("knight_black"))));
-        images.put(AbstractPiece.PieceType.KING, new Pair<>(
-                new Image(getImg("king_white")),
-                new Image(getImg("king_black"))));
-        images.put(AbstractPiece.PieceType.QUEEN, new Pair<>(
-                new Image(getImg("queen_white")),
-                new Image(getImg("queen_black"))));
-    }
-
-
-    private ImageView getImageForPiece(Piece p) {
-        if (p.isBlack()) {
-            return new ImageView(images.get(p.getType()).getValue());
-        } else {
-            return new ImageView(images.get(p.getType()).getKey());
-        }
-    }
 }

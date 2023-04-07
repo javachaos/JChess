@@ -1,10 +1,9 @@
 package com.github.javachaos.jchess.gamelogic.pieces.impl;
 
-import com.github.javachaos.jchess.gamelogic.Board;
+import com.github.javachaos.jchess.gamelogic.ChessBoard;
 import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.PiecePos;
-import com.github.javachaos.jchess.gamelogic.pieces.core.player.AIPlayer;
 import com.github.javachaos.jchess.gamelogic.pieces.core.player.Player;
 
 import java.util.Objects;
@@ -25,7 +24,7 @@ public class Pawn extends AbstractPiece {
     }
 
     @Override
-    public boolean canMove(Board b, PiecePos p) {
+    public boolean canMove(ChessBoard b, PiecePos p) {
         if (!b.isOnBoard(p) || getPos().equals(p)) {
             return false;
         }
@@ -70,15 +69,12 @@ public class Pawn extends AbstractPiece {
         return new PawnLocations(oneAhead, twoAhead, right, left);
     }
 
-    private boolean testDiag(Board b, PiecePos p, PiecePos right) {
+    private boolean testDiag(ChessBoard b, PiecePos p, PiecePos right) {
         //Test diagonal right
         Optional<Piece> op = b.getPiece(right);
         if (b.isOnBoard(right) && op.isPresent()) {
             Piece c = op.get();
-            if (c.getPlayer() != getPlayer() && p.equals(c.getPos())) {
-                c.capture();
-                return true;
-            }
+            return c.getPlayer() != getPlayer() && p.equals(c.getPos());
         }
         return false;
     }
@@ -88,21 +84,23 @@ public class Pawn extends AbstractPiece {
         return false;
     }
 
+    private record PawnLocations(PiecePos oneAhead, PiecePos twoAhead, PiecePos right, PiecePos left) {
+    }
+
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
-        Pawn pawn = (Pawn) o;
-        return Objects.equals(start, pawn.start);
+        if (o == null || o.getClass() != getClass()) {
+            return false;
+        }
+        Pawn that = (Pawn) o;
+        return  pos.equals(that.getPos())
+                && color == that.color
+                && that.getType() == getType();
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), start);
-    }
-
-    private record PawnLocations(PiecePos oneAhead, PiecePos twoAhead, PiecePos right, PiecePos left) {
+        return Objects.hash(pos, color);
     }
 
 }
