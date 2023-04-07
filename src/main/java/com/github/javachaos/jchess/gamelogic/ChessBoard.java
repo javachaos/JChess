@@ -15,12 +15,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 import static com.github.javachaos.jchess.gamelogic.managers.GSM.GameState.*;
-import static com.github.javachaos.jchess.gamelogic.managers.GSM.GameState.NONE;
 
 /**
  * Defines a simple 8x8 chess board.
@@ -152,31 +151,16 @@ public class ChessBoard implements Board {
     }
 
     private Piece createPiece(AbstractPiece.PieceType type, Player color, PiecePos piecePos) {
+        Map<AbstractPiece.PieceType, Supplier<Piece>> pieceMap = Map.of(
+                AbstractPiece.PieceType.PAWN, () -> new Pawn(color, piecePos.x(), piecePos.y()),
+                AbstractPiece.PieceType.ROOK, () -> new Rook(color, piecePos.x(), piecePos.y()),
+                AbstractPiece.PieceType.BISHOP, () -> new Bishop(color, piecePos.x(), piecePos.y()),
+                AbstractPiece.PieceType.KNIGHT, () -> new Knight(color, piecePos.x(), piecePos.y()),
+                AbstractPiece.PieceType.KING, () -> new King(color, piecePos.x(), piecePos.y()),
+                AbstractPiece.PieceType.QUEEN, () -> new Queen(color, piecePos.x(), piecePos.y())
+        );
 
-        switch (type) {
-            case PAWN -> {
-                return new Pawn(color, piecePos.x(), piecePos.y());
-            }
-            case ROOK -> {
-                return new Rook(color, piecePos.x(), piecePos.y());
-            }
-            case BISHOP -> {
-                return new Bishop(color, piecePos.x(), piecePos.y());
-            }
-            case KNIGHT -> {
-                return new Knight(color, piecePos.x(), piecePos.y());
-            }
-            case KING -> {
-                return new King(color, piecePos.x(), piecePos.y());
-            }
-            case QUEEN -> {
-                return new Queen(color, piecePos.x(), piecePos.y());
-            }
-            case NONE -> {
-                return null;
-            }
-        }
-        return null;
+        return pieceMap.getOrDefault(type, () -> null).get();
     }
 
     public Piece getKing(Player p) {
@@ -259,9 +243,11 @@ public class ChessBoard implements Board {
         return (x <= 'h' && x >= 'a') && (y <= '8' && y >= '1');
     }
 
-    public void addPiece(Piece a) {
-        //Check if location is valid.
-        currentPieces.add(a);
+    public void addPiece(Piece piece) {
+        if (isOnBoard(piece.getPos())
+                && getPiece(piece.getPos()).isEmpty()) {
+            currentPieces.add(piece);
+        }
     }
 
     @SuppressWarnings("unused")
@@ -277,48 +263,7 @@ public class ChessBoard implements Board {
     public List<PiecePos> getAllPositions() {
         return allPositions;
     }
-//
-//    public int boardScore() {
-//
-//        AtomicInteger whiteScore = new AtomicInteger();
-//        AtomicInteger blackScore = new AtomicInteger();
-//
-//        currentPieces.forEach(p -> {
-//            switch (p.getType()) {
-//                case PAWN -> {
-//                    if (p.isWhite()) {
-//                        whiteScore.addAndGet(1);
-//                    } else {
-//                        blackScore.addAndGet(1);
-//                    }
-//                }
-//                case ROOK -> {
-//                    if (p.isWhite()) {
-//                        whiteScore.addAndGet(5);
-//                    } else {
-//                        blackScore.addAndGet(5);
-//                    }
-//                }
-//                case BISHOP, KNIGHT -> {
-//                    if (p.isWhite()) {
-//                        whiteScore.addAndGet(3);
-//                    } else {
-//                        blackScore.addAndGet(3);
-//                    }
-//                }
-//                case QUEEN -> {
-//                    if (p.isWhite()) {
-//                        whiteScore.addAndGet(9);
-//                    } else {
-//                        blackScore.addAndGet(9);
-//                    }
-//                }
-//            }
-//        });
-//
-//
-//        return whiteScore.get() - blackScore.get();
-//    }
+
     public int boardScore() {
         int whiteScore = 0;
         int blackScore = 0;
