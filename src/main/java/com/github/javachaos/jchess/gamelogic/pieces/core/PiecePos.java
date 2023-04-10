@@ -9,6 +9,8 @@ package com.github.javachaos.jchess.gamelogic.pieces.core;
  */
 public record PiecePos(char x, char y) {
 
+    public static final PiecePos A1 = new PiecePos('a', '1');
+
     @Override
     public String toString() {
         return "[" + x + "," + y + "]";

@@ -1,6 +1,7 @@
 package com.github.javachaos.jchess.gamelogic.pieces.core.player;
 
 import com.github.javachaos.jchess.exceptions.JChessException;
+import com.github.javachaos.jchess.gamelogic.Alerts;
 import com.github.javachaos.jchess.gamelogic.ChessBoard;
 import com.github.javachaos.jchess.gamelogic.managers.GSM;
 import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
@@ -23,16 +24,21 @@ public class MinimaxAIPlayer extends AbstractAIPlayer implements AIPlayer {
     public Move getNextMove(ChessBoard b) {
         Map<Move, Integer> moveScores = new HashMap<>();
         for (Move m : getAllPossibleMoves(b)) {
-        	try {
-    			b.movePiece(m.from(), m.to());
-    		} catch (JChessException e) {
-    			ExceptionUtils.log(e);
-    			continue;
-    		}
+            try {
+                b.movePiece(m.from(), m.to());
+            } catch (JChessException e) {
+                ExceptionUtils.log(e);
+                continue;
+            }
             int score = b.boardScore();
 
             GSM.instance().undo(b);
             moveScores.put(m, score);
+        }
+
+        if (moveScores.isEmpty()) {
+            Alerts.info("GAME OVER.");
+            return Move.empty();
         }
         if (getColor() == Player.WHITE) {
             return Collections.max(moveScores.entrySet(),

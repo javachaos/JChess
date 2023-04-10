@@ -30,15 +30,18 @@ public class ChessBoard implements Board {
     /**
      * The current pieces in play.
      */
-    private final List<Piece> currentPieces = new ArrayList<>();
-    private final List<PiecePos> allPositions = new ArrayList<>();
+    private final List<Piece> currentPieces;
+    private final List<PiecePos> allPositions;
     /**
      * Captured pieces.
      */
-    private final ArrayDeque<Piece> capturedPieces = new ArrayDeque<>();
+    private final List<Piece> capturedPieces;
     private final AIPlayer ai;
 
     public ChessBoard(AIPlayer ai) {
+        capturedPieces = new ArrayList<>();
+        currentPieces = new ArrayList<>();
+        allPositions = new ArrayList<>();
         this.ai = ai;
         GSM.instance().setAIColor(ai.getColor());
     }
@@ -59,16 +62,17 @@ public class ChessBoard implements Board {
     public void movePiece(PiecePos pos, PiecePos desiredPos) throws JChessException {
         Optional<Piece> p = getPiece(pos);
         if (p.isPresent()) {
-            if (GSM.instance().getTurn() != p.get().getPlayer()) {
+            Piece piece = p.get();
+            if (GSM.instance().getTurn() != piece.getPlayer()) {
                 throw new JChessException("Not your turn.");
             }
 
-            if (!p.get().canMove(this, desiredPos)) {
+            if (!piece.canMove(this, desiredPos)) {
                 LOGGER.debug("Invalid move for player {}: {}",
-                        p.get().getPlayer(), desiredPos);
+                        piece.getPlayer(), desiredPos);
             } else {
                 Move currentMove = new Move(pos, desiredPos,
-                        AbstractPiece.PieceType.NONE, p.get().getPlayer());
+                        AbstractPiece.PieceType.NONE, piece.getPlayer());
                 Piece captive = doMove(currentMove);
                 if (captive != null) {
                     currentMove = new Move(
@@ -80,7 +84,6 @@ public class ChessBoard implements Board {
                 GSM.instance().changeTurns();
             }
         } else {
-            Alerts.err("No piece at this position");
             LOGGER.info("Invalid move, piece does not exist at {}", pos);
         }
     }
@@ -196,7 +199,7 @@ public class ChessBoard implements Board {
         allPositions.clear();
         IntStream.range(0, 8).forEach(x ->
                 IntStream.range(0, 8).forEach(y ->
-                        allPositions.add(new PiecePos((char) ('a' + x), (char) ('8' - y)))));
+                        allPositions.add(new PiecePos((char) ('a' + x), (char) ('1' + y)))));
         currentPieces.clear();
         currentPieces.addAll(Arrays.asList(
                 new Pawn(Player.WHITE, 'a', '2'),
@@ -273,9 +276,8 @@ public class ChessBoard implements Board {
                 case PAWN -> 1;
                 case ROOK -> 5;
                 case BISHOP, KNIGHT -> 3;
-                case KING -> 0;
+                case KING, NONE -> 0;
                 case QUEEN -> 9;
-                case NONE -> 0;
             };
 
             if (p.isWhite()) {

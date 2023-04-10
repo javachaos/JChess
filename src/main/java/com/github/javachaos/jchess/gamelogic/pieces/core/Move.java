@@ -13,6 +13,10 @@ import com.github.javachaos.jchess.gamelogic.pieces.core.player.Player;
 public record Move(PiecePos from, PiecePos to,
                    AbstractPiece.PieceType type, Player color) {
 
+    public static Move empty() {
+        return new Move(PiecePos.A1, PiecePos.A1, AbstractPiece.PieceType.NONE, Player.WHITE);
+    }
+
     public Move reverse() {
         return new Move(to, from, type, color);
     }
