@@ -10,6 +10,7 @@ module com.github.javachaos.jchess.jchess {
     opens com.github.javachaos.jchess.gamelogic.pieces.core to com.google.gson;
     opens com.github.javachaos.jchess.gamelogic.pieces.impl to com.google.gson;
     exports com.github.javachaos.jchess;
+    exports com.github.javachaos.jchess.gamelogic;
     exports com.github.javachaos.jchess.gamelogic.pieces.core;
     exports com.github.javachaos.jchess.gamelogic.ai.player;
     exports com.github.javachaos.jchess.gamelogic.states.core;

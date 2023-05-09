@@ -4,10 +4,10 @@ import com.github.javachaos.jchess.exceptions.JChessException;
 import com.github.javachaos.jchess.gamelogic.Alerts;
 import com.github.javachaos.jchess.gamelogic.Board;
 import com.github.javachaos.jchess.gamelogic.ai.trees.GameTree;
-import com.github.javachaos.jchess.gamelogic.managers.GSM;
 import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Move;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
+import com.github.javachaos.jchess.gamelogic.states.core.ChessGame;
 import com.github.javachaos.jchess.utils.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,9 +23,9 @@ public class MinimaxAIPlayer extends AbstractAIPlayer implements AIPlayer {
 
     private GameTree tree;
 
-    public MinimaxAIPlayer(Player c) {
+    public MinimaxAIPlayer(Player c, ChessGame game) {
         super(c);
-        tree = new GameTree();
+        tree = new GameTree(game);
     }
 
     @Override
@@ -49,17 +49,17 @@ public class MinimaxAIPlayer extends AbstractAIPlayer implements AIPlayer {
             }
             int score = b.boardScore(getColor());
 
-            GSM.instance().undo();
+            //GSM.instance().undo();
             moveScores.put(m, score);
         }
 
         if (moveScores.isEmpty()) {
             if (b.isInCheck(getColor())) {
                 Alerts.info("GAME OVER. CHECKMATE");
-                GSM.instance().setState(GSM.GameState.CHECKMATE);
+                //GSM.instance().setState(GSM.GameState.CHECKMATE);
             } else {
                 Alerts.info("GAME OVER. STALEMATE");
-                GSM.instance().setState(GSM.GameState.STALEMATE);
+                //GSM.instance().setState(GSM.GameState.STALEMATE);
             }
             return Move.empty();
         }

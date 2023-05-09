@@ -1,13 +1,14 @@
 package jchess;
 
+import com.github.javachaos.jchess.JChessController;
 import com.github.javachaos.jchess.exceptions.JChessException;
 import com.github.javachaos.jchess.gamelogic.ChessBoard;
-import com.github.javachaos.jchess.gamelogic.managers.GSM;
 import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.PiecePos;
 import com.github.javachaos.jchess.gamelogic.ai.player.MinimaxAIPlayer;
 import com.github.javachaos.jchess.gamelogic.ai.player.Player;
+import com.github.javachaos.jchess.gamelogic.states.core.ChessGame;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -25,7 +26,7 @@ public class ChessBoardTest {
 
     @BeforeAll
     public static void createBoard() {
-        board = new ChessBoard(new MinimaxAIPlayer(Player.BLACK));
+        board = new ChessBoard(new MinimaxAIPlayer(Player.BLACK, new ChessGame(new JChessController())));
         board.start();
     }
 
@@ -33,14 +34,9 @@ public class ChessBoardTest {
     void testResetBoard() throws JChessException {
         board.movePiece(new PiecePos('a', '2'), new PiecePos('a', '3'));
         board.movePiece(new PiecePos('b', '2'), new PiecePos('b', '4'));
-        GSM.instance().undo();//Works
-        GSM.instance().redo();//Works
         board.reset();//Works
         testBlackPieces();
         testWhitePieces();
-        assertEquals(
-                GSM.GameState.NONE,
-                GSM.instance().getCurrentState());
     }
 
     /**

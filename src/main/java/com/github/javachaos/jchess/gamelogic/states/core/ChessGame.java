@@ -7,7 +7,6 @@ import com.github.javachaos.jchess.gamelogic.Board;
 import com.github.javachaos.jchess.gamelogic.ChessBoard;
 import com.github.javachaos.jchess.gamelogic.ai.player.MinimaxAIPlayer;
 import com.github.javachaos.jchess.gamelogic.ai.player.Player;
-import com.github.javachaos.jchess.gamelogic.managers.GSM;
 import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Move;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
@@ -15,8 +14,6 @@ import com.github.javachaos.jchess.gamelogic.pieces.core.PiecePos;
 import com.github.javachaos.jchess.gamelogic.pieces.impl.King;
 import com.github.javachaos.jchess.gamelogic.states.impl.EndState;
 import com.github.javachaos.jchess.gamelogic.states.impl.StartState;
-import com.github.javachaos.jchess.utils.ExceptionUtils;
-import javafx.application.Platform;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -49,7 +46,7 @@ public class ChessGame {
         this.prevState = new EndState(this);
         undoStack = new ArrayDeque<>();
         redoStack = new ArrayDeque<>();
-        board = new ChessBoard(new MinimaxAIPlayer(Player.BLACK));
+        board = new ChessBoard(new MinimaxAIPlayer(Player.BLACK, this));
         resetTimers();
     }
 
@@ -67,9 +64,11 @@ public class ChessGame {
     }
 
     public void undo() {
-        currentState = prevState;
-        lastMove = undoStack.pop();
-        redoStack.push(lastMove);
+        if (undoStack != null && !undoStack.isEmpty()) {
+            currentState = prevState;
+            lastMove = undoStack.pop();
+            redoStack.push(lastMove);
+        }
     }
 
     public void redo() {
@@ -149,35 +148,6 @@ public class ChessGame {
         redoStack.clear();
     }
 
-    public void movePiece(PiecePos pos, PiecePos desiredPos) throws JChessException {
-        Optional<Piece> p = board.getPiece(pos);
-        if (p.isPresent()) {
-            Piece piece = p.get();
-            if (GSM.instance().getTurn() != piece.getPlayer()) {
-                throw new JChessException("Not your turn.");
-            }
-
-            if (!piece.canMove(board, desiredPos)) {
-                //LOG
-            } else {
-                Move currentMove = new Move(pos, desiredPos,
-                        AbstractPiece.PieceType.NONE, piece.getPlayer());
-                Piece captive = doMove(currentMove);
-                if (captive != null) {
-                    currentMove = new Move(
-                            pos, desiredPos, captive.getType(), captive.getPlayer());
-                }
-                GSM.instance().makeMove(currentMove);
-                //Check for check
-                inCheck(currentMove);
-                GSM.instance().changeTurns();
-                lastMove = currentMove;
-            }
-        } else {
-            //LOG
-        }
-    }
-
     /**
      * Check if the move currentMove would put the player into check.
      *
@@ -190,8 +160,8 @@ public class ChessGame {
             King ourKing = (King) board.getKing(p.get().getPlayer());
             for (Piece enemyPiece : board.getPieces(p.get().getOpponent())) {
                 if (board.getPotentialMoves(enemyPiece.getPos()).contains(ourKing.getPos())) {
-                    GSM.instance().undo();
-                    GSM.instance().changeTurns();
+//                    GSM.instance().undo();
+//                    GSM.instance().changeTurns();
                     throw new JChessException("This move puts king in check. " + currentMove);
                 }
             }

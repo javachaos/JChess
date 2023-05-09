@@ -38,8 +38,6 @@ public class JChessController {
             JChessController.class);
     private List<StackPane> highlightedPanes;
 
-    private ExecutorService executorService = Executors.newSingleThreadExecutor();
-
     @FXML
     public Button newgameBtn;
     @FXML
@@ -237,8 +235,6 @@ public class JChessController {
         if (undos != null) {
             clearSelection();
             chessGame.getBoard().reset();
-            //chessGame.setUndos(undos);
-            //chessGame.setRedos(redos);
             while (!undos.isEmpty()) {
                 Move m = undos.pollLast();
                 chessGame.getBoard().doMove(m);
@@ -268,8 +264,6 @@ public class JChessController {
 
     void saveButtonHandler() {
         LOGGER.info("Saving game.");
-        //saveLoadManager.setUndoMoves(chessGame.getUndos());
-        //saveLoadManager.setRedoMoves(chessGame.getRedos());
         saveLoadManager.save();
     }
 

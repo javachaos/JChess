@@ -10,7 +10,9 @@ import java.util.EnumMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
-public class ChessPieceFactory {
+public final class ChessPieceFactory {
+
+    private ChessPieceFactory() {}
 
     public static Piece createPiece(AbstractPiece.PieceType type, Player color, PiecePos piecePos) {
         Map<AbstractPiece.PieceType, Supplier<Piece>> pieceMap = new EnumMap<>(Map.of(

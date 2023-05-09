@@ -1,11 +1,13 @@
 package jchess;
 
+import com.github.javachaos.jchess.JChessController;
 import com.github.javachaos.jchess.gamelogic.ChessBoard;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.PiecePos;
 import com.github.javachaos.jchess.gamelogic.ai.player.MinimaxAIPlayer;
 import com.github.javachaos.jchess.gamelogic.ai.player.Player;
 import com.github.javachaos.jchess.gamelogic.pieces.impl.*;
+import com.github.javachaos.jchess.gamelogic.states.core.ChessGame;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -16,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class CanMoveTest {
 
     private static ChessBoard generateNewBoard(Piece b) {
-        ChessBoard chessBoard = new ChessBoard(new MinimaxAIPlayer(Player.BLACK));
+        ChessBoard chessBoard = new ChessBoard(new MinimaxAIPlayer(Player.BLACK, new ChessGame(new JChessController())));
         chessBoard.addPiece(b);
         Optional<Piece> p = chessBoard.getPiece('a', '1');
         p.ifPresent(piece -> assertEquals(piece, b));

@@ -1,7 +1,6 @@
 package com.github.javachaos.jchess.gamelogic;
 
 import com.github.javachaos.jchess.exceptions.JChessException;
-import com.github.javachaos.jchess.gamelogic.managers.GSM;
 import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Move;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
@@ -18,8 +17,6 @@ import org.apache.logging.log4j.Logger;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
-
-import static com.github.javachaos.jchess.gamelogic.managers.GSM.GameState.*;
 
 /**
  * Defines a simple 8x8 chess board.
@@ -57,17 +54,11 @@ public class ChessBoard implements Board {
 
     @Override
     public void start() {
-        GSM.instance().setState(START);
         reset();
-        GSM.instance().setTurn(Player.WHITE);
     }
 
     @Override
     public Move getAIMove() {
-//        if (GSM.instance().isAITurn()) {
-//            Move nextMove = ai.getNextMove(this);
-//            //move(nextMove);
-//        }
         return ai.getNextMove(this);
     }
 
@@ -88,10 +79,8 @@ public class ChessBoard implements Board {
                     currentMove = new Move(
                             pos, desiredPos, captive.getType(), captive.getPlayer());
                 }
-                GSM.instance().makeMove(currentMove);
                 //Check for check
                 inCheck(currentMove);
-                GSM.instance().changeTurns();
                 lastMove = currentMove;
             }
         } else {
@@ -111,8 +100,6 @@ public class ChessBoard implements Board {
             King ourKing = (King) getKing(p.get().getPlayer());
             for (Piece enemyPiece : getPieces(p.get().getOpponent())) {
                 if (getPotentialMoves(enemyPiece.getPos()).contains(ourKing.getPos())) {
-                    GSM.instance().undo();
-                    GSM.instance().changeTurns();
                     throw new JChessException("This move puts king in check. " + currentMove);
                 }
             }

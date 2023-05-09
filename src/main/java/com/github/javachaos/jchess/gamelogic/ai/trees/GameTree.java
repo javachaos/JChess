@@ -4,10 +4,13 @@ import com.github.javachaos.jchess.exceptions.JChessException;
 import com.github.javachaos.jchess.gamelogic.Board;
 import com.github.javachaos.jchess.gamelogic.ai.player.MinimaxAIPlayer;
 import com.github.javachaos.jchess.gamelogic.ai.player.Player;
-import com.github.javachaos.jchess.gamelogic.managers.GSM;
 import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Move;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
+import com.github.javachaos.jchess.gamelogic.states.core.ChessGame;
+import com.github.javachaos.jchess.gamelogic.states.impl.BlackWinState;
+import com.github.javachaos.jchess.gamelogic.states.impl.StalemateState;
+import com.github.javachaos.jchess.gamelogic.states.impl.WhiteWinState;
 import com.github.javachaos.jchess.utils.ExceptionUtils;
 
 import java.util.*;
@@ -19,8 +22,10 @@ public class GameTree {
 
     private boolean treePresent;
 
-    public GameTree() {
-        //Unused
+    private final ChessGame game;
+
+    public GameTree(ChessGame game) {
+        this.game = game;
     }
 
     /**
@@ -64,10 +69,11 @@ public class GameTree {
     }
 
     private Node buildTree(Node root, Player p, int depth) {
-        Board board = GSM.instance().getBoard();
+        Board board = game.getBoard();
         if (depth <= 0
-        || GSM.instance().getCurrentState() == GSM.GameState.STALEMATE
-        || GSM.instance().getCurrentState() == GSM.GameState.CHECKMATE) {
+        || game.getCurrentState() instanceof StalemateState
+        || game.getCurrentState() instanceof WhiteWinState
+        || game.getCurrentState() instanceof BlackWinState) {
             return root;
         } else {
             Board copy = board.deepCopy();
@@ -83,7 +89,7 @@ public class GameTree {
                 root.addChild(
                         buildTree(childNode,
                                 p == Player.WHITE ? Player.BLACK : Player.WHITE, depth - 1));
-                GSM.instance().undo();
+                game.undo();
             }
         }
         return root;
@@ -119,7 +125,7 @@ public class GameTree {
 
     private int minimax(Node node, int depth, int alpha, int beta, boolean maximizingPlayer) {
         if (depth == 0 || node.isLeaf()) {
-            return node.getBoard().boardScore(GSM.instance().getAI().getColor());
+            return node.getBoard().boardScore(game.getBoard().getAI().getColor());
         }
         if (maximizingPlayer) {
             int bestScore = Integer.MIN_VALUE;
