@@ -1,10 +1,11 @@
 package com.github.javachaos.jchess.gamelogic.pieces.impl;
 
+import com.github.javachaos.jchess.gamelogic.Board;
 import com.github.javachaos.jchess.gamelogic.ChessBoard;
 import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.PiecePos;
-import com.github.javachaos.jchess.gamelogic.pieces.core.player.Player;
+import com.github.javachaos.jchess.gamelogic.ai.player.Player;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +22,7 @@ public class King extends AbstractPiece {
     }
 
 
-    private List<PiecePos> potentialMoves(ChessBoard b) {
+    private List<PiecePos> potentialMoves(Board b) {
         List<PiecePos> potentials = new ArrayList<>();
         int[][] offsets = {
                 {1, 0},
@@ -45,7 +46,7 @@ public class King extends AbstractPiece {
     }
 
     @Override
-    public boolean canMove(ChessBoard b, PiecePos p) {
+    public boolean canMove(Board b, PiecePos p) {
         List<PiecePos> pom = potentialMoves(b);
         List<PiecePos> removals = new ArrayList<>();
         List<Piece> pieces = new ArrayList<>();

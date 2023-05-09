@@ -1,7 +1,7 @@
 package com.github.javachaos.jchess.gamelogic.pieces.core;
 
-import com.github.javachaos.jchess.gamelogic.ChessBoard;
-import com.github.javachaos.jchess.gamelogic.pieces.core.player.Player;
+import com.github.javachaos.jchess.gamelogic.Board;
+import com.github.javachaos.jchess.gamelogic.ai.player.Player;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +28,7 @@ public abstract class AbstractPiece implements Piece {
      * @param to   the to pos
      * @return the list of pieces between from and to positions
      */
-    protected List<Piece> getPiecesLateral(ChessBoard b, PiecePos from, PiecePos to) {
+    protected List<Piece> getPiecesLateral(Board b, PiecePos from, PiecePos to) {
         List<Piece> pieces = new ArrayList<>();
         //check if this is a horizontal or vertical scan
         if (from.x() == to.x()) {
@@ -55,7 +55,7 @@ public abstract class AbstractPiece implements Piece {
         return pieces;
     }
 
-    protected List<Piece> getPiecesDiagonal(ChessBoard b, PiecePos from, PiecePos to) {
+    protected List<Piece> getPiecesDiagonal(Board b, PiecePos from, PiecePos to) {
         List<Piece> pieces = new ArrayList<>();
         int dx = Integer.compare(to.x() - from.x(), 0);
         int dy = Integer.compare(to.y() - from.y(), 0);

@@ -6,9 +6,10 @@ import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Move;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.PiecePos;
-import com.github.javachaos.jchess.gamelogic.pieces.core.player.AIPlayer;
-import com.github.javachaos.jchess.gamelogic.pieces.core.player.Player;
+import com.github.javachaos.jchess.gamelogic.ai.player.AIPlayer;
+import com.github.javachaos.jchess.gamelogic.ai.player.Player;
 import com.github.javachaos.jchess.gamelogic.pieces.impl.*;
+import com.github.javachaos.jchess.utils.ChessPieceFactory;
 import com.github.javachaos.jchess.utils.ExceptionUtils;
 
 import org.apache.logging.log4j.LogManager;
@@ -16,7 +17,6 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 import static com.github.javachaos.jchess.gamelogic.managers.GSM.GameState.*;
@@ -38,34 +38,44 @@ public class ChessBoard implements Board {
     private final List<Piece> capturedPieces;
     private final AIPlayer ai;
 
+    private Move lastMove;
+
     public ChessBoard(AIPlayer ai) {
         capturedPieces = new ArrayList<>();
         currentPieces = new ArrayList<>();
         allPositions = new ArrayList<>();
         this.ai = ai;
-        GSM.instance().setAIColor(ai.getColor());
     }
 
+    private ChessBoard(AIPlayer p, List<Piece> capturedPieces,
+                       List<Piece> currentPieces, List<PiecePos> allPositions) {
+        this.capturedPieces = new ArrayList<>(capturedPieces);
+        this.currentPieces = new ArrayList<>(currentPieces);
+        this.allPositions = new ArrayList<>(allPositions);
+        this.ai = p;
+    }
+
+    @Override
     public void start() {
         GSM.instance().setState(START);
         reset();
         GSM.instance().setTurn(Player.WHITE);
     }
 
-    public void doAIMove() {
-        if (GSM.instance().isAITurn()) {
-            Move nextMove = ai.getNextMove(this);
-            move(nextMove);
-        }
+    @Override
+    public Move getAIMove() {
+//        if (GSM.instance().isAITurn()) {
+//            Move nextMove = ai.getNextMove(this);
+//            //move(nextMove);
+//        }
+        return ai.getNextMove(this);
     }
 
+    @Override
     public void movePiece(PiecePos pos, PiecePos desiredPos) throws JChessException {
         Optional<Piece> p = getPiece(pos);
         if (p.isPresent()) {
             Piece piece = p.get();
-            if (GSM.instance().getTurn() != piece.getPlayer()) {
-                throw new JChessException("Not your turn.");
-            }
 
             if (!piece.canMove(this, desiredPos)) {
                 LOGGER.debug("Invalid move for player {}: {}",
@@ -82,6 +92,7 @@ public class ChessBoard implements Board {
                 //Check for check
                 inCheck(currentMove);
                 GSM.instance().changeTurns();
+                lastMove = currentMove;
             }
         } else {
             LOGGER.info("Invalid move, piece does not exist at {}", pos);
@@ -100,7 +111,7 @@ public class ChessBoard implements Board {
             King ourKing = (King) getKing(p.get().getPlayer());
             for (Piece enemyPiece : getPieces(p.get().getOpponent())) {
                 if (getPotentialMoves(enemyPiece.getPos()).contains(ourKing.getPos())) {
-                    GSM.instance().undo(this);
+                    GSM.instance().undo();
                     GSM.instance().changeTurns();
                     throw new JChessException("This move puts king in check. " + currentMove);
                 }
@@ -108,11 +119,24 @@ public class ChessBoard implements Board {
         }
     }
 
+    @Override
+    public boolean isInCheck(Player p) {
+        King ourKing = (King) getKing(p);
+        for (Piece enemyPiece : getPieces(ourKing.getOpponent())) {
+            if (getPotentialMoves(enemyPiece.getPos()).contains(ourKing.getPos())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
     public List<Piece> getPieces(Player p) {
         return currentPieces.stream().filter(piece ->
                 piece.getPlayer().equals(p)).toList();
     }
 
+    @Override
     public void move(Move m) {
     	try {
 			movePiece(m.from(), m.to());
@@ -145,7 +169,7 @@ public class ChessBoard implements Board {
         PiecePos t = m.to();
         Optional<Piece> fromPiece = getPiece(f);
         if (m.type() != AbstractPiece.PieceType.NONE) {
-            Piece p = createPiece(m.type(), m.color(), f);
+            Piece p = ChessPieceFactory.createPiece(m.type(), m.color(), f);
             assert p != null;
             currentPieces.add(p);
             capturedPieces.remove(p);
@@ -153,19 +177,7 @@ public class ChessBoard implements Board {
         fromPiece.ifPresent(piece -> piece.move(t));
     }
 
-    private Piece createPiece(AbstractPiece.PieceType type, Player color, PiecePos piecePos) {
-        Map<AbstractPiece.PieceType, Supplier<Piece>> pieceMap = Map.of(
-                AbstractPiece.PieceType.PAWN, () -> new Pawn(color, piecePos.x(), piecePos.y()),
-                AbstractPiece.PieceType.ROOK, () -> new Rook(color, piecePos.x(), piecePos.y()),
-                AbstractPiece.PieceType.BISHOP, () -> new Bishop(color, piecePos.x(), piecePos.y()),
-                AbstractPiece.PieceType.KNIGHT, () -> new Knight(color, piecePos.x(), piecePos.y()),
-                AbstractPiece.PieceType.KING, () -> new King(color, piecePos.x(), piecePos.y()),
-                AbstractPiece.PieceType.QUEEN, () -> new Queen(color, piecePos.x(), piecePos.y())
-        );
-
-        return pieceMap.getOrDefault(type, () -> null).get();
-    }
-
+    @Override
     public Piece getKing(Player p) {
         AtomicReference<Piece> ref = new AtomicReference<>();
         currentPieces.forEach(piece -> {
@@ -182,17 +194,18 @@ public class ChessBoard implements Board {
                 .reduce((a, b) -> a);
     }
 
+    @Override
     public Optional<Piece> getPiece(char x, char y) {
         return getPiece(new PiecePos(x, y));
     }
 
+    @Override
     public List<PiecePos> getPotentialMoves(PiecePos pos) {
         List<PiecePos> potentials = new ArrayList<>();
         getPiece(pos).ifPresent(piece -> potentials.addAll(allPositions.stream()
                 .filter(piecePos -> piece.canMove(this, piecePos)).toList()));
         return potentials;
     }
-
 
     @Override
     public void reset() {
@@ -238,10 +251,17 @@ public class ChessBoard implements Board {
         ));
     }
 
+    @Override
+    public Move getLastMove() {
+        return lastMove;
+    }
+
+    @Override
     public boolean isOnBoard(PiecePos p) {
         return isOnBoard(p.x(), p.y());
     }
 
+    @Override
     public boolean isOnBoard(char x, char y) {
         return (x <= 'h' && x >= 'a') && (y <= '8' && y >= '1');
     }
@@ -267,7 +287,8 @@ public class ChessBoard implements Board {
         return allPositions;
     }
 
-    public int boardScore() {
+    @Override
+    public int boardScore(Player player) {
         int whiteScore = 0;
         int blackScore = 0;
 
@@ -286,7 +307,42 @@ public class ChessBoard implements Board {
                 blackScore += score;
             }
         }
-        return whiteScore - blackScore;
+        if (player == Player.WHITE) {
+            return  whiteScore - blackScore;
+        } else {
+            return blackScore - whiteScore;
+        }
     }
 
+    public ChessBoard deepCopy() {
+        ChessBoard cb = new ChessBoard(ai, capturedPieces, currentPieces, allPositions);
+        cb.setLastMove(getLastMove());
+        return cb;
+    }
+
+    @Override
+    public AIPlayer getAI() {
+        return ai;
+    }
+
+    @Override
+    public void clear() {
+        currentPieces.clear();
+        capturedPieces.clear();
+    }
+
+    @Override
+    public void remove(Piece captive) {
+        currentPieces.remove(captive);
+    }
+
+    @Override
+    public void addCaptive(Piece captive) {
+        //TODO check for duplicated pieces
+        capturedPieces.add(captive);
+    }
+
+    private void setLastMove(Move lastMove) {
+        this.lastMove = lastMove;
+    }
 }

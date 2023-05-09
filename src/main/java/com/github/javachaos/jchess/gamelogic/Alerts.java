@@ -39,6 +39,21 @@ public final class Alerts {
         return result.map(String::toCharArray).orElse(null);
     }
 
+    public static boolean yesNoPrompt(final String prompt) {
+        Dialog<Boolean> dialog = new Dialog<>();
+        dialog.setTitle("Confirm");
+        dialog.setHeaderText(prompt);
+        dialog.getDialogPane().getButtonTypes()
+                .addAll(ButtonType.YES, ButtonType.NO);
+        HBox content = new HBox();
+        content.setAlignment(Pos.CENTER_LEFT);
+        content.getChildren().addAll(new Label(prompt));
+        dialog.getDialogPane().setContent(content);
+        dialog.setResultConverter(db -> db.getText().equals(ButtonType.YES.getText()));
+        Optional<Boolean> result = dialog.showAndWait();
+        return Boolean.TRUE.equals(result.orElse(null));
+    }
+
     /**
      * Show an info Alert.
      *

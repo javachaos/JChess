@@ -11,6 +11,7 @@
     <ButtonBar prefHeight="26.0" prefWidth="600.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
                AnchorPane.topAnchor="0.0">
         <buttons>
+            <Label fx:id="gameStatus" />
             <Button fx:id="newgameBtn" mnemonicParsing="false" text="New Game"/>
             <Button fx:id="undoBtn" mnemonicParsing="false" text="Undo"/>
             <Button fx:id="redoBtn" mnemonicParsing="false" text="Redo"/>

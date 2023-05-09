@@ -6,8 +6,8 @@ import com.github.javachaos.jchess.gamelogic.managers.GSM;
 import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.PiecePos;
-import com.github.javachaos.jchess.gamelogic.pieces.core.player.MinimaxAIPlayer;
-import com.github.javachaos.jchess.gamelogic.pieces.core.player.Player;
+import com.github.javachaos.jchess.gamelogic.ai.player.MinimaxAIPlayer;
+import com.github.javachaos.jchess.gamelogic.ai.player.Player;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -33,8 +33,8 @@ public class ChessBoardTest {
     void testResetBoard() throws JChessException {
         board.movePiece(new PiecePos('a', '2'), new PiecePos('a', '3'));
         board.movePiece(new PiecePos('b', '2'), new PiecePos('b', '4'));
-        GSM.instance().undo(board);//Works
-        GSM.instance().redo(board);//Works
+        GSM.instance().undo();//Works
+        GSM.instance().redo();//Works
         board.reset();//Works
         testBlackPieces();
         testWhitePieces();

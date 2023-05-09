@@ -1,6 +1,6 @@
-package com.github.javachaos.jchess.gamelogic.pieces.core.player;
+package com.github.javachaos.jchess.gamelogic.ai.player;
 
-import com.github.javachaos.jchess.gamelogic.ChessBoard;
+import com.github.javachaos.jchess.gamelogic.Board;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Move;
 
 /**
@@ -15,7 +15,7 @@ public interface AIPlayer {
      * @param b the board on which to execute the move.
      * @return the move this player should make
      */
-    Move getNextMove(ChessBoard b);
+    Move getNextMove(Board b);
 
     /**
      * Get the color of this player.

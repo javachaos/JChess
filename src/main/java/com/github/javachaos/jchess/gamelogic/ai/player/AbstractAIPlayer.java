@@ -1,4 +1,4 @@
-package com.github.javachaos.jchess.gamelogic.pieces.core.player;
+package com.github.javachaos.jchess.gamelogic.ai.player;
 
 public abstract class AbstractAIPlayer implements AIPlayer {
 

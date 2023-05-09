@@ -1,10 +1,11 @@
 package com.github.javachaos.jchess.gamelogic.pieces.impl;
 
+import com.github.javachaos.jchess.gamelogic.Board;
 import com.github.javachaos.jchess.gamelogic.ChessBoard;
 import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.PiecePos;
-import com.github.javachaos.jchess.gamelogic.pieces.core.player.Player;
+import com.github.javachaos.jchess.gamelogic.ai.player.Player;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +21,7 @@ public class Queen extends AbstractPiece {
         return PieceType.QUEEN;
     }
 
-    private List<PiecePos> potentialMoves(ChessBoard b) {
+    private List<PiecePos> potentialMoves(Board b) {
         List<PiecePos> potentials = new ArrayList<>();
         int[][] directions = {{1, 1}, {-1, 1}, {1, -1}, {-1, -1}, {1, 0}, {0, 1}, {-1, 0}, {0, -1}};
         for (int[] dir : directions) {
@@ -34,7 +35,7 @@ public class Queen extends AbstractPiece {
     }
 
     @Override
-    public boolean canMove(ChessBoard b, PiecePos p) {
+    public boolean canMove(Board b, PiecePos p) {
         List<PiecePos> possibleMoves = potentialMoves(b);
         if (possibleMoves.contains(p)) {
             List<Piece> diagonalPieces = getPiecesDiagonal(b, getPos(), p);

@@ -1,13 +1,16 @@
-package com.github.javachaos.jchess.gamelogic.pieces.core.player;
+package com.github.javachaos.jchess.gamelogic.ai.player;
 
 import com.github.javachaos.jchess.exceptions.JChessException;
 import com.github.javachaos.jchess.gamelogic.Alerts;
-import com.github.javachaos.jchess.gamelogic.ChessBoard;
+import com.github.javachaos.jchess.gamelogic.Board;
+import com.github.javachaos.jchess.gamelogic.ai.trees.GameTree;
 import com.github.javachaos.jchess.gamelogic.managers.GSM;
 import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Move;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
 import com.github.javachaos.jchess.utils.ExceptionUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.*;
 
@@ -16,12 +19,26 @@ import java.util.*;
  */
 public class MinimaxAIPlayer extends AbstractAIPlayer implements AIPlayer {
 
+    public static final Logger LOGGER = LogManager.getLogger(MinimaxAIPlayer.class);
+
+    private GameTree tree;
+
     public MinimaxAIPlayer(Player c) {
         super(c);
+        tree = new GameTree();
     }
 
     @Override
-    public Move getNextMove(ChessBoard b) {
+    public Move getNextMove(Board b) {
+        Move m = tree.getAIMove(b, getColor());
+        if (m == null) {
+            m = getMove(b);
+            LOGGER.info("Tree returned null, getting move.");
+        }
+        return m;
+    }
+
+    public Move getMove(Board b) {
         Map<Move, Integer> moveScores = new HashMap<>();
         for (Move m : getAllPossibleMoves(b)) {
             try {
@@ -30,14 +47,20 @@ public class MinimaxAIPlayer extends AbstractAIPlayer implements AIPlayer {
                 ExceptionUtils.log(e);
                 continue;
             }
-            int score = b.boardScore();
+            int score = b.boardScore(getColor());
 
-            GSM.instance().undo(b);
+            GSM.instance().undo();
             moveScores.put(m, score);
         }
 
         if (moveScores.isEmpty()) {
-            Alerts.info("GAME OVER.");
+            if (b.isInCheck(getColor())) {
+                Alerts.info("GAME OVER. CHECKMATE");
+                GSM.instance().setState(GSM.GameState.CHECKMATE);
+            } else {
+                Alerts.info("GAME OVER. STALEMATE");
+                GSM.instance().setState(GSM.GameState.STALEMATE);
+            }
             return Move.empty();
         }
         if (getColor() == Player.WHITE) {
@@ -55,7 +78,7 @@ public class MinimaxAIPlayer extends AbstractAIPlayer implements AIPlayer {
      *
      * @param b the board
      */
-    private List<Move> getAllPossibleMoves(ChessBoard b) {
+    private List<Move> getAllPossibleMoves(Board b) {
         List<Move> moves = new ArrayList<>();
         for (Piece p : b.getPieces(getColor())) {
             b.getPotentialMoves(p.getPos()).forEach(pot -> {

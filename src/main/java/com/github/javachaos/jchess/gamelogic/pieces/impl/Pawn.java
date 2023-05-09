@@ -1,10 +1,11 @@
 package com.github.javachaos.jchess.gamelogic.pieces.impl;
 
+import com.github.javachaos.jchess.gamelogic.Board;
 import com.github.javachaos.jchess.gamelogic.ChessBoard;
 import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.PiecePos;
-import com.github.javachaos.jchess.gamelogic.pieces.core.player.Player;
+import com.github.javachaos.jchess.gamelogic.ai.player.Player;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -24,7 +25,7 @@ public class Pawn extends AbstractPiece {
     }
 
     @Override
-    public boolean canMove(ChessBoard b, PiecePos p) {
+    public boolean canMove(Board b, PiecePos p) {
         if (!b.isOnBoard(p) || getPos().equals(p)) {
             return false;
         }
@@ -69,7 +70,7 @@ public class Pawn extends AbstractPiece {
         return new PawnLocations(oneAhead, twoAhead, right, left);
     }
 
-    private boolean testDiag(ChessBoard b, PiecePos p, PiecePos right) {
+    private boolean testDiag(Board b, PiecePos p, PiecePos right) {
         //Test diagonal right
         Optional<Piece> op = b.getPiece(right);
         if (b.isOnBoard(right) && op.isPresent()) {

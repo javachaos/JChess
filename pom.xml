@@ -70,8 +70,9 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${mvn.compile.version}</version>
                 <configuration>
-                    <source>${jvm.source}</source>
-                    <target>${jvm.target}</target>
+                    <source>20</source>
+                    <target>20</target>
+                    <compilerArgs>--enable-preview</compilerArgs>
                 </configuration>
             </plugin>
             <plugin>

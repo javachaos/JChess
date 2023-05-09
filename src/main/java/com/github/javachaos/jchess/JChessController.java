@@ -1,22 +1,23 @@
 package com.github.javachaos.jchess;
 
-import com.github.javachaos.jchess.exceptions.JChessException;
-import com.github.javachaos.jchess.gamelogic.ChessBoard;
-import com.github.javachaos.jchess.gamelogic.managers.GSM;
+import com.github.javachaos.jchess.gamelogic.Alerts;
 import com.github.javachaos.jchess.gamelogic.managers.SaveLoadManager;
+import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Move;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.PiecePos;
-import com.github.javachaos.jchess.gamelogic.pieces.core.player.MinimaxAIPlayer;
-import com.github.javachaos.jchess.gamelogic.pieces.core.player.Player;
+import com.github.javachaos.jchess.gamelogic.ai.player.Player;
+import com.github.javachaos.jchess.gamelogic.states.core.ChessGame;
+import com.github.javachaos.jchess.gamelogic.states.core.GameState;
+import com.github.javachaos.jchess.gamelogic.states.impl.*;
 import com.github.javachaos.jchess.utils.Constants;
-import com.github.javachaos.jchess.utils.ExceptionUtils;
 import com.github.javachaos.jchess.utils.ImageLoader;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.fxml.FXML;
 import javafx.geometry.Bounds;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.effect.Effect;
 import javafx.scene.effect.InnerShadow;
 import javafx.scene.image.ImageView;
@@ -29,12 +30,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.*;
+import java.util.concurrent.*;
 
 public class JChessController {
 
     public static final Logger LOGGER = LogManager.getLogger(
             JChessController.class);
     private List<StackPane> highlightedPanes;
+
+    private ExecutorService executorService = Executors.newSingleThreadExecutor();
 
     @FXML
     public Button newgameBtn;
@@ -50,17 +54,43 @@ public class JChessController {
     private Button loadBtn;
     @FXML
     private Button undoBtn;
-    private ChessBoard board;
+    @FXML
+    private Label gameStatus;
+
     private StackPane currentSelection;
     private boolean pieceSelected;
     private SaveLoadManager saveLoadManager;
     private ImageLoader imLoader;
 
+    private Move blacksNextMove;
+    private Move whitesNextMove;
+
+    private GameState currentState;
+
+    private Move nextMove;
+    private ChessGame chessGame;
+
+    /**
+     * Get the next requested move for player p
+     * @param p
+     */
+    public Move getMove(Player p) {
+        if (p == Player.BLACK) {
+            nextMove = blacksNextMove;
+        }
+
+        if (p == Player.WHITE) {
+            nextMove = whitesNextMove;
+        }
+
+        return nextMove;
+    }
+
     @FXML
     void initialize() {
         initLists();
         initFiles();
-        initChessBoard();
+        initGame();
         initComponents();
         generateTiles();
         setupActions();
@@ -75,9 +105,8 @@ public class JChessController {
         assert checkerGrid != null : "fx:id=\"checkerGrid\" was not injected: check your FXML file 'jchess.fxml'.";
     }
 
-    private void initChessBoard() {
-        board = new ChessBoard(new MinimaxAIPlayer(Player.BLACK));
-        board.start();
+    private void initGame() {
+        chessGame = new ChessGame(this);
     }
 
     private void initLists() {
@@ -96,7 +125,7 @@ public class JChessController {
                 drawCheckeredTiles(x, y);
                 int finalX = x;
                 int finalY = y;
-                board.getPiece((char) ('a' + x), (char) ('1' + y))
+                chessGame.getBoard().getPiece((char) ('a' + x), (char) ('1' + y))
                         .ifPresent(p -> renderPiece(finalX, finalY, p));
             }
         }
@@ -194,9 +223,11 @@ public class JChessController {
     void createNewGame() {
         LOGGER.info("Creating new game.");
         clearSelection();
-        board.reset();
+        chessGame.getBoard().reset();
         checkerGrid.autosize();
         redrawPieces();
+        currentState = chessGame.getCurrentState();
+        currentState.handle();//Start state -> Whites Turn state
     }
 
     void loadButtonHandler() {
@@ -205,12 +236,12 @@ public class JChessController {
         Deque<Move> undos = saveLoadManager.loadUndos();
         if (undos != null) {
             clearSelection();
-            board.reset();
-            GSM.instance().setUndos(undos);
-            GSM.instance().setRedos(redos);
+            chessGame.getBoard().reset();
+            //chessGame.setUndos(undos);
+            //chessGame.setRedos(redos);
             while (!undos.isEmpty()) {
                 Move m = undos.pollLast();
-                board.doMove(m);
+                chessGame.getBoard().doMove(m);
             }
             redrawPieces();
         }
@@ -219,14 +250,14 @@ public class JChessController {
     void undoAction() {
         LOGGER.info("User selected undo.");
         clearSelection();
-        GSM.instance().undo(board);
+        chessGame.undo();
         redrawPieces();
     }
 
     void redoAction() {
         LOGGER.info("User selected redo.");
         clearSelection();
-        GSM.instance().redo(board);
+        chessGame.redo();
         redrawPieces();
     }
 
@@ -237,8 +268,8 @@ public class JChessController {
 
     void saveButtonHandler() {
         LOGGER.info("Saving game.");
-        saveLoadManager.setUndoMoves(GSM.instance().getUndos());
-        saveLoadManager.setRedoMoves(GSM.instance().getRedos());
+        //saveLoadManager.setUndoMoves(chessGame.getUndos());
+        //saveLoadManager.setRedoMoves(chessGame.getRedos());
         saveLoadManager.save();
     }
 
@@ -253,9 +284,9 @@ public class JChessController {
 
     private void highlightSquares(StackPane selectedPane, PiecePos selectedPiece) {
         if (selectedPiece != null) {
-            List<PiecePos> potentialMoves = board.getPotentialMoves(selectedPiece);
+            List<PiecePos> potentialMoves = chessGame.getBoard().getPotentialMoves(selectedPiece);
             potentialMoves.forEach(potentialMove -> {
-                if (board.isOnBoard(potentialMove)) {
+                if (chessGame.getBoard().isOnBoard(potentialMove)) {
                     StackPane stackPane =
                             getPane(potentialMove.x() - 'a',
                                     potentialMove.y() - '1');
@@ -267,36 +298,63 @@ public class JChessController {
         applySelectedEffect(selectedPane);
     }
 
-    private void attemptPlayerMove(StackPane selectedPane, PiecePos p) {
-        if (pieceSelected && highlightedPanes.contains(selectedPane) &&
-        GSM.instance().isPlayerTurn()) {
+    private void attemptPlayerMove(StackPane selectedPane, PiecePos p, ChessGame cg) {
+        if (pieceSelected && highlightedPanes.contains(selectedPane)) {
             PiecePos from = (PiecePos) currentSelection.getUserData();
-            try {
-                board.movePiece(from, p);
-            } catch (JChessException e) {
-                ExceptionUtils.log(e);
-            }
-            redrawPieces();
+            Piece piece = cg.getBoard().getPiece(from).orElseThrow();
+            AbstractPiece.PieceType pt = piece.getType();
+            Player player = piece.getPlayer();
+            whitesNextMove = new Move(from, p, pt, player);
         }
     }
 
     private void doAITurn() {
-        if (GSM.instance().isAITurn()) {
-            board.doAIMove();
-            clearSelection();
-            redrawPieces();
-        }
+        blacksNextMove = chessGame.getBoard().getAIMove();
+        clearSelection();
+        redrawPieces();
     }
 
     public void handlePressed(MouseEvent mouseEvent) {
         StackPane selectedPane = (StackPane) mouseEvent.getSource();
         PiecePos selectedPiece = (PiecePos) selectedPane.getUserData();
-
-        attemptPlayerMove(selectedPane, selectedPiece);
-        clearSelection();
-        highlightSquares(selectedPane, selectedPiece);
-
-        doAITurn();
+        currentState = chessGame.getCurrentState();
+        currentState.handle();
+        if (currentState instanceof WhitesTurnState) {
+            gameStatus.setText("Whites turn.");
+            attemptPlayerMove(selectedPane, selectedPiece, chessGame);
+            clearSelection();
+            highlightSquares(selectedPane, selectedPiece);
+            currentState.handle();
+        }
+        if (currentState instanceof WhiteCheckState)  {
+            gameStatus.setText("White in check!");
+            currentState.handle();
+        }
+        if (currentState instanceof WhiteWinState)  {
+            gameStatus.setText("White won!");
+            Alerts.info("White Wins.");
+            currentState.handle();
+        }
+        if (currentState instanceof BlacksTurnState)  {
+            gameStatus.setText("Blacks turn.");
+            doAITurn();
+            currentState.handle();
+        }
+        if (currentState instanceof BlackCheckState)  {
+            gameStatus.setText("Black in check!");
+            currentState.handle();
+        }
+        if (currentState instanceof BlackWinState)  {
+            gameStatus.setText("Black won!");
+            Alerts.info("Black Wins.");
+            currentState.handle();
+        }
+        if (currentState instanceof StalemateState)  {
+            gameStatus.setText("Draw.");
+            Alerts.info("Draw.");
+            currentState.handle();
+        }
+        redrawPieces();
     }
 
     private void applySelectedEffect(StackPane selectedPane) {
@@ -314,5 +372,7 @@ public class JChessController {
         return innerShadow;
     }
 
-
+    public void setMove(Move m) {
+        this.nextMove = m;
+    }
 }
