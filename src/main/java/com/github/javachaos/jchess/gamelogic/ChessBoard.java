@@ -16,6 +16,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.stream.IntStream;
 
 /**
@@ -28,6 +29,13 @@ public class ChessBoard implements Board {
      * The current pieces in play.
      */
     private final List<Piece> currentPieces;
+
+    private PiecePos enpassant;
+
+    private int halfMoveClock;
+    private int fullMoveNumber;
+
+    private final boolean[] castleRights = new boolean[4];
     private final List<PiecePos> allPositions;
     /**
      * Captured pieces.
@@ -37,11 +45,35 @@ public class ChessBoard implements Board {
 
     private Move lastMove;
 
+    private Player activePlayer;
+
+    private static final Map<Character, Function<PiecePos, Piece>> pieceMap = Map.ofEntries(
+            Map.entry('r', pos -> new Rook(Player.BLACK, pos.x(), pos.y())),
+            Map.entry('n', pos -> new Knight(Player.BLACK, pos.x(), pos.y())),
+            Map.entry('b', pos -> new Bishop(Player.BLACK, pos.x(), pos.y())),
+            Map.entry('k', pos -> new King(Player.BLACK, pos.x(), pos.y())),
+            Map.entry('q', pos -> new Queen(Player.BLACK, pos.x(), pos.y())),
+            Map.entry('p', pos -> new Pawn(Player.BLACK, pos.x(), pos.y())),
+            Map.entry('R', pos -> new Rook(Player.WHITE, pos.x(), pos.y())),
+            Map.entry('N', pos -> new Knight(Player.WHITE, pos.x(), pos.y())),
+            Map.entry('B', pos -> new Bishop(Player.WHITE, pos.x(), pos.y())),
+            Map.entry('K', pos -> new King(Player.WHITE, pos.x(), pos.y())),
+            Map.entry('Q', pos -> new Queen(Player.WHITE, pos.x(), pos.y())),
+            Map.entry('P', pos -> new Pawn(Player.WHITE, pos.x(), pos.y()))
+    );
+
     public ChessBoard(AIPlayer ai) {
+        castleRights[0] = true;//White can castle
+        castleRights[1] = true;//Black can castle
         capturedPieces = new ArrayList<>();
         currentPieces = new ArrayList<>();
         allPositions = new ArrayList<>();
         this.ai = ai;
+    }
+
+    public ChessBoard(AIPlayer ai, String fen) {
+        this(ai);
+        parseFenAndUpdate(fen);
     }
 
     private ChessBoard(AIPlayer p, List<Piece> capturedPieces,
@@ -50,6 +82,90 @@ public class ChessBoard implements Board {
         this.currentPieces = new ArrayList<>(currentPieces);
         this.allPositions = new ArrayList<>(allPositions);
         this.ai = p;
+    }
+
+    /**
+     * Clear the current board of all pieces.
+     * Parse the input fen string.
+     * Add pieces to the board according to fen string
+     * and update board logic.
+     *
+     * @param fen a valid fen string
+     */
+    private void parseFenAndUpdate(String fen) {
+        String fenRegex = "^(?:[rnbqkpRNBQKP1-8]{1,8}/){7}[rnbqkpRNBQKP1-8]{1,8} " +
+                "[wb] " +
+                "(?:[KQkq-]{1,4} )?" +
+                "(?:[a-h][1-8]|-) " +
+                "\\d+ \\d+$";
+        if (!fen.matches(fenRegex)) {
+            throw new IllegalArgumentException("Invalid fen string!");
+        }
+        currentPieces.clear();
+        String[] parts = fen.split(" ");
+
+        // Parse piece placement
+        String[] ranks = parts[0].split("/");
+        for (int rank = 0; rank < ranks.length; rank++) {
+            String fenRank = ranks[rank];
+            int file = 0;
+            for (int i = 0; i < fenRank.length(); i++) {
+                char c = fenRank.charAt(i);
+                if (Character.isDigit(c)) {
+                    int emptySquares = Character.getNumericValue(c);
+                    file += emptySquares;
+                } else {
+                    addPiece(getPieceFromFenCharacter(c,
+                            new PiecePos((char) ('a' + file),
+                                         (char) ('8' - rank))));
+                    file++;
+                }
+            }
+        }
+
+        // Parse active color, castling rights,
+        // en passant, halfmove clock,
+        // and fullmove number
+        String activeColor = parts[1];
+        String castlingRights = parts[2];
+        String enPassantSquare = parts[3];
+        halfMoveClock = Integer.parseInt(parts[4]);
+        fullMoveNumber = Integer.parseInt(parts[5]);
+
+        // Update castling rights based on the FEN string
+        boolean whiteKingside = castlingRights.contains("K");
+        boolean whiteQueenside = castlingRights.contains("Q");
+        boolean blackKingside = castlingRights.contains("k");
+        boolean blackQueenside = castlingRights.contains("q");
+
+        // Store the castling rights
+        castleRights[0] = whiteKingside;
+        castleRights[1] = whiteQueenside;
+        castleRights[2] = blackKingside;
+        castleRights[3] = blackQueenside;
+
+        if (activeColor.equals("w")) {
+            activePlayer = Player.WHITE;
+        } else if (activeColor.equals("b")) {
+            activePlayer = Player.BLACK;
+        } else {
+            activePlayer = Player.NONE;
+        }
+
+        // Check if en passant is possible
+        boolean enPassantPossible = !enPassantSquare.equals("-");
+
+        if (enPassantPossible) {
+            // Parse the file and rank of the en passant square
+            char file = enPassantSquare.charAt(0);
+            char rank = enPassantSquare.charAt(1);
+
+            // Store the en passant square
+            enpassant = new PiecePos(file, rank);
+        } else {
+            enpassant = null;
+        }
+
     }
 
     @Override
@@ -130,6 +246,19 @@ public class ChessBoard implements Board {
 		} catch (JChessException e) {
 			ExceptionUtils.log(e);
 		}
+    }
+
+    public void setActivePlayer(Player p) {
+        this.activePlayer = p;
+    }
+
+    @Override
+    public void applyFen(String fenStr) {
+        this.parseFenAndUpdate(fenStr);
+    }
+
+    public Player getActivePlayer() {
+        return activePlayer;
     }
 
     @Override
@@ -275,6 +404,72 @@ public class ChessBoard implements Board {
     }
 
     @Override
+    @SuppressWarnings("all")
+    public String getFenString() {
+        StringBuilder fenBuilder = new StringBuilder();
+
+        // Iterate over ranks in reverse order
+        for (int rank = 7; rank >= 0; rank--) {
+            int emptySquareCount = 0;
+
+            // Iterate over files
+            for (int file = 0; file < 8; file++) {
+                PiecePos pos = new PiecePos((char) ('a' + file), (char) ('1' + rank));
+                Optional<Piece> piece = getPiece(pos);
+
+                if (piece.isPresent()) {
+                    // Append the piece symbol
+                    if (emptySquareCount > 0) {
+                        fenBuilder.append(emptySquareCount);
+                        emptySquareCount = 0;
+                    }
+                    fenBuilder.append(getPieceFENSymbol(piece.get()));
+                } else {
+                    // Empty square
+                    emptySquareCount++;
+                }
+            }
+
+            // Append the empty square count or slash
+            if (emptySquareCount > 0) {
+                fenBuilder.append(emptySquareCount);
+            }
+            if (rank > 0) {
+                fenBuilder.append("/");
+            }
+        }
+
+        fenBuilder.append(" ");
+        fenBuilder.append(activePlayer == Player.WHITE ? "w" : "b");
+        fenBuilder.append(" ");
+
+        // Append the castling rights for white
+        boolean whiteCanCastleKingSide = castleRights[0];
+        boolean whiteCanCastleQueenSide = castleRights[1];
+        fenBuilder.append(whiteCanCastleKingSide ? "K" : "");
+        fenBuilder.append(whiteCanCastleQueenSide ? "Q" : "");
+
+        boolean blackCanCastleKingSide = castleRights[2];
+        boolean blackCanCastleQueenSide = castleRights[3];
+        fenBuilder.append(blackCanCastleKingSide ? "k" : "");
+        fenBuilder.append(blackCanCastleQueenSide ? "q" : "");
+
+        if (!(whiteCanCastleKingSide || whiteCanCastleQueenSide || blackCanCastleKingSide || blackCanCastleQueenSide)) {
+            fenBuilder.append("-");
+        }
+
+        fenBuilder.append(" ");
+        fenBuilder.append(enpassant == null ? "-" : enpassant.toString());
+        fenBuilder.append(" ");
+        fenBuilder.append(halfMoveClock);
+        fenBuilder.append(" ");
+        fenBuilder.append(fullMoveNumber);
+
+
+        return fenBuilder.toString();
+    }
+
+    @Override
     public int boardScore(Player player) {
         int whiteScore = 0;
         int blackScore = 0;
@@ -332,4 +527,24 @@ public class ChessBoard implements Board {
     private void setLastMove(Move lastMove) {
         this.lastMove = lastMove;
     }
+
+    private Piece getPieceFromFenCharacter(char c, PiecePos pos) {
+        return pieceMap.getOrDefault(c, unused -> {
+            throw new IllegalArgumentException("Invalid FEN character: " + c);
+        }).apply(pos);
+    }
+
+    private char getPieceFENSymbol(Piece piece) {
+        char symbol = switch (piece.getType()) {
+            case PAWN -> 'P';
+            case ROOK -> 'R';
+            case KNIGHT -> 'N';
+            case BISHOP -> 'B';
+            case KING -> 'K';
+            case QUEEN -> 'Q';
+            default -> ' ';
+        };
+        return piece.isWhite() ? symbol : Character.toLowerCase(symbol);
+    }
+
 }

@@ -173,4 +173,22 @@ public interface Board {
      * @return the list of all positions
      */
     List<PiecePos> getAllPositions();
+
+    /**
+     * Return the FEN representation of the board.
+     * @return a string in FEN notation of the board
+     */
+    String getFenString();
+
+    /**
+     * Set the current player.
+     * @param player the player
+     */
+    void setActivePlayer(Player player);
+
+    /**
+     * Apply the given fen string to this board.
+     * @param fenStr the string representing the board
+     */
+    void applyFen(String fenStr);
 }

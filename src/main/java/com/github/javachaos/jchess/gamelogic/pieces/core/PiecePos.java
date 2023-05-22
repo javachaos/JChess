@@ -10,6 +10,6 @@ package com.github.javachaos.jchess.gamelogic.pieces.core;
 public record PiecePos(char x, char y) {
     @Override
     public String toString() {
-        return "[" + x + "," + y + "]";
+        return String.valueOf(x) + y;
     }
 }

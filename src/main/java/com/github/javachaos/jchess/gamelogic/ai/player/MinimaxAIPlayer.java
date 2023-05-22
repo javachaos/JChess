@@ -49,17 +49,14 @@ public class MinimaxAIPlayer extends AbstractAIPlayer implements AIPlayer {
             }
             int score = b.boardScore(getColor());
 
-            //GSM.instance().undo();
             moveScores.put(m, score);
         }
 
         if (moveScores.isEmpty()) {
             if (b.isInCheck(getColor())) {
                 Alerts.info("GAME OVER. CHECKMATE");
-                //GSM.instance().setState(GSM.GameState.CHECKMATE);
             } else {
                 Alerts.info("GAME OVER. STALEMATE");
-                //GSM.instance().setState(GSM.GameState.STALEMATE);
             }
             return Move.empty();
         }

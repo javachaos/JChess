@@ -7,7 +7,6 @@ import com.github.javachaos.jchess.gamelogic.Board;
 import com.github.javachaos.jchess.gamelogic.ChessBoard;
 import com.github.javachaos.jchess.gamelogic.ai.player.MinimaxAIPlayer;
 import com.github.javachaos.jchess.gamelogic.ai.player.Player;
-import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Move;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.PiecePos;
@@ -189,6 +188,17 @@ public class ChessGame {
 
     public JChessController getController() {
         return controller;
+    }
+
+    /**
+     * Clears the current redo stack, adds all of the
+     * redos from redos to the recently cleared stack.
+     *
+     * @param redos the new redo stack
+     */
+    public void setRedos(Deque<Move> redos) {
+        this.redoStack.clear();
+        this.redoStack.addAll(redos);
     }
 }
 

@@ -27,6 +27,8 @@ public class JChessApplication extends Application {
         stage.setResizable(false);
         stage.setTitle("JChess");
         stage.setScene(scene);
+        JChessController controller = fxmlLoader.getController();
+        controller.setStage(stage);
         stage.show();
     }
 

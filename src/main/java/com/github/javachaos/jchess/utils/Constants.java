@@ -1,6 +1,10 @@
 package com.github.javachaos.jchess.utils;
 
+import java.io.File;
+
 public class Constants {
+
+    public static final File SAVE_DIR = new File(System.getProperty("user.home") + "/.jchess_saves");
 
     private Constants() {
         //Unused

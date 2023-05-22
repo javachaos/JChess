@@ -6,6 +6,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
+import javafx.util.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -22,24 +23,24 @@ public class SaveLoadManager {
 
     private static final Logger LOGGER = LogManager.getLogger(SaveLoadManager.class);
 
-    private static final Type MOVE_TYPE = new TypeToken<Deque<Move>>() {
+    private static final Type MOVE_TYPE = new TypeToken<Pair<Deque<Move>, Deque<Move>>>() {
     }.getType();
 
-    private final String undoFilename;
-    private final String redoFilename;
+    private final String saveFilename;
     private final Gson gsonBuilder;
     private Deque<Move> undoMoves;
     private Deque<Move> redoMoves;
 
-    public SaveLoadManager(String undoFilename, String redoFilename) {
+    private Pair<Deque<Move>, Deque<Move>> saveData;
+
+    public SaveLoadManager(String saveFilename) {
         gsonBuilder = new GsonBuilder()
                 .serializeNulls()
                 .setDateFormat(DateFormat.LONG)
                 .setPrettyPrinting()
                 .setVersion(1.0)
                 .create();
-        this.undoFilename = undoFilename;
-        this.redoFilename = redoFilename;
+        this.saveFilename = saveFilename;
     }
 
     public void setUndoMoves(Deque<Move> undoMoves) {
@@ -51,40 +52,27 @@ public class SaveLoadManager {
     }
 
     public void save() {
-        File u = new File(undoFilename);
-        File r = new File(redoFilename);
-        try (FileWriter ufw = new FileWriter(u);
-             FileWriter rfw = new FileWriter(r)) {
+        File save = new File(saveFilename);
+        saveData = new Pair<>(undoMoves, redoMoves);
+        try (FileWriter ufw = new FileWriter(save)) {
             if (undoMoves != null && !undoMoves.isEmpty()) {
-                LOGGER.info("Saving file: {}", u);
-                gsonBuilder.toJson(undoMoves, ufw);
-            }
-            if (redoMoves != null && !redoMoves.isEmpty()) {
-                LOGGER.info("Saving file: {}", r);
-                gsonBuilder.toJson(redoMoves, rfw);
+                LOGGER.info("Saving file: {}", save);
+                gsonBuilder.toJson(saveData, ufw);
             }
         } catch (IOException e) {
             ExceptionUtils.log(e);
         }
     }
 
-    public Deque<Move> loadUndos() {
+    public Pair<Deque<Move>, Deque<Move>> load() {
         Deque<Move> undos = new ArrayDeque<>();
-        try (JsonReader reader = new JsonReader(new FileReader(undoFilename))) {
-            undos = gsonBuilder.fromJson(reader, MOVE_TYPE);
-        } catch (IOException fnf) {
-            ExceptionUtils.log(fnf);
-        }
-        return undos;
-    }
-
-    public Deque<Move> loadRedos() {
         Deque<Move> redos = new ArrayDeque<>();
-        try (JsonReader reader = new JsonReader(new FileReader(redoFilename))) {
-            redos = gsonBuilder.fromJson(reader, MOVE_TYPE);
+        Pair<Deque<Move>, Deque<Move>> loadData = new Pair<>(undos, redos);
+        try (JsonReader reader = new JsonReader(new FileReader(saveFilename))) {
+            loadData = gsonBuilder.fromJson(reader, MOVE_TYPE);
         } catch (IOException fnf) {
             ExceptionUtils.log(fnf);
         }
-        return redos;
+        return loadData;
     }
 }

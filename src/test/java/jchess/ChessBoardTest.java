@@ -9,18 +9,23 @@ import com.github.javachaos.jchess.gamelogic.pieces.core.PiecePos;
 import com.github.javachaos.jchess.gamelogic.ai.player.MinimaxAIPlayer;
 import com.github.javachaos.jchess.gamelogic.ai.player.Player;
 import com.github.javachaos.jchess.gamelogic.states.core.ChessGame;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests a simple 8x8 chess board.
  */
 public class ChessBoardTest {
+
+    private static final Logger LOGGER = LogManager.getLogger(
+            ChessBoardTest.class);
 
     private static ChessBoard board;
 
@@ -199,5 +204,80 @@ public class ChessBoardTest {
         assertEquals(AbstractPiece.PieceType.PAWN, f2.get().getType());
         assertEquals(AbstractPiece.PieceType.PAWN, g2.get().getType());
         assertEquals(AbstractPiece.PieceType.PAWN, h2.get().getType());
+    }
+
+    @Test
+    void testBasicFenStrings() {
+        List<String> basicFens =
+                List.of(
+                        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1",
+                        "8/8/8/8/8/8/8/8 w - - 0 1",
+                        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1");
+        basicFens.forEach(this::testValidFen);
+    }
+
+    @Test
+    void testComplexBoardFens() {
+        List<String> complexFens = List.of(
+                "3q1rk1/1b4pp/p3P3/1pp2p2/3p1P2/8/PPP1B1PP/R2Q1RK1 w - - 3 18",
+                "rnbqkbnr/ppp1pppp/8/3p4/3P4/8/PPP2PPP/RNBQKBNR w KQkq - 0 3",
+                "rnbqk2r/ppp2ppp/3b4/3p4/3Pn3/2N5/PPP2PPP/R1BQKB1R b KQkq - 0 7",
+                "8/2p1k3/8/2PpP3/2K2P2/8/8/8 w - d6 0 36",
+                "r3k2r/2p2pp1/2p5/3n4/8/2N5/PPP2PPP/R1BQKB1R w KQkq - 1 14",
+                "2kr3r/pppb1ppp/1b3n2/1B6/3PN3/2N2P2/PPP3PP/R1B1R1K1 w - - 0 12",
+                "rnbq1rk1/1pp2ppp/8/p2p4/1b1P4/2N5/PP2PPPP/R1BQKB1R w KQ - 1 7",
+                "rnb1k2r/pp3ppp/2p5/3p4/8/2N2P2/PP2P1PP/R1B1KB1R b KQkq - 0 10",
+                "r2q1rk1/pbp2ppp/1p2p3/3pP3/3Pn3/2N1B3/PPPQ1PPP/R3K2R w KQ - 0 13",
+                "r1b1kb1r/1ppp1ppp/p1n1pn2/8/2P1P3/2N1BN2/PP1P1PPP/R2QKB1R b KQkq - 0 6",
+                "rnbqk2r/pp2ppbp/6p1/3pP3/3P4/8/PPP2PPP/R1BQKBNR w KQkq - 1 7",
+                "r3k2r/1bpq1pp1/p1np4/1p2p3/1P2P3/2P5/3Q1PPP/R1B1KBNR w KQkq - 1 14",
+                "2kr1b1r/pppbqppp/1bn1pn2/1B6/3PP3/2N2N2/PPP2PPP/R1BQK2R w KQ - 4 8",
+                "rnbq1rk1/1p3ppp/p1p1pn2/3p4/1b1P4/2NBPN2/PP3PPP/R1BQ1RK1 b - - 0 10"
+        );
+        complexFens.forEach(this::testValidFen);
+    }
+
+    @Test
+    void testEdgeCaseFens() {
+        List<String> edgeCases =
+                List.of(
+                        "8/8/8/8/8/8/8/k7 w - - 50 101",
+                        "8/8/8/8/8/8/8/k7 w - - 100 101",
+                        "8/8/8/8/8/8/8/4K2R w KQ - 0 1",
+                        "8/8/8/8/8/8/8/4K2R w - - 0 1",
+                        "8/8/8/8/8/8/8/8 w - a3 0 1");
+        edgeCases.forEach(this::testValidFen);
+    }
+
+    @Test
+    void testInvalidFens() {
+        List<String> invalidFens =
+                List.of(
+                        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
+                        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0",
+                        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 A",
+                        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1 2",
+                        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQ - 0 1 2");
+        invalidFens.forEach(this::testInvalidFen);
+    }
+
+
+    private void testValidFen(String assumedValid) {
+        ChessBoard board = new ChessBoard(new MinimaxAIPlayer(Player.BLACK, new ChessGame(new JChessController())));
+        // Apply the FEN string to the board
+        board.applyFen(assumedValid);
+
+        LOGGER.info(assumedValid);
+        // Assert the FEN string representation of
+        // the board matches the assumedValid string
+        String fenString = board.getFenString();
+        LOGGER.info(fenString);
+        assert fenString.equals(assumedValid) : "FEN string does not match";
+    }
+
+
+    private void testInvalidFen(String assumedInvalid) {
+        ChessBoard b = new ChessBoard(new MinimaxAIPlayer(Player.BLACK, new ChessGame(new JChessController())));
+        assertThrows(IllegalArgumentException.class, () -> b.applyFen(assumedInvalid));
     }
 }

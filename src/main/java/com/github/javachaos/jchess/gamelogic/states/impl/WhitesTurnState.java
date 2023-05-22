@@ -20,7 +20,7 @@ public class WhitesTurnState extends AbstractGameState {
         && !(game.getPrevState() instanceof WhiteCheckState)) {
             invalidState();
         }
-
+        game.getBoard().setActivePlayer(Player.WHITE);
         if (waitForWhitesMove()) {
             if (game.isInCheck(Player.WHITE)) {
                 game.setState(new WhiteCheckState(game));

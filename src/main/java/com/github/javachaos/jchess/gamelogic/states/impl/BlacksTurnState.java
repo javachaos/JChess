@@ -20,6 +20,7 @@ public class BlacksTurnState extends AbstractGameState {
                 !(game.getPrevState() instanceof BlackCheckState)) {
             invalidState();
         }
+        game.getBoard().setActivePlayer(Player.BLACK);
         if (waitForBlacksMove()) {//if move is valid
             if (game.isInCheck(Player.BLACK)) {
                 game.setState(new BlackCheckState(game));
