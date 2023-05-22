@@ -63,8 +63,8 @@ public class ChessBoard implements Board {
     );
 
     public ChessBoard(AIPlayer ai) {
-        castleRights[0] = true;//White can castle
-        castleRights[1] = true;//Black can castle
+        castleRights[0] = true; // White can castle
+        castleRights[1] = true; // Black can castle
         capturedPieces = new ArrayList<>();
         currentPieces = new ArrayList<>();
         allPositions = new ArrayList<>();
@@ -108,6 +108,10 @@ public class ChessBoard implements Board {
             throw new IllegalArgumentException("Invalid fen string!");
         }
         currentPieces.clear();
+        allPositions.clear();
+        IntStream.range(0, 8).forEach(x ->
+                IntStream.range(0, 8).forEach(y ->
+                        allPositions.add(new PiecePos((char) ('a' + x), (char) ('1' + y)))));
         String[] parts = fen.split(" ");
 
         // Parse piece placement
@@ -331,46 +335,7 @@ public class ChessBoard implements Board {
 
     @Override
     public void reset() {
-        allPositions.clear();
-        IntStream.range(0, 8).forEach(x ->
-                IntStream.range(0, 8).forEach(y ->
-                        allPositions.add(new PiecePos((char) ('a' + x), (char) ('1' + y)))));
-        currentPieces.clear();
-        currentPieces.addAll(Arrays.asList(
-                new Pawn(Player.WHITE, 'a', '2'),
-                new Pawn(Player.WHITE, 'b', '2'),
-                new Pawn(Player.WHITE, 'c', '2'),
-                new Pawn(Player.WHITE, 'd', '2'),
-                new Pawn(Player.WHITE, 'e', '2'),
-                new Pawn(Player.WHITE, 'f', '2'),
-                new Pawn(Player.WHITE, 'g', '2'),
-                new Pawn(Player.WHITE, 'h', '2'),
-                new Rook(Player.WHITE, 'a', '1'),
-                new Rook(Player.WHITE, 'h', '1'),
-                new Knight(Player.WHITE, 'b', '1'),
-                new Knight(Player.WHITE, 'g', '1'),
-                new Bishop(Player.WHITE, 'c', '1'),
-                new Bishop(Player.WHITE, 'f', '1'),
-                new Queen(Player.WHITE, 'd', '1'),
-                new King(Player.WHITE, 'e', '1'),
-
-                new Pawn(Player.BLACK, 'a', '7'),
-                new Pawn(Player.BLACK, 'b', '7'),
-                new Pawn(Player.BLACK, 'c', '7'),
-                new Pawn(Player.BLACK, 'd', '7'),
-                new Pawn(Player.BLACK, 'e', '7'),
-                new Pawn(Player.BLACK, 'f', '7'),
-                new Pawn(Player.BLACK, 'g', '7'),
-                new Pawn(Player.BLACK, 'h', '7'),
-                new Rook(Player.BLACK, 'a', '8'),
-                new Rook(Player.BLACK, 'h', '8'),
-                new Knight(Player.BLACK, 'b', '8'),
-                new Knight(Player.BLACK, 'g', '8'),
-                new Bishop(Player.BLACK, 'c', '8'),
-                new Bishop(Player.BLACK, 'f', '8'),
-                new Queen(Player.BLACK, 'd', '8'),
-                new King(Player.BLACK, 'e', '8')
-        ));
+        parseFenAndUpdate("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1");
     }
 
     @Override
@@ -503,7 +468,7 @@ public class ChessBoard implements Board {
     }
 
     public ChessBoard deepCopy() {
-        ChessBoard cb = new ChessBoard(ai, capturedPieces, currentPieces, allPositions);
+        ChessBoard cb = new ChessBoard(getAI(), getFenString());
         cb.setLastMove(getLastMove());
         return cb;
     }

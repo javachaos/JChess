@@ -191,4 +191,6 @@ public interface Board {
      * @param fenStr the string representing the board
      */
     void applyFen(String fenStr);
+
+    Player getActivePlayer();
 }

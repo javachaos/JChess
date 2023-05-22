@@ -11,10 +11,12 @@ import com.github.javachaos.jchess.gamelogic.pieces.core.Move;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.PiecePos;
 import com.github.javachaos.jchess.gamelogic.pieces.impl.King;
+import com.github.javachaos.jchess.gamelogic.saves.UndoData;
+import com.github.javachaos.jchess.gamelogic.states.impl.BlacksTurnState;
 import com.github.javachaos.jchess.gamelogic.states.impl.EndState;
 import com.github.javachaos.jchess.gamelogic.states.impl.StartState;
+import com.github.javachaos.jchess.gamelogic.states.impl.WhitesTurnState;
 
-import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -24,9 +26,7 @@ public class ChessGame {
     private GameState prevState;
 
     private final JChessController controller;
-
-    private final Deque<Move> undoStack;
-    private final Deque<Move> redoStack;
+    private final UndoData undoData;
     private Move lastMove;
 
     /**
@@ -43,8 +43,7 @@ public class ChessGame {
         this.controller = controller;
         this.currentState = new StartState(this);
         this.prevState = new EndState(this);
-        undoStack = new ArrayDeque<>();
-        redoStack = new ArrayDeque<>();
+        this.undoData = new UndoData();
         board = new ChessBoard(new MinimaxAIPlayer(Player.BLACK, this));
         resetTimers();
     }
@@ -63,17 +62,24 @@ public class ChessGame {
     }
 
     public void undo() {
-        if (undoStack != null && !undoStack.isEmpty()) {
-            currentState = prevState;
-            lastMove = undoStack.pop();
-            redoStack.push(lastMove);
+        if (currentState instanceof WhitesTurnState
+         || currentState instanceof BlacksTurnState
+         && (undoData.getUndoList() != null && !undoData.getUndoList().isEmpty())) {
+             currentState = prevState;
+             lastMove = undoData.getUndoList().pop();
+             board.move(lastMove);
+             undoData.getRedoList().push(lastMove);
         }
     }
 
     public void redo() {
-        prevState = currentState;
-        lastMove = redoStack.pop();
-        undoStack.push(lastMove);
+        if (currentState instanceof WhitesTurnState
+         || currentState instanceof BlacksTurnState) {
+            prevState = currentState;
+            lastMove = undoData.getRedoList().pop();
+            board.move(lastMove);
+            undoData.getUndoList().push(lastMove);
+        }
     }
 
     public void setState(GameState state) {
@@ -140,11 +146,11 @@ public class ChessGame {
      * Clear the undo stack
      */
     public void clearUndo() {
-        undoStack.clear();
+        undoData.getUndoList().clear();
     }
 
     public void clearRedo() {
-        redoStack.clear();
+        undoData.getRedoList().clear();
     }
 
     /**
@@ -159,8 +165,8 @@ public class ChessGame {
             King ourKing = (King) board.getKing(p.get().getPlayer());
             for (Piece enemyPiece : board.getPieces(p.get().getOpponent())) {
                 if (board.getPotentialMoves(enemyPiece.getPos()).contains(ourKing.getPos())) {
-//                    GSM.instance().undo();
-//                    GSM.instance().changeTurns();
+                    undo();
+                    board.setActivePlayer(p.get().getOpponent());
                     throw new JChessException("This move puts king in check. " + currentMove);
                 }
             }
@@ -197,8 +203,12 @@ public class ChessGame {
      * @param redos the new redo stack
      */
     public void setRedos(Deque<Move> redos) {
-        this.redoStack.clear();
-        this.redoStack.addAll(redos);
+        undoData.getRedoList().clear();
+        undoData.getRedoList().addAll(redos);
+    }
+
+    public UndoData getUndoData() {
+        return undoData;
     }
 }
 

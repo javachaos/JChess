@@ -16,4 +16,6 @@ module com.github.javachaos.jchess.jchess {
     exports com.github.javachaos.jchess.gamelogic.states.core;
     exports com.github.javachaos.jchess.exceptions;
     opens com.github.javachaos.jchess.gamelogic.ai.player to com.google.gson;
+    exports com.github.javachaos.jchess.gamelogic.saves;
+    opens com.github.javachaos.jchess.gamelogic.saves to javafx.fxml;
 }

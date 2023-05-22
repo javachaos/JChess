@@ -1,40 +1,37 @@
 package com.github.javachaos.jchess.gamelogic.ai.trees;
 
-import com.github.javachaos.jchess.gamelogic.Board;
-import com.github.javachaos.jchess.gamelogic.ChessBoard;
-import com.github.javachaos.jchess.gamelogic.ai.player.MinimaxAIPlayer;
+import com.github.javachaos.jchess.gamelogic.ai.player.Player;
+import com.github.javachaos.jchess.gamelogic.pieces.core.Move;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public class Node {
 
     private final String fen;
 
-    private MinimaxAIPlayer player;
+    private final Player activePlayer;
 
-    int score;
+    private final int score;
 
-    List<Node> children;
+    private final Move lastMove;
 
-    public Node(MinimaxAIPlayer player, String fen) {
+    private final Set<Node> children;
+
+    public Node(String fen, int score, Player activePlayer, Move lastMove) {
+        this.score = score;
         this.fen = fen;
-        this.player = player;
-        children = new ArrayList<>();
-    }
-
-    public Node(Board board) {
-        this.player = (MinimaxAIPlayer) board.getAI();
-        this.fen = board.getFenString();
-        children = new ArrayList<>();
-    }
-
-    public Board getBoard() {
-        return new ChessBoard(player, fen);
+        this.activePlayer = activePlayer;
+        this.children = new LinkedHashSet<>();
+        this.lastMove = lastMove;
     }
 
     public void addChild(Node n) {
         children.add(n);
+    }
+
+    public Move getLastMove() {
+        return lastMove;
     }
 
     public Node[] getChildren() {
@@ -44,4 +41,13 @@ public class Node {
     public boolean isLeaf() {
         return children.isEmpty();
     }
+
+    public String getFen() {
+        return fen;
+    }
+
+    public Player getActivePlayer() {
+        return activePlayer;
+    }
+
 }

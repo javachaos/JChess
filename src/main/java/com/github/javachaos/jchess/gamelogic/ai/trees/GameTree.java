@@ -2,15 +2,13 @@ package com.github.javachaos.jchess.gamelogic.ai.trees;
 
 import com.github.javachaos.jchess.exceptions.JChessException;
 import com.github.javachaos.jchess.gamelogic.Board;
+import com.github.javachaos.jchess.gamelogic.ChessBoard;
 import com.github.javachaos.jchess.gamelogic.ai.player.MinimaxAIPlayer;
 import com.github.javachaos.jchess.gamelogic.ai.player.Player;
 import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Move;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
 import com.github.javachaos.jchess.gamelogic.states.core.ChessGame;
-import com.github.javachaos.jchess.gamelogic.states.impl.BlackWinState;
-import com.github.javachaos.jchess.gamelogic.states.impl.StalemateState;
-import com.github.javachaos.jchess.gamelogic.states.impl.WhiteWinState;
 import com.github.javachaos.jchess.utils.ExceptionUtils;
 
 import java.util.*;
@@ -26,6 +24,7 @@ public class GameTree {
 
     public GameTree(ChessGame game) {
         this.game = game;
+        currentTree = null;
     }
 
     /**
@@ -35,7 +34,7 @@ public class GameTree {
      * @param p the player we are creating this tree for.
      */
     private void updateTree(Board cb, Player p) {
-        Node n = new Node(cb);
+        Node n = new Node(cb.getFenString(), cb.boardScore(p), p, cb.getLastMove());
         currentTree = buildTree(n, p, MAX_DEPTH);
         treePresent = true;
     }
@@ -69,28 +68,21 @@ public class GameTree {
     }
 
     private Node buildTree(Node root, Player p, int depth) {
-        Board board = game.getBoard();
-        if (depth <= 0
-        || game.getCurrentState() instanceof StalemateState
-        || game.getCurrentState() instanceof WhiteWinState
-        || game.getCurrentState() instanceof BlackWinState) {
+        if (depth <= 0) {
             return root;
-        } else {
-            Board copy = board.deepCopy();
-            for (Move m : getAllPossibleMoves(copy, p)) {
-                try {
-                    copy.movePiece(m.from(), m.to());
-                } catch (JChessException e) {
-                    ExceptionUtils.log(e);
-                    continue;
-                }
-                Node childNode = new Node(copy);
-                root.addChild(childNode);
-                root.addChild(
-                        buildTree(childNode,
-                                p == Player.WHITE ? Player.BLACK : Player.WHITE, depth - 1));
-                game.undo();
+        }
+        Board copy = game.getBoard().deepCopy();
+        for (Move m : getAllPossibleMoves(copy, p)) {
+            try {
+                copy.movePiece(m.from(), m.to());
+            } catch (JChessException e) {
+                ExceptionUtils.log(e);
+                continue;
             }
+            Node childNode = new Node(copy.getFenString(), copy.boardScore(p), p, m);
+            root.addChild(childNode);
+            buildTree(childNode,
+                    p == Player.WHITE ? Player.BLACK : Player.WHITE, depth - 1);
         }
         return root;
     }
@@ -117,7 +109,7 @@ public class GameTree {
             int score = minimax(child, MAX_DEPTH - 1, Integer.MIN_VALUE, Integer.MAX_VALUE, true);
             if (score > bestScore) {
                 bestScore = score;
-                bestMove = child.getBoard().getLastMove();
+                bestMove = child.getLastMove();
             }
         }
         return bestMove;
@@ -125,10 +117,11 @@ public class GameTree {
 
     private int minimax(Node node, int depth, int alpha, int beta, boolean maximizingPlayer) {
         if (depth == 0 || node.isLeaf()) {
-            return node.getBoard().boardScore(game.getBoard().getAI().getColor());
+            return new ChessBoard(null, node.getFen()).boardScore(game.getBoard().getAI().getColor());
         }
+        int bestScore;
         if (maximizingPlayer) {
-            int bestScore = Integer.MIN_VALUE;
+            bestScore = Integer.MIN_VALUE;
             for (Node child : node.getChildren()) {
                 int score = minimax(child, depth - 1, alpha, beta, false);
                 bestScore = Math.max(bestScore, score);
@@ -137,9 +130,8 @@ public class GameTree {
                     break;
                 }
             }
-            return bestScore;
         } else {
-            int bestScore = Integer.MAX_VALUE;
+            bestScore = Integer.MAX_VALUE;
             for (Node child : node.getChildren()) {
                 int score = minimax(child, depth - 1, alpha, beta, true);
                 bestScore = Math.min(bestScore, score);
@@ -148,8 +140,8 @@ public class GameTree {
                     break;
                 }
             }
-            return bestScore;
         }
+        return bestScore;
     }
 
     public Move getAIMove(Board b, Player p) {
