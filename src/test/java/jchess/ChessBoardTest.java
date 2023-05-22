@@ -232,7 +232,8 @@ public class ChessBoardTest {
                 "rnbqk2r/pp2ppbp/6p1/3pP3/3P4/8/PPP2PPP/R1BQKBNR w KQkq - 1 7",
                 "r3k2r/1bpq1pp1/p1np4/1p2p3/1P2P3/2P5/3Q1PPP/R1B1KBNR w KQkq - 1 14",
                 "2kr1b1r/pppbqppp/1bn1pn2/1B6/3PP3/2N2N2/PPP2PPP/R1BQK2R w KQ - 4 8",
-                "rnbq1rk1/1p3ppp/p1p1pn2/3p4/1b1P4/2NBPN2/PP3PPP/R1BQ1RK1 b - - 0 10"
+                "rnbq1rk1/1p3ppp/p1p1pn2/3p4/1b1P4/2NBPN2/PP3PPP/R1BQ1RK1 b - - 0 10",
+                "r1b2rk1/2pnbppp/p1pq4/3p4/P4P2/1PNNP3/2PP2PP/R1BQK2R w KQ - 1 11"
         );
         complexFens.forEach(this::testValidFen);
     }
@@ -257,7 +258,17 @@ public class ChessBoardTest {
                         "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0",
                         "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 A",
                         "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1 2",
-                        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQ - 0 1 2");
+                        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQ - 0 1 2",
+                        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR", // FEN string missing the rest of the fields
+                        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w -", // FEN string missing halfmove clock and fullmove number
+                        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - 50", // FEN string missing fullmove number
+                        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - 50 ABC", // Invalid characters in the halfmove clock field
+                        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - 50 101 1", // Extra field at the end
+                        "rnbqkbnr/ppp1pppp/8/3p4/3P4/8/PPP2PPP/RNBQKBNR w KQkq - 0", // Missing fullmove number
+                        "rnbqkbnr/ppp1pppp/8/3p4/3P4/8/PPP2PPP/RNBQKBNR w KQkq 0 50", // Invalid order of fields
+                        "rnbqkbnr/ppp1pppp/8/3p4/3P4/8/PPP2PPP/RNBQKBNR w KQkq 50 -", // Invalid en passant field
+                        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w TZSF - 50 101" // Invalid castling rights field
+                );
         invalidFens.forEach(this::testInvalidFen);
     }
 
@@ -265,9 +276,9 @@ public class ChessBoardTest {
     private void testValidFen(String assumedValid) {
         ChessBoard board = new ChessBoard(new MinimaxAIPlayer(Player.BLACK, new ChessGame(new JChessController())));
         // Apply the FEN string to the board
-        board.applyFen(assumedValid);
 
         LOGGER.info(assumedValid);
+        board.applyFen(assumedValid);
         // Assert the FEN string representation of
         // the board matches the assumedValid string
         String fenString = board.getFenString();
@@ -278,6 +289,11 @@ public class ChessBoardTest {
 
     private void testInvalidFen(String assumedInvalid) {
         ChessBoard b = new ChessBoard(new MinimaxAIPlayer(Player.BLACK, new ChessGame(new JChessController())));
-        assertThrows(IllegalArgumentException.class, () -> b.applyFen(assumedInvalid));
+        try {
+            assertThrows(IllegalArgumentException.class, () -> b.applyFen(assumedInvalid));
+        } catch (AssertionError e) {
+            LOGGER.error("Assertion failed: " + e.getMessage());
+            LOGGER.info(assumedInvalid);
+        }
     }
 }

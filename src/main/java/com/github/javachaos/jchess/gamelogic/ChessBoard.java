@@ -93,11 +93,17 @@ public class ChessBoard implements Board {
      * @param fen a valid fen string
      */
     private void parseFenAndUpdate(String fen) {
-        String fenRegex = "^(?:[rnbqkpRNBQKP1-8]{1,8}/){7}[rnbqkpRNBQKP1-8]{1,8} " +
-                "[wb] " +
-                "(?:[KQkq-]{1,4} )?" +
-                "(?:[a-h][1-8]|-) " +
-                "\\d+ \\d+$";
+        String fenRegex =
+                "^(?:[rnbqkpRNBQKP1-8]{1,8}/){7}[rnbqkpRNBQKP1-8]{1,8} " +// board
+                "[wb] " + // active player
+                "(?:[KQkq-]{1,4} )?" + // Castle Rights
+                "(?:[a-h][1-8]|-)" + // Enpassant square
+                "\\s+" +
+                "(\\d+)" + // half move count
+                "\\s+" +
+                "(\\d+)" + // full move count
+                "\\s*$";
+
         if (!fen.matches(fenRegex)) {
             throw new IllegalArgumentException("Invalid fen string!");
         }
