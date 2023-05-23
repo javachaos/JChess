@@ -18,6 +18,9 @@ import static com.github.javachaos.jchess.gamelogic.managers.GSM.GameState.UNDO;
  */
 public class GSM {
 
+    //TODO AI needs its own Undo/Redo stacks to prevent clobbering the players Undo/Redo stacks during
+    // saving and loading...
+
     private static final Logger LOGGER = LogManager.getLogger(GSM.class);
     private static GSM instance;
     private Player currentPlayer;
