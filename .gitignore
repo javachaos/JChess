@@ -44,3 +44,4 @@ build/
 /jchess_redo.json
 /jchess_undo.json
 .idea/inspectionProfiles/
+/.idea/sonarlint.xml
