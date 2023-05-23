@@ -43,6 +43,11 @@ To play JChess, simply start the application and begin playing! Use the mouse to
 
 If you'd like to contribute to JChess, feel free to submit a pull request or open an issue on the GitHub repository.
 
+## RoadMap
+
+I hope to eventually implement a simple DQN neural network and train the AI to play better than most human players.
+Or simply implement a minimax algorithm which can achieve the same level of intelligence.
+
 ## License
 
 This project is licensed under the GPLv3 License - see the [LICENSE](LICENSE) file for details.
