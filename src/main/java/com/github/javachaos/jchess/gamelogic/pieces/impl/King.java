@@ -4,7 +4,8 @@ import com.github.javachaos.jchess.gamelogic.ChessBoard;
 import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.PiecePos;
-import com.github.javachaos.jchess.gamelogic.pieces.core.player.Player;
+import com.github.javachaos.jchess.gamelogic.pieces.core.SimplePiece;
+import com.github.javachaos.jchess.gamelogic.player.Player;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,5 +65,11 @@ public class King extends AbstractPiece {
     public boolean isKing() {
         return true;
     }
+
+    @Override
+    public SimplePiece toSimple() {
+        return new SimplePiece(getPlayer() == Player.WHITE ? 'K' : 'k', getPos());
+    }
+
 
 }

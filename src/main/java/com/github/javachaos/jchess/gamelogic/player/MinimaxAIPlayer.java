@@ -1,4 +1,4 @@
-package com.github.javachaos.jchess.gamelogic.pieces.core.player;
+package com.github.javachaos.jchess.gamelogic.player;
 
 import com.github.javachaos.jchess.exceptions.JChessException;
 import com.github.javachaos.jchess.gamelogic.Alerts;
@@ -7,7 +7,6 @@ import com.github.javachaos.jchess.gamelogic.managers.GSM;
 import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Move;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
-import com.github.javachaos.jchess.utils.ExceptionUtils;
 
 import java.util.*;
 
@@ -27,7 +26,6 @@ public class MinimaxAIPlayer extends AbstractAIPlayer implements AIPlayer {
             try {
                 b.movePiece(m.from(), m.to());
             } catch (JChessException e) {
-                ExceptionUtils.log(e);
                 continue;
             }
             int score = b.boardScore();

@@ -1,7 +1,7 @@
 package com.github.javachaos.jchess.gamelogic.pieces.core;
 
 import com.github.javachaos.jchess.gamelogic.ChessBoard;
-import com.github.javachaos.jchess.gamelogic.pieces.core.player.Player;
+import com.github.javachaos.jchess.gamelogic.player.Player;
 
 public interface Piece {
 
@@ -78,4 +78,5 @@ public interface Piece {
      */
     boolean isKing();
 
+    SimplePiece toSimple();
 }

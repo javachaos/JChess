@@ -3,8 +3,8 @@ package jchess;
 import com.github.javachaos.jchess.gamelogic.ChessBoard;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.PiecePos;
-import com.github.javachaos.jchess.gamelogic.pieces.core.player.MinimaxAIPlayer;
-import com.github.javachaos.jchess.gamelogic.pieces.core.player.Player;
+import com.github.javachaos.jchess.gamelogic.player.MinimaxAIPlayer;
+import com.github.javachaos.jchess.gamelogic.player.Player;
 import com.github.javachaos.jchess.gamelogic.pieces.impl.*;
 import org.junit.jupiter.api.Test;
 

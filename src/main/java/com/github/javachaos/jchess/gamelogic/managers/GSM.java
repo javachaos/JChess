@@ -2,7 +2,7 @@ package com.github.javachaos.jchess.gamelogic.managers;
 
 import com.github.javachaos.jchess.gamelogic.Board;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Move;
-import com.github.javachaos.jchess.gamelogic.pieces.core.player.Player;
+import com.github.javachaos.jchess.gamelogic.player.Player;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -24,8 +24,6 @@ public class GSM {
     private GameState currentState;
     private Player aiColor;
 
-    private Board board;
-
     private final Deque<Move> undoStack = new ArrayDeque<>();
     private final Deque<Move> redoStack = new ArrayDeque<>();
 
@@ -38,13 +36,6 @@ public class GSM {
             instance = new GSM();
         }
         return instance;
-    }
-
-    public void reset() {
-        undoStack.clear();
-        redoStack.clear();
-        board.reset();
-
     }
 
     public void undo(Board b) {

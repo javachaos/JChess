@@ -1,7 +1,7 @@
 package com.github.javachaos.jchess.gamelogic.pieces.core;
 
 import com.github.javachaos.jchess.gamelogic.ChessBoard;
-import com.github.javachaos.jchess.gamelogic.pieces.core.player.Player;
+import com.github.javachaos.jchess.gamelogic.player.Player;
 
 import java.util.ArrayList;
 import java.util.List;

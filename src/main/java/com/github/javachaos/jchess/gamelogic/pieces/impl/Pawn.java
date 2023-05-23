@@ -4,7 +4,8 @@ import com.github.javachaos.jchess.gamelogic.ChessBoard;
 import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.PiecePos;
-import com.github.javachaos.jchess.gamelogic.pieces.core.player.Player;
+import com.github.javachaos.jchess.gamelogic.pieces.core.SimplePiece;
+import com.github.javachaos.jchess.gamelogic.player.Player;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -100,7 +101,12 @@ public class Pawn extends AbstractPiece {
 
     @Override
     public int hashCode() {
-        return Objects.hash(pos, color);
+        return Objects.hash(super.hashCode(), start);
+    }
+
+    @Override
+    public SimplePiece toSimple() {
+        return new SimplePiece(getPlayer() == Player.WHITE ? 'P' : 'p', getPos());
     }
 
 }

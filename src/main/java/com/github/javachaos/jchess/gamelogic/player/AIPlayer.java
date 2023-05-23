@@ -1,4 +1,4 @@
-package com.github.javachaos.jchess.gamelogic.pieces.core.player;
+package com.github.javachaos.jchess.gamelogic.player;
 
 import com.github.javachaos.jchess.gamelogic.ChessBoard;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Move;
@@ -24,10 +24,12 @@ public interface AIPlayer {
      */
     Player getColor();
 
+
     /**
      * Return the opponent.
      * @return the opponent
      */
+    @SuppressWarnings("unused")
     Player getOpponent();
 
 }

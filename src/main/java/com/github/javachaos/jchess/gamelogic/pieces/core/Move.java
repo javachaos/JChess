@@ -1,6 +1,6 @@
 package com.github.javachaos.jchess.gamelogic.pieces.core;
 
-import com.github.javachaos.jchess.gamelogic.pieces.core.player.Player;
+import com.github.javachaos.jchess.gamelogic.player.Player;
 
 /**
  * Represents a single move done in a chess game.

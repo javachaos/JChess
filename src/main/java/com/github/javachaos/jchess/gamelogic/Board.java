@@ -2,6 +2,7 @@ package com.github.javachaos.jchess.gamelogic;
 
 import com.github.javachaos.jchess.gamelogic.pieces.core.Move;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
+import com.github.javachaos.jchess.gamelogic.player.Player;
 
 public interface Board {
 
@@ -29,4 +30,12 @@ public interface Board {
      * Reset the board to the default start state.
      */
     void reset();
+
+    /**
+     * Clear the board, and update this boards pieces to reflect the fen string.
+     * @param fen the FEN (Forsyth-Edwards Notation) string
+     */
+    void applyFen(String fen);
+
+    Player getActivePlayer();
 }

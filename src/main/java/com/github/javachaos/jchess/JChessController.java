@@ -3,12 +3,15 @@ package com.github.javachaos.jchess;
 import com.github.javachaos.jchess.exceptions.JChessException;
 import com.github.javachaos.jchess.gamelogic.ChessBoard;
 import com.github.javachaos.jchess.gamelogic.managers.GSM;
-import com.github.javachaos.jchess.gamelogic.managers.SaveLoadManager;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Move;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.PiecePos;
-import com.github.javachaos.jchess.gamelogic.pieces.core.player.MinimaxAIPlayer;
-import com.github.javachaos.jchess.gamelogic.pieces.core.player.Player;
+import com.github.javachaos.jchess.gamelogic.player.MinimaxAIPlayer;
+import com.github.javachaos.jchess.gamelogic.player.Player;
+import com.github.javachaos.jchess.gamelogic.saves.ISaveLoader;
+import com.github.javachaos.jchess.gamelogic.saves.SaveLoadManager;
+import com.github.javachaos.jchess.gamelogic.saves.SaveData;
+import com.github.javachaos.jchess.gamelogic.saves.VoidSaveLoadManager;
 import com.github.javachaos.jchess.utils.Constants;
 import com.github.javachaos.jchess.utils.ExceptionUtils;
 import com.github.javachaos.jchess.utils.ImageLoader;
@@ -25,9 +28,12 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.stage.FileChooser;
+import javafx.stage.Window;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.File;
 import java.util.*;
 
 public class JChessController {
@@ -35,6 +41,8 @@ public class JChessController {
     public static final Logger LOGGER = LogManager.getLogger(
             JChessController.class);
     private List<StackPane> highlightedPanes;
+
+    private Window windowRef;
 
     @FXML
     public Button newgameBtn;
@@ -53,7 +61,6 @@ public class JChessController {
     private ChessBoard board;
     private StackPane currentSelection;
     private boolean pieceSelected;
-    private SaveLoadManager saveLoadManager;
     private ImageLoader imLoader;
 
     @FXML
@@ -86,8 +93,6 @@ public class JChessController {
 
     private void initFiles() {
         imLoader = new ImageLoader();
-        saveLoadManager = new SaveLoadManager(Constants.UNDO_SAVEFILE,
-                Constants.REDO_SAVEFILE);
     }
 
     private void redrawPieces() {
@@ -201,17 +206,16 @@ public class JChessController {
 
     void loadButtonHandler() {
         LOGGER.info("Loading saved game.");
-        Deque<Move> redos = saveLoadManager.loadRedos();
-        Deque<Move> undos = saveLoadManager.loadUndos();
+        SaveData udd = chooseFile(false).load();
+        Deque<Move> redos = udd.undoList();
+        Deque<Move> undos = udd.redoList();
         if (undos != null) {
             clearSelection();
-            board.reset();
+            GSM.instance().setTurn(board.getActivePlayer());
             GSM.instance().setUndos(undos);
             GSM.instance().setRedos(redos);
-            while (!undos.isEmpty()) {
-                Move m = undos.pollLast();
-                board.doMove(m);
-            }
+            board.setCapturedPieces(udd.captives());
+            board.applyFen(udd.fen());
             redrawPieces();
         }
     }
@@ -237,9 +241,44 @@ public class JChessController {
 
     void saveButtonHandler() {
         LOGGER.info("Saving game.");
-        saveLoadManager.setUndoMoves(GSM.instance().getUndos());
-        saveLoadManager.setRedoMoves(GSM.instance().getRedos());
-        saveLoadManager.save();
+        ISaveLoader sl = chooseFile(true);
+        sl.save();
+    }
+
+    public void setStage(Window windowRef) {
+        this.windowRef = windowRef;
+    }
+
+    /**
+     * Private helper method to show a file chooser with .json extension filter
+     * then return a new {@link SaveLoadManager} from the selected file.
+     *
+     * @param save true if the chooser is intended to save a new game save.
+     * @return a new {@link SaveLoadManager}
+     */
+    private ISaveLoader chooseFile(boolean save) {
+        FileChooser fc = new FileChooser();
+        fc.setTitle("Save/Load Game");
+        fc.setInitialDirectory(Constants.DEFAULT_SAVE_DIR);
+        fc.setInitialFileName("jchess.json");
+        fc.setSelectedExtensionFilter(new FileChooser.ExtensionFilter("JSON", ".json"));
+        File selectedFile;
+        if (save) {
+            selectedFile = fc.showSaveDialog(windowRef);
+            SaveData sd = new SaveData(GSM.instance().getUndos(), GSM.instance().getRedos(),
+                    board.getCapturedPieces(), board.getFenString());
+            SaveLoadManager slm = new SaveLoadManager(selectedFile.getAbsolutePath());
+            slm.setSaveData(sd);
+            return slm;
+        } else {
+            selectedFile = fc.showOpenDialog(windowRef);
+        }
+
+        if (selectedFile == null) {
+            return new VoidSaveLoadManager();
+        }
+
+        return new SaveLoadManager(selectedFile.getAbsolutePath());
     }
 
     private void clearSelection() {
@@ -313,6 +352,5 @@ public class JChessController {
         innerShadow.setColor(Color.color(0.0, 1.0, 1.0));
         return innerShadow;
     }
-
 
 }
