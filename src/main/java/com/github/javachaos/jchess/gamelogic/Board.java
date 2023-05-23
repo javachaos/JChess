@@ -193,4 +193,6 @@ public interface Board {
     void applyFen(String fenStr);
 
     Player getActivePlayer();
+
+	boolean isValid(Move bestMove);
 }

@@ -159,7 +159,8 @@ public class ChessGame {
      * @param currentMove the current move.
      * @throws JChessException if the currentMove would put the player into check
      */
-    private void inCheck(Move currentMove) throws JChessException {
+    @SuppressWarnings("unused")
+	private void inCheck(Move currentMove) throws JChessException {
         Optional<Piece> p = board.getPiece(currentMove.to());
         if (p.isPresent()) {
             King ourKing = (King) board.getKing(p.get().getPlayer());
@@ -173,7 +174,8 @@ public class ChessGame {
         }
     }
 
-    private Piece doMove(Move m) {
+    @SuppressWarnings("unused")
+	private Piece doMove(Move m) {
         Piece captive = null;
         PiecePos f = m.from();
         PiecePos t = m.to();

@@ -12,7 +12,7 @@ public class Node {
 
     private final Player activePlayer;
 
-    private final int score;
+    private int score;
 
     private final Move lastMove;
 
@@ -49,5 +49,13 @@ public class Node {
     public Player getActivePlayer() {
         return activePlayer;
     }
+
+	public int getScore() {
+		return score;
+	}
+
+	public void setScore(int bestScore) {
+		this.score = bestScore;		
+	}
 
 }

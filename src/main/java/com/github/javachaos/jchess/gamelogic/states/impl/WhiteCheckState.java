@@ -1,6 +1,5 @@
 package com.github.javachaos.jchess.gamelogic.states.impl;
 
-import com.github.javachaos.jchess.exceptions.StateTransitionException;
 import com.github.javachaos.jchess.gamelogic.ai.player.Player;
 import com.github.javachaos.jchess.gamelogic.states.core.AbstractGameState;
 import com.github.javachaos.jchess.gamelogic.states.core.ChessGame;

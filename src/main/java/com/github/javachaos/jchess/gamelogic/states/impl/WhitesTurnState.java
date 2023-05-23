@@ -16,7 +16,9 @@ public class WhitesTurnState extends AbstractGameState {
 
     @Override
     public void handle() {
-        if (!(game.getPrevState() instanceof StartState)  && !(game.getPrevState() instanceof BlacksTurnState)
+        if (!(game.getPrevState() instanceof StartState)
+                && !(game.getPrevState() instanceof BlacksTurnState
+                || game.getPrevState() instanceof WhitesTurnState)
         && !(game.getPrevState() instanceof WhiteCheckState)) {
             invalidState();
         }

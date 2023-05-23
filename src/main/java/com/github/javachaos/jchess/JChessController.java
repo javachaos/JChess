@@ -336,13 +336,23 @@ public class JChessController {
         applySelectedEffect(selectedPane);
     }
 
-    private void attemptPlayerMove(StackPane selectedPane, PiecePos p, ChessGame cg) {
+    /**
+     * Attempt to make a move for the player.
+     * @param selectedPane the selected stack pane
+     * @param p the desired position
+     * @param cg chessGame instance
+     * @return true if the move was valid
+     */
+    private boolean attemptPlayerMove(StackPane selectedPane, PiecePos p, ChessGame cg) {
         if (pieceSelected && highlightedPanes.contains(selectedPane)) {
             PiecePos from = (PiecePos) currentSelection.getUserData();
             Piece piece = cg.getBoard().getPiece(from).orElseThrow();
             AbstractPiece.PieceType pt = piece.getType();
             Player player = piece.getPlayer();
             whitesNextMove = new Move(from, p, pt, player);
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -357,12 +367,22 @@ public class JChessController {
         PiecePos selectedPiece = (PiecePos) selectedPane.getUserData();
         currentState = chessGame.getCurrentState();
         currentState.handle();
+        if (currentState instanceof StartState) {
+            Alerts.info("Good Luck.");
+            currentState.handle();
+        }
+        if (currentState instanceof EndState) {
+            Alerts.info("Game over.");
+            currentState.handle();
+        }
         if (currentState instanceof WhitesTurnState) {
             gameStatus.setText("Whites turn.");
-            attemptPlayerMove(selectedPane, selectedPiece, chessGame);
+            boolean validMove = attemptPlayerMove(selectedPane, selectedPiece, chessGame);
             clearSelection();
             highlightSquares(selectedPane, selectedPiece);
-            currentState.handle();
+            if (validMove) {
+                currentState.handle();
+            }
         }
         if (currentState instanceof WhiteCheckState)  {
             gameStatus.setText("White in check!");

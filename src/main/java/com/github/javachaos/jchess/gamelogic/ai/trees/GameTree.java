@@ -1,5 +1,10 @@
 package com.github.javachaos.jchess.gamelogic.ai.trees;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
+
 import com.github.javachaos.jchess.exceptions.JChessException;
 import com.github.javachaos.jchess.gamelogic.Board;
 import com.github.javachaos.jchess.gamelogic.ChessBoard;
@@ -9,12 +14,11 @@ import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Move;
 import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
 import com.github.javachaos.jchess.gamelogic.states.core.ChessGame;
-import com.github.javachaos.jchess.utils.ExceptionUtils;
-
-import java.util.*;
 
 public class GameTree {
-    private static final int MAX_DEPTH = 3;
+    private static final int MAX_DEPTH = 2;
+    
+    private HashMap<String, Integer> transpositionTable = new HashMap<>();
 
     private Node currentTree;
 
@@ -73,12 +77,12 @@ public class GameTree {
         }
         Board copy = game.getBoard().deepCopy();
         for (Move m : getAllPossibleMoves(copy, p)) {
-            try {
-                copy.movePiece(m.from(), m.to());
-            } catch (JChessException e) {
-                ExceptionUtils.log(e);
-                continue;
-            }
+	        try {
+	            copy.movePiece(m.from(), m.to());
+	        } catch (JChessException e) {
+	            //ExceptionUtils.log(e);
+	            continue;
+	        }
             Node childNode = new Node(copy.getFenString(), copy.boardScore(p), p, m);
             root.addChild(childNode);
             buildTree(childNode,
@@ -114,10 +118,19 @@ public class GameTree {
         }
         return bestMove;
     }
-
+    
     private int minimax(Node node, int depth, int alpha, int beta, boolean maximizingPlayer) {
+        // Check if the position is already in the transposition table
+        String positionKey = node.getFen(); // Use a unique identifier for the position (e.g., FEN string)
+        if (transpositionTable.containsKey(positionKey)) {
+            return transpositionTable.get(positionKey);
+        }
+
         if (depth == 0 || node.isLeaf()) {
-            return new ChessBoard(null, node.getFen()).boardScore(game.getBoard().getAI().getColor());
+            int score = new ChessBoard(null, positionKey).boardScore(game.getBoard().getAI().getColor());
+            node.setScore(score); // Store the score in the current node
+            transpositionTable.put(positionKey, score); // Store the score in the transposition table
+            return score;
         }
         int bestScore;
         if (maximizingPlayer) {
@@ -141,14 +154,22 @@ public class GameTree {
                 }
             }
         }
+        node.setScore(bestScore); // Store the best score in the current node
         return bestScore;
     }
+
 
     public Move getAIMove(Board b, Player p) {
         if (currentTree == null) {
             MinimaxAIPlayer.LOGGER.info("Current game tree null.");
             updateTree(b, p);
         }
-        return getBestMove(currentTree);
+        Node n = new Node(
+        		b.getFenString(),
+        		b.boardScore(b.getAI().getColor()),
+        		p,
+        		b.getLastMove());
+        currentTree = buildTree(n, p, MAX_DEPTH);
+		return getBestMove(currentTree);
     }
 }

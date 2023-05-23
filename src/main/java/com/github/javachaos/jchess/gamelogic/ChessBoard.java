@@ -63,8 +63,10 @@ public class ChessBoard implements Board {
     );
 
     public ChessBoard(AIPlayer ai) {
-        castleRights[0] = true; // White can castle
-        castleRights[1] = true; // Black can castle
+        castleRights[0] = true; // K
+        castleRights[1] = true; // Q
+        castleRights[2] = true; // k
+        castleRights[3] = true; // q
         capturedPieces = new ArrayList<>();
         currentPieces = new ArrayList<>();
         allPositions = new ArrayList<>();
@@ -74,14 +76,6 @@ public class ChessBoard implements Board {
     public ChessBoard(AIPlayer ai, String fen) {
         this(ai);
         parseFenAndUpdate(fen);
-    }
-
-    private ChessBoard(AIPlayer p, List<Piece> capturedPieces,
-                       List<Piece> currentPieces, List<PiecePos> allPositions) {
-        this.capturedPieces = new ArrayList<>(capturedPieces);
-        this.currentPieces = new ArrayList<>(currentPieces);
-        this.allPositions = new ArrayList<>(allPositions);
-        this.ai = p;
     }
 
     /**
@@ -195,8 +189,9 @@ public class ChessBoard implements Board {
             Piece piece = p.get();
 
             if (!piece.canMove(this, desiredPos)) {
-                LOGGER.debug("Invalid move for player {}: {}",
-                        piece.getPlayer(), desiredPos);
+                throw new JChessException("Invalid move for player "
+                        + piece.getPlayer() 
+                        + ": " + desiredPos);
             } else {
                 Move currentMove = new Move(pos, desiredPos,
                         AbstractPiece.PieceType.NONE, piece.getPlayer());
@@ -210,7 +205,7 @@ public class ChessBoard implements Board {
                 lastMove = currentMove;
             }
         } else {
-            LOGGER.info("Invalid move, piece does not exist at {}", pos);
+            throw new JChessException("Invalid move, piece does not exist at " + pos);
         }
     }
 
@@ -273,7 +268,7 @@ public class ChessBoard implements Board {
 
     @Override
     public Piece doMove(Move m) {
-        LOGGER.info("Attempting move: {}", m);
+        //LOGGER.info("Attempting move: {}", m);
         Piece captive = null;
         PiecePos f = m.from();
         PiecePos t = m.to();
@@ -360,12 +355,10 @@ public class ChessBoard implements Board {
         }
     }
 
-    @SuppressWarnings("unused")
     public List<Piece> getWhiteCaptives() {
         return capturedPieces.stream().filter(Piece::isWhite).toList();
     }
 
-    @SuppressWarnings("unused")
     public List<Piece> getBlackCaptives() {
         return capturedPieces.stream().filter(Piece::isBlack).toList();
     }
@@ -450,7 +443,8 @@ public class ChessBoard implements Board {
                 case PAWN -> 1;
                 case ROOK -> 5;
                 case BISHOP, KNIGHT -> 3;
-                case KING, NONE -> 0;
+                case KING -> 25;
+                case NONE -> 0;
                 case QUEEN -> 9;
             };
 
@@ -517,5 +511,11 @@ public class ChessBoard implements Board {
         };
         return piece.isWhite() ? symbol : Character.toLowerCase(symbol);
     }
+
+	@Override
+	public boolean isValid(Move bestMove) {
+        Optional<Piece> p = getPiece(bestMove.from());
+        return p.isPresent() && p.get().canMove(this, bestMove.to());
+	}
 
 }
