@@ -3,7 +3,7 @@ package com.github.javachaos.jchess.logic;
 import com.github.javachaos.jchess.utils.BitUtils;
 
 /**
- * Light weight chess board representation, using bitboards.
+ * Lightweight chess board representation, using bitboards.
  *
  * @author fred
  *
