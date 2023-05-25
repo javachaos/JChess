@@ -6,54 +6,51 @@ import com.github.javachaos.jchess.utils.BitUtils;
  * Lightweight chess board representation, using bitboards.
  *
  * @author fred
- *
  */
 public class ChessBoard {
+    private static final char[][] INIT_BOARD = {
+            {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},
+            {'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'},
+            {'.', '.', '.', '.', '.', '.', '.', '.'},
+            {'.', '.', '.', '.', '.', '.', '.', '.'},
+            {'.', '.', '.', '.', '.', '.', '.', '.'},
+            {'.', '.', '.', '.', '.', '.', '.', '.'},
+            {'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'},
+            {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'}
+    };
+    private final long[] bits;
     private long occupancy = 0L;
 
-	private static final char[][] INIT_BOARD = {
-		    {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},
-		    {'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'},
-		    {'.', '.', '.', '.', '.', '.', '.', '.'},
-		    {'.', '.', '.', '.', '.', '.', '.', '.'},
-		    {'.', '.', '.', '.', '.', '.', '.', '.'},
-		    {'.', '.', '.', '.', '.', '.', '.', '.'},
-		    {'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'},
-		    {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'}
-		};
-    
-	private final long[] bits;
-
     public ChessBoard(char[][] initialBoard) {
-    	bits = BitUtils.createBitBoard(initialBoard);
-    	updateOccupancy();
+        bits = BitUtils.createBitBoard(initialBoard);
+        updateOccupancy();
     }
 
     public ChessBoard() {
-    	this(INIT_BOARD);
+        this(INIT_BOARD);
     }
 
     private void updateOccupancy() {
-		for (long bit : bits) {
-			occupancy |= bit;
-		}
+        for (long bit : bits) {
+            occupancy |= bit;
+        }
     }
 
-	@SuppressWarnings("unused")
+    @SuppressWarnings("unused")
     public long getOccupancy() {
-    	return occupancy;
+        return occupancy;
     }
-    
+
     public void printOccupancy() {
-    	BitUtils.printBitboard(occupancy);
+        BitUtils.printBitboard(occupancy);
     }
-    
+
     public void printBoard() {
-    	BitUtils.printBits(bits);
+        BitUtils.printBits(bits);
     }
-    
+
     public char[][] toCharArray() {
-    	return BitUtils.bitsToCharArray(bits);
+        return BitUtils.bitsToCharArray(bits);
     }
-   
+
 }

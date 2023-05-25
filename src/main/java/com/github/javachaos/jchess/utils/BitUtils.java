@@ -172,22 +172,6 @@ public class BitUtils {
         }
     }
 
-    public int popCount(long x) {
-        /* -1/3 */
-        long k1 = 0x5555555555555555L;
-        x = x - ((x >> 1) & k1); /* put count of each 2 bits into those 2 bits */
-        /* -1/5 */
-        long k2 = 0x3333333333333333L;
-        x = (x & k2) + ((x >> 2) & k2); /* put count of each 4 bits into those 4 bits */
-        /* -1/17 */
-        long k4 = 0x0f0f0f0f0f0f0f0fL;
-        x = (x + (x >> 4)) & k4; /* put count of each 8 bits into those 8 bits */
-        /* -1/255 */
-        long kf = 0x0101010101010101L;
-        x = (x * kf) >> 56; /* returns 8 most significant bits of x + (x<<8) + (x<<16) + (x<<24) + ... */
-        return (int) x;
-    }
-
     public static long soutOne(long b) {
         return b >> 8;
     }
@@ -225,5 +209,21 @@ public class BitUtils {
         s = (Character.toUpperCase(file)) - 65;
         s += 8 * (56 - rank);
         return s;
+    }
+
+    public int popCount(long x) {
+        /* -1/3 */
+        long k1 = 0x5555555555555555L;
+        x = x - ((x >> 1) & k1); /* put count of each 2 bits into those 2 bits */
+        /* -1/5 */
+        long k2 = 0x3333333333333333L;
+        x = (x & k2) + ((x >> 2) & k2); /* put count of each 4 bits into those 4 bits */
+        /* -1/17 */
+        long k4 = 0x0f0f0f0f0f0f0f0fL;
+        x = (x + (x >> 4)) & k4; /* put count of each 8 bits into those 8 bits */
+        /* -1/255 */
+        long kf = 0x0101010101010101L;
+        x = (x * kf) >> 56; /* returns 8 most significant bits of x + (x<<8) + (x<<16) + (x<<24) + ... */
+        return (int) x;
     }
 }
