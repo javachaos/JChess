@@ -71,7 +71,9 @@ public class BitUtils {
         //pawn right captures
         long moveBits = ((bits[0] >> 7) & captureBlackPieces & NOT_RANK_8 & NOT_A_FILE);
         if (popCount(moveBits) > 0) {
-            for (int i = 0; i < BOARD_SIZE * BOARD_SIZE; i++) {
+            int start = Long.numberOfTrailingZeros(moveBits);
+            int end = Long.numberOfLeadingZeros(moveBits);
+            for (int i = start; i < BOARD_SIZE * BOARD_SIZE - end; i++) {
                 if (((moveBits >>i) & 1L) == 1) {
                     moves.add(new Move(indexToPos(i / 8 + 1, i % 8 - 1),
                             indexToPos(i / 8,  i % 8), '.'));
