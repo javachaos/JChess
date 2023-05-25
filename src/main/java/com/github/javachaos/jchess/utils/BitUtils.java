@@ -8,11 +8,35 @@ import java.util.Arrays;
 @SuppressWarnings("unused")
 public class BitUtils {
 
+    private BitUtils() {}
+
     public static final Logger LOGGER = LogManager.getLogger(BitUtils.class);
 
     private static final int BOARD_SIZE = 8;
-    private static final long NOT_A_FILE = 0xfefefefefefefefeL;
-    private static final long NOT_H_FILE = 0x7f7f7f7f7f7f7f7fL;
+    private static final long RANK_8 = 0b00000000_00000000_00000000_00000000_00000000_00000000_11111111L;
+    private static final long RANK_1 = 0b11111111_00000000_00000000_00000000_00000000_00000000_00000000L;
+    private static final long FILE_A = 0b10000000_10000000_10000000_10000000_10000000_10000000_10000000L;
+    private static final long FILE_H = 0b00000001_00000001_00000001_00000001_00000001_00000001_00000001L;
+    private static final long NOT_A_FILE = ~FILE_A;
+    private static final long NOT_H_FILE = ~FILE_H;
+    private static long captureBlackPieces = 0L;
+    private static long captureWhitePieces = 0L;
+    
+    public static long getCaptureWhitePieces() {
+    	return captureWhitePieces;
+    }
+    
+    public static long getCaptureBlackPieces() {
+    	return captureBlackPieces;
+    }
+    
+    public static void updateWhites(long[] bits) {
+    	captureWhitePieces = bits[0] | bits[1] | bits[2] | bits[3] | bits[5];
+    }
+    
+    public static void updateBlacks(long[] bits) {
+    	captureBlackPieces = bits[11] | bits[9] | bits[8] | bits[7] | bits[6];
+    }
 
     public static long[] createBitBoard(char[][] cb) {
         long[] bits = new long[]{0L, // 0 white pawn
@@ -77,7 +101,8 @@ public class BitUtils {
                     throw new IllegalStateException("Unexpected value: " + cb[i / BOARD_SIZE][i % BOARD_SIZE]);
             }
         }
-
+        updateWhites(bits);
+        updateBlacks(bits);
         return bits;
     }
 
@@ -89,14 +114,6 @@ public class BitUtils {
     public static long setBit(long number, int bitIndex) {
         long mask = 1L << bitIndex;
         return number | mask;
-    }
-
-    public static long strToBitBoard(String bin) {
-        if (bin.charAt(0) == '0') {
-            return Long.parseLong(bin, 2);
-        } else {
-            return Long.parseLong("1" + bin.substring(2), 2) * 2;
-        }
     }
 
     public static void printBits(long[] bits) {
@@ -172,11 +189,11 @@ public class BitUtils {
         }
     }
 
-    public static long soutOne(long b) {
+    public static long southOne(long b) {
         return b >> 8;
     }
 
-    public static long nortOne(long b) {
+    public static long northOne(long b) {
         return b << 8;
     }
 
@@ -211,19 +228,7 @@ public class BitUtils {
         return s;
     }
 
-    public int popCount(long x) {
-        /* -1/3 */
-        long k1 = 0x5555555555555555L;
-        x = x - ((x >> 1) & k1); /* put count of each 2 bits into those 2 bits */
-        /* -1/5 */
-        long k2 = 0x3333333333333333L;
-        x = (x & k2) + ((x >> 2) & k2); /* put count of each 4 bits into those 4 bits */
-        /* -1/17 */
-        long k4 = 0x0f0f0f0f0f0f0f0fL;
-        x = (x + (x >> 4)) & k4; /* put count of each 8 bits into those 8 bits */
-        /* -1/255 */
-        long kf = 0x0101010101010101L;
-        x = (x * kf) >> 56; /* returns 8 most significant bits of x + (x<<8) + (x<<16) + (x<<24) + ... */
-        return (int) x;
+    public static int popCount(long x) {
+    	return Long.bitCount(x);
     }
 }
