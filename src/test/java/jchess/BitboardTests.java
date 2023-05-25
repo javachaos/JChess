@@ -2,19 +2,32 @@ package jchess;
 
 import com.github.javachaos.jchess.logic.ChessBoard;
 import com.github.javachaos.jchess.utils.BitUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@SuppressWarnings("all")
-public class BitboardTests {
+class BitboardTests {
+    private static final Logger LOGGER = LogManager.getLogger(BitboardTests.class);
 
     @Test
     void testChessBoard() {
+        char[][] INIT_BOARD = {
+                {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},
+                {'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'},
+                {'.', '.', '.', '.', '.', '.', '.', '.'},
+                {'.', '.', '.', '.', '.', '.', '.', '.'},
+                {'.', '.', '.', '.', '.', '.', '.', '.'},
+                {'.', '.', '.', '.', '.', '.', '.', '.'},
+                {'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'},
+                {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'}
+        };
         ChessBoard cb = new ChessBoard();
         cb.printOccupancy();
         cb.printBoard();
+        assertArrayEquals(cb.toCharArray(), INIT_BOARD);
     }
     
     @Test
@@ -56,30 +69,31 @@ public class BitboardTests {
 
         long[] bits = BitUtils.createBitBoard(INIT_BOARD);
         BitUtils.printBitboard(bits[0]);
-        System.out.println();
+        LOGGER.info("");
         BitUtils.printBitboard(bits[1]);
-        System.out.println();
+        LOGGER.info("");
         BitUtils.printBitboard(bits[2]);
-        System.out.println();
+        LOGGER.info("");
         BitUtils.printBitboard(bits[3]);
-        System.out.println();
+        LOGGER.info("");
         BitUtils.printBitboard(bits[4]);
-        System.out.println();
+        LOGGER.info("");
         BitUtils.printBitboard(bits[5]);
-        System.out.println();
+        LOGGER.info("");
         BitUtils.printBitboard(bits[6]);
-        System.out.println();
+        LOGGER.info("");
         BitUtils.printBitboard(bits[7]);
-        System.out.println();
+        LOGGER.info("");
         BitUtils.printBitboard(bits[8]);
-        System.out.println();
+        LOGGER.info("");
         BitUtils.printBitboard(bits[9]);
-        System.out.println();
+        LOGGER.info("");
         BitUtils.printBitboard(bits[10]);
-        System.out.println();
+        LOGGER.info("");
         BitUtils.printBitboard(bits[11]);
         char[][] BITBOARD = BitUtils.bitsToCharArray(bits);
         BitUtils.printBits(bits);
+        LOGGER.info(BitUtils.pawnMovesWhite(bits));
 
         assertArrayEquals(BITBOARD, INIT_BOARD);
     }

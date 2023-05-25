@@ -3,10 +3,23 @@ package com.github.javachaos.jchess.utils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
-@SuppressWarnings("unused")
+@SuppressWarnings("all")
 public class BitUtils {
+
+    public record Pos(char file, char rank) {
+        public String toString() {
+            return "" + file + rank;
+        }
+    }
+    public record Move(Pos from, Pos to, char promotion) {
+        public String toString() {
+            return "" + from + to + (promotion == '.' ? "" : promotion);
+        }
+    }
 
     private BitUtils() {}
 
@@ -17,12 +30,12 @@ public class BitUtils {
     private static final long RANK_4  = 0b00000000_00000000_00000000_11111111_00000000_00000000_00000000_00000000L;
     private static final long RANK_5  = 0b00000000_00000000_00000000_00000000_11111111_00000000_00000000_00000000L;
     private static final long RANK_1  = 0b11111111_00000000_00000000_00000000_00000000_00000000_00000000_00000000L;
-    private static final long FILE_A  = 0b10000000_10000000_10000000_10000000_10000000_10000000_10000000_10000000L;
-    private static final long FILE_AB = 0b11000000_11000000_11000000_11000000_11000000_11000000_11000000_11000000L;
-    private static final long FILE_H  = 0b00000001_00000001_00000001_00000001_00000001_00000001_00000001_00000001L;
-    private static final long FILE_GH = 0b00000011_00000011_00000011_00000011_00000011_00000011_00000011_00000011L;
-    private static final long KING_SIDE_WHITE = 0b01100000_00000000_00000000_00000000_00000000_00000000_00000000_00000110L;
-    private static final long KING_SIDE_BLACK = 0b00000110_00000000_00000000_00000000_00000000_00000000_00000000_01100000L;
+    private static final long FILE_H  = 0b10000000_10000000_10000000_10000000_10000000_10000000_10000000_10000000L;
+    private static final long FILE_GH = 0b11000000_11000000_11000000_11000000_11000000_11000000_11000000_11000000L;
+    private static final long FILE_A  = 0b00000001_00000001_00000001_00000001_00000001_00000001_00000001_00000001L;
+    private static final long FILE_AB = 0b00000011_00000011_00000011_00000011_00000011_00000011_00000011_00000011L;
+    private static final long KING_SIDE = 0b00001111_00001111_00001111_00001111_00001111_00001111_00001111_00001111L;
+    private static final long QUEEN_SIDE = 0b11110000_11110000_11110000_11110000_11110000_11110000_11110000_11110000L;
     private static final long NOT_A_FILE = ~FILE_A;
     private static final long NOT_H_FILE = ~FILE_H;
     private static final long NOT_RANK_8 = ~RANK_8;
@@ -47,12 +60,70 @@ public class BitUtils {
     	captureBlackPieces = bits[11] | bits[9] | bits[8] | bits[7] | bits[6];
     }
 
-    public static long pawnMovesWhite(long[] bits) {
-        return (bits[0]>>7) & captureBlackPieces & NOT_RANK_8 & NOT_A_FILE;
+    public static void updateEmpty(long[] bits) {
+        empty = ~(bits[0]|bits[1]|bits[2]|bits[3]|bits[4]|bits[5]|bits[6]|bits[7]|bits[8]|bits[9]|bits[10]|bits[11]);
+    }
+
+    public static List<Move> pawnMovesWhite(long[] bits) {
+        List<Move> moves = new ArrayList<>();
+        updateBlacks(bits);
+        updateEmpty(bits);
+        //pawn right captures
+        long moveBits = ((bits[0] >> 7) & captureBlackPieces & NOT_RANK_8 & NOT_A_FILE);
+        if (popCount(moveBits) > 0) {
+            for (int i = 0; i < BOARD_SIZE * BOARD_SIZE; i++) {
+                if (((moveBits >>i) & 1L) == 1) {
+                    moves.add(new Move(indexToPos(i / 8 + 1, i % 8 - 1),
+                            indexToPos(i / 8,  i % 8), '.'));
+                }
+            }
+        }
+
+        //pawn left captures
+        moveBits = ((bits[0] >> 9) & captureBlackPieces & NOT_RANK_8 & NOT_H_FILE);
+        if (popCount(moveBits) > 0) {
+            int start = Long.numberOfTrailingZeros(moveBits);
+            int end = Long.numberOfLeadingZeros(moveBits);
+            for (int i = start; i < BOARD_SIZE * BOARD_SIZE - end; i++) {
+                if (((moveBits >>i) & 1L) == 1) {
+                    moves.add(new Move(indexToPos(i / 8 + 1, i % 8 + 1),
+                            indexToPos(i / 8,  i % 8), '.'));
+                }
+            }
+        }
+
+        //one ahead
+        moveBits = (bits[0] >> 8) & empty & NOT_RANK_8;
+        if (popCount(moveBits) > 0) {
+            int start = Long.numberOfTrailingZeros(moveBits);
+            int end = Long.numberOfLeadingZeros(moveBits);
+            for (int i = start; i < BOARD_SIZE * BOARD_SIZE - end; i++) {
+                if (((moveBits >>i) & 1L) == 1) {
+                    moves.add(new Move(indexToPos(i / 8 + 1, i % 8),
+                            indexToPos(i / 8,  i % 8), '.'));
+                }
+            }
+        }
+
+        //two ahead
+        moveBits = (bits[0] >> 16) & empty & (empty>>8)&RANK_4;
+        if (popCount(moveBits) > 0) {
+            int start = Long.numberOfTrailingZeros(moveBits);
+            int end = Long.numberOfLeadingZeros(moveBits);
+            for (int i = start; i < BOARD_SIZE * BOARD_SIZE - end; i++) {
+                if (((moveBits >>i) & 1L) == 1) {
+                    moves.add(new Move(indexToPos(i / 8 + 2, i % 8),
+                            indexToPos(i / 8,  i % 8), '.'));
+                }
+            }
+        }
+
+        return moves;
     }
 
     public static long[] createBitBoard(char[][] cb) {
-        long[] bits = new long[]{0L, // 0 white pawn
+        long[] bits = new long[]{
+                0L, // 0 white pawn
                 0L, // 1 white rook
                 0L, // 2 white knight
                 0L, // 3 white bishop
@@ -200,6 +271,7 @@ public class BitUtils {
             String s = Arrays.toString(cb[i]);
             LOGGER.info(s);
         }
+        LOGGER.info("");
     }
 
     public static long southOne(long b) {
@@ -243,5 +315,12 @@ public class BitUtils {
 
     public static int popCount(long x) {
     	return Long.bitCount(x);
+    }
+
+    public static Pos indexToPos(int x, int y) {
+        if (x < 0 || y < 0) {
+            throw new IllegalArgumentException("Cannot have a negative index!");
+        }
+        return new Pos((char) ('a' + y), (char) ('8' - x));
     }
 }
