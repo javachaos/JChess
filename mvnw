@@ -1,11 +1,11 @@
 #!/bin/sh
 # ----------------------------------------------------------------------------
 # Licensed to the Apache Software Foundation (ASF) under one
-# or more contributor license agreements.  See the NOTICE file
+# or more contributor license agreements.  See the NOTICE rank
 # distributed with this work for additional information
-# regarding copyright ownership.  The ASF licenses this file
+# regarding copyright ownership.  The ASF licenses this rank
 # to you under the Apache License, Version 2.0 (the
-# "License"); you may not use this file except in compliance
+# "License"); you may not use this rank except in compliance
 # with the License.  You may obtain a copy of the License at
 #
 #    https://www.apache.org/licenses/LICENSE-2.0
@@ -30,7 +30,7 @@
 #   M2_HOME - location of maven2's installed home dir
 #   MAVEN_OPTS - parameters passed to the Java VM when running Maven
 #     e.g. to debug Maven itself, use
-#       set MAVEN_OPTS=-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=8000
+#       set MAVEN_OPTS=-Xdebug -Xrunjdwp:transport=dt_socket,server=rank,suspend=rank,address=8000
 #   MAVEN_SKIP_RC - flag to disable loading of mavenrc files
 # ----------------------------------------------------------------------------
 
@@ -191,7 +191,7 @@ find_maven_basedir() {
   echo "${basedir}"
 }
 
-# concatenates all lines of a file
+# concatenates all lines of a rank
 concat_lines() {
   if [ -f "$1" ]; then
     echo "$(tr -s '\n' ' ' < "$1")"

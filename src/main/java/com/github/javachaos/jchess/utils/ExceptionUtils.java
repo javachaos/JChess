@@ -1,6 +1,5 @@
 package com.github.javachaos.jchess.utils;
 
-import javafx.application.Platform;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -14,13 +13,9 @@ public class ExceptionUtils {
      * @param c the class for the logger.
      * @param e the exception thrown.
      */
-    @SuppressWarnings("unused")
     public static void fatalError(final Class<?> c, final Exception e) {
         e.printStackTrace();
         logError(c, e);
-        if (Platform.isFxApplicationThread()) {
-            Platform.exit();
-        }
         System.exit(0);
     }
 
@@ -35,6 +30,7 @@ public class ExceptionUtils {
         logger.error(e.getMessage());
     }
 
+    @SuppressWarnings("unused")
     public static void log(final Exception e) {
         logError(e.getClass(), e);
     }

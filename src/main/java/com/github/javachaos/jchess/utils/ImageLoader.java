@@ -1,61 +1,53 @@
 package com.github.javachaos.jchess.utils;
 
-import com.github.javachaos.jchess.gamelogic.pieces.core.AbstractPiece;
-import com.github.javachaos.jchess.gamelogic.pieces.core.Piece;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.util.Pair;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Map;
+
+import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.InputStream;
-import java.util.EnumMap;
-
 public class ImageLoader {
 
-    public static final Logger LOGGER = LogManager.getLogger(
-            ImageLoader.class);
+	private static final Logger LOGGER = LogManager.getLogger(ImageLoader.class);
+	private Map<Character, BufferedImage> images;
 
-    private final EnumMap<AbstractPiece.PieceType,
-            Pair<Image, Image>> images = new EnumMap<>(AbstractPiece.PieceType.class);
+	public ImageLoader() {
+		loadImages();
+	}
 
-    public ImageLoader() {
-        loadImages();
-    }
+	private void loadImages() {
+		try {
+			images = Map.ofEntries(
+					Map.entry('P', ImageIO.read(getImg("pawn_white"))),
+					Map.entry('R', ImageIO.read(getImg("rook_white"))),
+					Map.entry('N', ImageIO.read(getImg("knight_white"))),
+					Map.entry('B', ImageIO.read(getImg("bishop_white"))),
+					Map.entry('K', ImageIO.read(getImg("king_white"))),
+					Map.entry('Q', ImageIO.read(getImg("queen_white"))),
+					Map.entry('p', ImageIO.read(getImg("pawn_black"))),
+			    	Map.entry('r', ImageIO.read(getImg("rook_black"))),
+					Map.entry('n', ImageIO.read(getImg("knight_black"))),
+				    Map.entry('b', ImageIO.read(getImg("bishop_black"))),
+					Map.entry('k', ImageIO.read(getImg("king_black"))),
+					Map.entry('q', ImageIO.read(getImg("queen_black"))));
+		} catch (IOException e) {
+			ExceptionUtils.fatalError(ImageLoader.class, e);
+		}
+	}
 
-    private void loadImages() {
-        images.put(AbstractPiece.PieceType.PAWN, new Pair<>(
-                new Image(getImg("pawn_white")),
-                new Image(getImg("pawn_black"))));
-        images.put(AbstractPiece.PieceType.BISHOP, new Pair<>(
-                new Image(getImg("bishop_white")),
-                new Image(getImg("bishop_black"))));
-        images.put(AbstractPiece.PieceType.ROOK, new Pair<>(
-                new Image(getImg("rook_white")),
-                new Image(getImg("rook_black"))));
-        images.put(AbstractPiece.PieceType.KNIGHT, new Pair<>(
-                new Image(getImg("knight_white")),
-                new Image(getImg("knight_black"))));
-        images.put(AbstractPiece.PieceType.KING, new Pair<>(
-                new Image(getImg("king_white")),
-                new Image(getImg("king_black"))));
-        images.put(AbstractPiece.PieceType.QUEEN, new Pair<>(
-                new Image(getImg("queen_white")),
-                new Image(getImg("queen_black"))));
-    }
+	private InputStream getImg(final String name) {
+		String imgName = Constants.IMG_DIR + name + Constants.PNG;
+		LOGGER.debug("Loading image: {}", imgName);
+		return getClass().getResourceAsStream(imgName);
+	}
 
-    private InputStream getImg(final String name) {
-        String imgName = Constants.IMG_DIR + name + Constants.PNG;
-        LOGGER.debug("Loading image: {}", imgName);
-        return getClass().getResourceAsStream(imgName);
-    }
-
-    public ImageView getImageForPiece(Piece p) {
-        if (p.isBlack()) {
-            return new ImageView(images.get(p.getType()).getValue());
-        } else {
-            return new ImageView(images.get(p.getType()).getKey());
-        }
-    }
+	public ImageIcon getImageForPiece(char c) {
+		return new ImageIcon(images.get(c));
+	}
 
 }
