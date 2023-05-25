@@ -118,6 +118,61 @@ public class BitUtils {
             }
         }
 
+        //check capture right promotions
+        moveBits = (bits[0] >> 7)&captureBlackPieces&RANK_8&NOT_A_FILE;
+        if (popCount(moveBits) > 0) {
+            int start = Long.numberOfTrailingZeros(moveBits);
+            int end = Long.numberOfLeadingZeros(moveBits);
+            for (int i = start; i < BOARD_SIZE * BOARD_SIZE - end; i++) {
+                if (((moveBits >>i) & 1L) == 1) {
+                    moves.add(new Move(indexToPos(i / 8 + 1, i % 8 - 1),
+                            indexToPos(i / 8,  i % 8), 'Q'));
+                    moves.add(new Move(indexToPos(i / 8 + 1, i % 8 - 1),
+                            indexToPos(i / 8,  i % 8), 'R'));
+                    moves.add(new Move(indexToPos(i / 8 + 1, i % 8 - 1),
+                            indexToPos(i / 8,  i % 8), 'B'));
+                    moves.add(new Move(indexToPos(i / 8 + 1, i % 8 - 1),
+                            indexToPos(i / 8,  i % 8), 'N'));
+                }
+            }
+        }
+
+        //check capture left promotions
+        moveBits = (bits[0] >> 9)&captureBlackPieces&RANK_8&NOT_H_FILE;
+        if (popCount(moveBits) > 0) {
+            int start = Long.numberOfTrailingZeros(moveBits);
+            int end = Long.numberOfLeadingZeros(moveBits);
+            for (int i = start; i < BOARD_SIZE * BOARD_SIZE - end; i++) {
+                if (((moveBits >>i) & 1L) == 1) {
+                    moves.add(new Move(indexToPos(i / 8 + 1, i % 8),
+                            indexToPos(i / 8,  i % 8), 'Q'));
+                    moves.add(new Move(indexToPos(i / 8 + 1, i % 8),
+                            indexToPos(i / 8,  i % 8), 'R'));
+                    moves.add(new Move(indexToPos(i / 8 + 1, i % 8),
+                            indexToPos(i / 8,  i % 8), 'B'));
+                    moves.add(new Move(indexToPos(i / 8 + 1, i % 8),
+                            indexToPos(i / 8,  i % 8), 'N'));
+                }
+            }
+        }
+        moveBits = (bits[0] >> 8)&empty&RANK_8;
+        if (popCount(moveBits) > 0) {
+            int start = Long.numberOfTrailingZeros(moveBits);
+            int end = Long.numberOfLeadingZeros(moveBits);
+            for (int i = start; i < BOARD_SIZE * BOARD_SIZE - end; i++) {
+                if (((moveBits >>i) & 1L) == 1) {
+                    moves.add(new Move(indexToPos(i / 8, i % 8),
+                            indexToPos(i / 8,  i % 8), 'Q'));
+                    moves.add(new Move(indexToPos(i / 8, i % 8),
+                            indexToPos(i / 8,  i % 8), 'R'));
+                    moves.add(new Move(indexToPos(i / 8, i % 8),
+                            indexToPos(i / 8,  i % 8), 'B'));
+                    moves.add(new Move(indexToPos(i / 8, i % 8),
+                            indexToPos(i / 8,  i % 8), 'N'));
+                }
+            }
+        }
+
         return moves;
     }
 
