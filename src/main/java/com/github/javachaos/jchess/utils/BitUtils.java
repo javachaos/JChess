@@ -13,14 +13,23 @@ public class BitUtils {
     public static final Logger LOGGER = LogManager.getLogger(BitUtils.class);
 
     private static final int BOARD_SIZE = 8;
-    private static final long RANK_8 = 0b00000000_00000000_00000000_00000000_00000000_00000000_11111111L;
-    private static final long RANK_1 = 0b11111111_00000000_00000000_00000000_00000000_00000000_00000000L;
-    private static final long FILE_A = 0b10000000_10000000_10000000_10000000_10000000_10000000_10000000L;
-    private static final long FILE_H = 0b00000001_00000001_00000001_00000001_00000001_00000001_00000001L;
+    private static final long RANK_8  = 0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_11111111L;
+    private static final long RANK_4  = 0b00000000_00000000_00000000_11111111_00000000_00000000_00000000_00000000L;
+    private static final long RANK_5  = 0b00000000_00000000_00000000_00000000_11111111_00000000_00000000_00000000L;
+    private static final long RANK_1  = 0b11111111_00000000_00000000_00000000_00000000_00000000_00000000_00000000L;
+    private static final long FILE_A  = 0b10000000_10000000_10000000_10000000_10000000_10000000_10000000_10000000L;
+    private static final long FILE_AB = 0b11000000_11000000_11000000_11000000_11000000_11000000_11000000_11000000L;
+    private static final long FILE_H  = 0b00000001_00000001_00000001_00000001_00000001_00000001_00000001_00000001L;
+    private static final long FILE_GH = 0b00000011_00000011_00000011_00000011_00000011_00000011_00000011_00000011L;
+    private static final long KING_SIDE_WHITE = 0b01100000_00000000_00000000_00000000_00000000_00000000_00000000_00000110L;
+    private static final long KING_SIDE_BLACK = 0b00000110_00000000_00000000_00000000_00000000_00000000_00000000_01100000L;
     private static final long NOT_A_FILE = ~FILE_A;
     private static final long NOT_H_FILE = ~FILE_H;
+    private static final long NOT_RANK_8 = ~RANK_8;
+    private static final long NOT_RANK_1 = ~RANK_1;
     private static long captureBlackPieces = 0L;
     private static long captureWhitePieces = 0L;
+    private static long empty = 0L;
     
     public static long getCaptureWhitePieces() {
     	return captureWhitePieces;
@@ -36,6 +45,10 @@ public class BitUtils {
     
     public static void updateBlacks(long[] bits) {
     	captureBlackPieces = bits[11] | bits[9] | bits[8] | bits[7] | bits[6];
+    }
+
+    public static long pawnMovesWhite(long[] bits) {
+        return (bits[0]>>7) & captureBlackPieces & NOT_RANK_8 & NOT_A_FILE;
     }
 
     public static long[] createBitBoard(char[][] cb) {
