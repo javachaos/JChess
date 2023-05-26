@@ -68,14 +68,15 @@ public class BitUtilsTest {
     @Test
     public void testPawnforwardBoard() {
         char[][] INIT_BOARD = {
-                {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},
-                {'p', 'p', 'p', 'p', '.', 'p', 'p', 'p'},
-                {'.', '.', '.', '.', 'p', '.', '.', '.'},
-                {'.', '.', '.', '.', '.', '.', '.', '.'},
-                {'.', '.', '.', '.', '.', '.', '.', '.'},
-                {'.', '.', '.', '.', '.', '.', '.', '.'},
-                {'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'},
-                {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'}
+                {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},//8
+                {'p', 'p', 'p', 'p', '.', 'p', 'p', 'p'},//7
+                {'.', '.', '.', '.', 'p', '.', '.', '.'},//6
+                {'.', '.', '.', '.', '.', '.', '.', '.'},//5
+                {'.', '.', '.', '.', '.', '.', 'p', '.'},//4
+                {'P', 'P', 'P', 'P', 'P', 'P', '.', '.'},//3
+                {'.', '.', '.', '.', '.', '.', 'P', 'P'},//2
+                {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'} //1
+                //A    B    C    D    E    F    G    H
         };
 
         long[] bits = BitUtils.createBitBoard(INIT_BOARD);
@@ -106,28 +107,20 @@ public class BitUtilsTest {
         BitUtils.printBoard(bits);
         List<BitUtils.Move> movesList = new ArrayList<>();
         BitUtils.updateBoards(bits);
-        LOGGER.info("Starting pawn move generation.");
-        ExecUtils.ExecutionResult<BitUtils.MoveSet> r = ExecUtils.measureExecutionTime(
-                "Pawn Move Generation", () -> BitUtils.pawnMovesWhite(bits));
-        BitUtils.MoveSet moves = r.result();
-        ExecUtils.ExecutionResult<List<BitUtils.Move>> m =
-                ExecUtils.measureExecutionTime("Remove Nulls", () -> filterNulls(movesList, moves));
-        LOGGER.info("Filtering out nulls took {} ns.", m.nanos());
-        LOGGER.info("Total runtime: {} ns", m.nanos() + r.nanos());
+        LOGGER.info("Starting white pawn move generation.");
+        ExecUtils.ExecutionResult<List<BitUtils.Move>> r = ExecUtils.measureExecutionTime(
+                "White Pawn Move Generation", () -> BitUtils.pawnMovesWhite(bits, movesList));
+        LOGGER.info("Total runtime: {} ns", r.nanos());
+
+        movesList.clear();
+
+        LOGGER.info("Starting black pawn move generation.");
+        ExecUtils.ExecutionResult<List<BitUtils.Move>> b = ExecUtils.measureExecutionTime(
+                "Black Pawn Move Generation", () -> BitUtils.pawnMovesBlack(bits, movesList));
+        LOGGER.info("Total runtime: {} ns", b.nanos());
+
         LOGGER.info(movesList);
         assertArrayEquals(BITBOARD, INIT_BOARD);
-    }
-
-    private static List<BitUtils.Move> filterNulls(List<BitUtils.Move> movesList, BitUtils.MoveSet moves) {
-        int s = Long.numberOfTrailingZeros(moves.occupancy());
-        int e = Long.numberOfLeadingZeros(moves.occupancy());
-
-        for (int i = s; i < 64 - e; i++) {
-            if (((moves.occupancy() >>i) & 1L) == 1) {
-                movesList.add(moves.moves()[i]);
-            }
-        }
-        return movesList;
     }
 
     @Test
