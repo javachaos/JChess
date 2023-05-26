@@ -26,7 +26,7 @@ public class ChessBoard {
     private long occupancy = 0L;
     private final Deque<long[]> history;
     private final boolean[] castleRights = new boolean[4];
-    private int halfMoveClock = 0;
+    private static final int HALFMOVECLOCK = 0;
     private int fullMoveClock = 0;
 
     public ChessBoard(char[][] initialBoard) {
@@ -73,7 +73,7 @@ public class ChessBoard {
     }
 
     public void printBoard() {
-        BitUtils.printBits(bits);
+        BitUtils.printBoard(bits);
     }
 
     public char[][] toCharArray() {
