@@ -4,8 +4,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -106,17 +104,21 @@ public class BitUtilsTest {
         BitUtils.printBitboard(bits[11]);
         char[][] BITBOARD = BitUtils.bitsToCharArray(bits);
         BitUtils.printBoard(bits);
-        long[] times = new long[2];
         List<BitUtils.Move> movesList = new ArrayList<>();
-        BitUtils.MoveSet moves = assertTimeout(Duration.of(1, ChronoUnit.MILLIS),
-                () -> {
-                    times[0] = System.nanoTime();
-                    BitUtils.MoveSet m = BitUtils.pawnMovesWhite(bits);
-                    times[1] = System.nanoTime();
-                    return m;
-                });
-        LOGGER.info("Pawn move generation took {} ns.", times[1] - times[0]);
-        long start = System.nanoTime();
+        BitUtils.updateBoards(bits);
+        LOGGER.info("Starting pawn move generation.");
+        ExecUtils.ExecutionResult<BitUtils.MoveSet> r = ExecUtils.measureExecutionTime(
+                "Pawn Move Generation", () -> BitUtils.pawnMovesWhite(bits));
+        BitUtils.MoveSet moves = r.result();
+        ExecUtils.ExecutionResult<List<BitUtils.Move>> m =
+                ExecUtils.measureExecutionTime("Remove Nulls", () -> filterNulls(movesList, moves));
+        LOGGER.info("Filtering out nulls took {} ns.", m.nanos());
+        LOGGER.info("Total runtime: {} ns", m.nanos() + r.nanos());
+        LOGGER.info(movesList);
+        assertArrayEquals(BITBOARD, INIT_BOARD);
+    }
+
+    private static List<BitUtils.Move> filterNulls(List<BitUtils.Move> movesList, BitUtils.MoveSet moves) {
         int s = Long.numberOfTrailingZeros(moves.occupancy());
         int e = Long.numberOfLeadingZeros(moves.occupancy());
 
@@ -125,11 +127,24 @@ public class BitUtilsTest {
                 movesList.add(moves.moves()[i]);
             }
         }
-        long end = System.nanoTime();
-        LOGGER.info("Filtering out nulls took {} ns.", end - start);
-        LOGGER.info("Total time took {} ns.", end - start + times[1] - times[0]);
-        LOGGER.info(movesList);
-        assertArrayEquals(BITBOARD, INIT_BOARD);
+        return movesList;
+    }
+
+    @Test
+    void testIsOddParity() {
+        long odd = 0b00000111_00000000_00000000_00000000_00000000_00000000_00000000_00000000L;
+        assertTrue(BitUtils.isOddParity(odd));
+        long even = 0b00000111_00100000_00000000_00000000_00000000_00000000_00000000_00000000L;
+        assertFalse(BitUtils.isOddParity(even));
+
+        long o = 0b00011111_00000000_00000000_00000000_00000000_00000000_00000000_00000000L;
+        assertTrue(BitUtils.isOddParity(o));
+        long e = 0b10000111_00100000_00000000_00000000_00000000_00000000_00000000_00000011L;
+        assertTrue(BitUtils.isOddParity(e));
+
+        long od = 0b10011111_00000000_00000100_00000010_00000000_00000100_00100000_00000000L;
+        ExecUtils.measureExecutionTime("1", () -> BitUtils.isOddParity(od));
+
     }
 
 }

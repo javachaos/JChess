@@ -88,10 +88,13 @@ public class BitUtils {
         return cb;
     }
 
-    public static MoveSet pawnMovesWhite(long[] bits) {
-        Move[] moves = new Move[64];
+    public static void updateBoards(long[] bits) {
         updateBlacks(bits);
         updateEmpty(bits);
+    }
+
+    public static MoveSet pawnMovesWhite(long[] bits) {
+        Move[] moves = new Move[64];
         //pawn right captures
         long moveBitsRight = ((bits[0] >> 7) & captureBlackPieces & NOT_RANK_8 & NOT_A_FILE);
         //pawn left captures
@@ -404,4 +407,20 @@ public class BitUtils {
         }
         return new Pos((char) ('a' + file), (char) ('8' - rank));
     }
+
+    /**
+     * Faster than {@code Long.bitCount(x) % 2 == 0}
+     * @param x the value to test
+     * @return true if the value x has an odd number of set bits
+     */
+    public static boolean isOddParity(long x) {
+        x ^= x <<  1;
+        x ^= x <<  2;
+        x ^= x <<  4;
+        x ^= x <<  8;
+        x ^= x << 16;
+        x ^= x << 32;
+        return x < 0;
+    }
+
 }
