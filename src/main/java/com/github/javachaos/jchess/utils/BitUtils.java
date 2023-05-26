@@ -33,10 +33,14 @@ public class BitUtils {
     public static final Logger LOGGER = LogManager.getLogger(BitUtils.class);
 
     private static final int BOARD_SIZE = 8;
-    private static final long RANK_8  = 0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_11111111L;
+    private static final long RANK_1  = 0b11111111_00000000_00000000_00000000_00000000_00000000_00000000_00000000L;
+    private static final long RANK_2  = 0b00000000_11111111_00000000_00000000_00000000_00000000_00000000_00000000L;
+    private static final long RANK_3  = 0b00000000_00000000_11111111_00000000_00000000_00000000_00000000_00000000L;
     private static final long RANK_4  = 0b00000000_00000000_00000000_11111111_00000000_00000000_00000000_00000000L;
     private static final long RANK_5  = 0b00000000_00000000_00000000_00000000_11111111_00000000_00000000_00000000L;
-    private static final long RANK_1  = 0b11111111_00000000_00000000_00000000_00000000_00000000_00000000_00000000L;
+    private static final long RANK_6  = 0b00000000_00000000_00000000_00000000_00000000_11111111_00000000_00000000L;
+    private static final long RANK_7  = 0b00000000_00000000_00000000_00000000_00000000_00000000_11111111_00000000L;
+    private static final long RANK_8  = 0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_11111111L;
     private static final long FILE_A  = 0b10000000_10000000_10000000_10000000_10000000_10000000_10000000_10000000L;
     private static final long FILE_AB = 0b11000000_11000000_11000000_11000000_11000000_11000000_11000000_11000000L;
     private static final long FILE_H  = 0b00000001_00000001_00000001_00000001_00000001_00000001_00000001_00000001L;
@@ -90,31 +94,51 @@ public class BitUtils {
     }
 
     public static void updateBoards(long[] bits) {
+        updateWhites(bits);
         updateBlacks(bits);
         updateEmpty(bits);
     }
 
+    /**
+     * Piece Index
+     *  0 white pawn
+     *  1 white rook
+     *  2 white knight
+     *  3 white bishop
+     *  4 white king
+     *  5 white queen
+     *  6 black pawn
+     *  7 black rook
+     *  8 black knight
+     *  9 black bishop
+     *  10 black king
+     *  11 black queen
+     * @param bits
+     * @param movesList
+     * @return
+     */
     public static List<Move> pawnMovesBlack(long[] bits, List<Move> movesList) {
         Move[] moves = new Move[64];
-        long moveBitsRight = ((bits[6] << 7) & captureWhitePieces & NOT_RANK_1 & NOT_H_FILE);
-        long moveBitsLeft = ((bits[6] << 9) & captureWhitePieces & NOT_RANK_1 & NOT_A_FILE);
-        long moveBitsOneAhead = (bits[6] << 8) & empty & NOT_RANK_1;
-        long moveBitsTwoAhead = (bits[6] << 16) & empty & (empty>>8)&RANK_5;
-        long moveBitsRightP = (bits[6] << 7)&captureWhitePieces&RANK_1&NOT_H_FILE;
-        long moveBitsLeftP = (bits[6] << 9)&captureWhitePieces&RANK_1&NOT_A_FILE;
-        long moveBitsP = (bits[6] << 8)&empty&RANK_1;
+
+        long moveBitsRight =    (bits[6] << 7)  & captureWhitePieces & NOT_RANK_1 & NOT_A_FILE;
+        long moveBitsLeft =     (bits[6] << 9)  & captureWhitePieces & NOT_RANK_1 & NOT_H_FILE;
+        long moveBitsOneAhead = (bits[6] << 8)  & empty & NOT_RANK_1;
+        long moveBitsTwoAhead = (bits[6] << 16) & empty & (empty >> 8) & RANK_5;
+        long moveBitsRightP =   (bits[6] << 7)  & captureWhitePieces & RANK_1 & NOT_A_FILE;
+        long moveBitsLeftP =    (bits[6] << 9)  & captureWhitePieces & RANK_1 & NOT_H_FILE;
+        long moveBitsP =        (bits[6] << 8)  & empty & RANK_1;
 
         long moveOccupancy = moveBitsRight | moveBitsLeft
                 | moveBitsOneAhead | moveBitsTwoAhead | moveBitsRightP | moveBitsLeftP | moveBitsP;
 
-        moves = processMoveBits(moveBitsRight, '.', -1, -1, moves);
-        moves = processMoveBits(moveBitsLeft, '.', -1, 1, moves);
+        moves = processMoveBits(moveBitsRight, '.', -1, 1, moves);
+        moves = processMoveBits(moveBitsLeft, '.', -1, -1, moves);
         moves = processMoveBits(moveBitsOneAhead, '.', -1, 0, moves);
         moves = processMoveBits(moveBitsTwoAhead, '.', -2, 0, moves);
-        moves = processMoveBits(moveBitsRightP, 'Q', -1, -1, moves);
-        moves = processMoveBits(moveBitsRightP, 'R', -1, -1, moves);
-        moves = processMoveBits(moveBitsRightP, 'B', -1, -1, moves);
-        moves = processMoveBits(moveBitsRightP, 'N', -1, -1, moves);
+        moves = processMoveBits(moveBitsRightP, 'Q', -1, 1, moves);
+        moves = processMoveBits(moveBitsRightP, 'R', -1, 1, moves);
+        moves = processMoveBits(moveBitsRightP, 'B', -1, 1, moves);
+        moves = processMoveBits(moveBitsRightP, 'N', -1, 1, moves);
         moves = processMoveBits(moveBitsLeftP, 'Q', -1, 0, moves);
         moves = processMoveBits(moveBitsLeftP, 'R', -1, 0, moves);
         moves = processMoveBits(moveBitsLeftP, 'B', -1, 0, moves);
