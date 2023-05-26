@@ -111,7 +111,7 @@ public class BitUtilsTest {
         ExecUtils.ExecutionResult<List<BitUtils.Move>> r = ExecUtils.measureExecutionTime(
                 "White Pawn Move Generation", () -> BitUtils.pawnMovesWhite(bits, movesList));
         LOGGER.info("Total runtime: {} ns", r.nanos());
-
+        LOGGER.info(movesList);
         movesList.clear();
 
         LOGGER.info("Starting black pawn move generation.");

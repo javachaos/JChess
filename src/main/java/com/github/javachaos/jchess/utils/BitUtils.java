@@ -5,8 +5,6 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 @SuppressWarnings("all")
 public class BitUtils {
@@ -98,118 +96,34 @@ public class BitUtils {
 
     public static List<Move> pawnMovesBlack(long[] bits, List<Move> movesList) {
         Move[] moves = new Move[64];
-        //pawn right captures
-        long moveBitsRight = ((bits[6] >> 7) & captureWhitePieces & NOT_RANK_1 & NOT_H_FILE);
-        //pawn left captures
-        long moveBitsLeft = ((bits[6] >> 9) & captureWhitePieces & NOT_RANK_1 & NOT_A_FILE);
-        //one ahead
-        long moveBitsOneAhead = (bits[6] >> 8) & empty & NOT_RANK_1;
-        //two ahead
-        long moveBitsTwoAhead = (bits[6] >> 16) & empty & (empty>>8)&RANK_5;
-        //check capture right promotions
-        long moveBitsRightP = (bits[6] >> 7)&captureWhitePieces&RANK_1&NOT_H_FILE;
-        //check capture left promotions
-        long moveBitsLeftP = (bits[6] >> 9)&captureWhitePieces&RANK_1&NOT_A_FILE;
-        //check one ahead promotion
-        long moveBitsP = (bits[6] >> 8)&empty&RANK_1;
+        long moveBitsRight = ((bits[6] << 7) & captureWhitePieces & NOT_RANK_1 & NOT_H_FILE);
+        long moveBitsLeft = ((bits[6] << 9) & captureWhitePieces & NOT_RANK_1 & NOT_A_FILE);
+        long moveBitsOneAhead = (bits[6] << 8) & empty & NOT_RANK_1;
+        long moveBitsTwoAhead = (bits[6] << 16) & empty & (empty>>8)&RANK_5;
+        long moveBitsRightP = (bits[6] << 7)&captureWhitePieces&RANK_1&NOT_H_FILE;
+        long moveBitsLeftP = (bits[6] << 9)&captureWhitePieces&RANK_1&NOT_A_FILE;
+        long moveBitsP = (bits[6] << 8)&empty&RANK_1;
 
         long moveOccupancy = moveBitsRight | moveBitsLeft
                 | moveBitsOneAhead | moveBitsTwoAhead | moveBitsRightP | moveBitsLeftP | moveBitsP;
 
-        //TODO meticulously update each index to correct direction of play for black.
-        if (Long.bitCount(moveBitsRight) > 0) {
-            //in the case that popCount uses 1 machine instruction this could be faster.
-            int start = Long.numberOfTrailingZeros(moveBitsRight);
-            int end = Long.numberOfLeadingZeros(moveBitsRight);
-            for (int i = start; i < BOARD_SIZE * BOARD_SIZE - end; i++) {
-                if (((moveBitsRight >>i) & 1L) == 1) {
-                    moves[i] = (new Move(indexToPos(i / 8 + 1, i % 8 - 1),
-                            indexToPos(i / 8,  i % 8), '.'));
-                }
-            }
-        }
+        moves = processMoveBits(moveBitsRight, '.', -1, -1, moves);
+        moves = processMoveBits(moveBitsLeft, '.', -1, 1, moves);
+        moves = processMoveBits(moveBitsOneAhead, '.', -1, 0, moves);
+        moves = processMoveBits(moveBitsTwoAhead, '.', -2, 0, moves);
+        moves = processMoveBits(moveBitsRightP, 'Q', -1, -1, moves);
+        moves = processMoveBits(moveBitsRightP, 'R', -1, -1, moves);
+        moves = processMoveBits(moveBitsRightP, 'B', -1, -1, moves);
+        moves = processMoveBits(moveBitsRightP, 'N', -1, -1, moves);
+        moves = processMoveBits(moveBitsLeftP, 'Q', -1, 0, moves);
+        moves = processMoveBits(moveBitsLeftP, 'R', -1, 0, moves);
+        moves = processMoveBits(moveBitsLeftP, 'B', -1, 0, moves);
+        moves = processMoveBits(moveBitsLeftP, 'N', -1, 0, moves);
+        moves = processMoveBits(moveBitsP, 'Q', 0, 0, moves);
+        moves = processMoveBits(moveBitsP, 'R', 0, 0, moves);
+        moves = processMoveBits(moveBitsP, 'B', 0, 0, moves);
+        moves = processMoveBits(moveBitsP, 'N', 0, 0, moves);
 
-        if (Long.bitCount(moveBitsLeft) > 0) {
-            int start = Long.numberOfTrailingZeros(moveBitsLeft);
-            int end = Long.numberOfLeadingZeros(moveBitsLeft);
-            for (int i = start; i < BOARD_SIZE * BOARD_SIZE - end; i++) {
-                if (((moveBitsLeft >>i) & 1L) == 1) {
-                    moves[i] =(new Move(indexToPos(i / 8 + 1, i % 8 + 1),
-                            indexToPos(i / 8,  i % 8), '.'));
-                }
-            }
-        }
-
-        if (Long.bitCount(moveBitsOneAhead) > 0) {
-            int start = Long.numberOfTrailingZeros(moveBitsOneAhead);
-            int end = Long.numberOfLeadingZeros(moveBitsOneAhead);
-            for (int i = start; i < BOARD_SIZE * BOARD_SIZE - end; i++) {
-                if (((moveBitsOneAhead >>i) & 1L) == 1) {
-                    moves[i] = (new Move(indexToPos(i / 8 + 1, i % 8),
-                            indexToPos(i / 8,  i % 8), '.'));
-                }
-            }
-        }
-
-        if (Long.bitCount(moveBitsTwoAhead) > 0) {
-            int start = Long.numberOfTrailingZeros(moveBitsTwoAhead);
-            int end = Long.numberOfLeadingZeros(moveBitsTwoAhead);
-            for (int i = start; i < BOARD_SIZE * BOARD_SIZE - end; i++) {
-                if (((moveBitsTwoAhead >>i) & 1L) == 1) {
-                    moves[i] = (new Move(indexToPos(i / 8 + 2, i % 8),
-                            indexToPos(i / 8,  i % 8), '.'));
-                }
-            }
-        }
-        if (Long.bitCount(moveBitsRightP) > 0) {
-            int start = Long.numberOfTrailingZeros(moveBitsRightP);
-            int end = Long.numberOfLeadingZeros(moveBitsRightP);
-            for (int i = start; i < BOARD_SIZE * BOARD_SIZE - end; i++) {
-                if (((moveBitsRightP >>i) & 1L) == 1) {
-                    moves[i] = (new Move(indexToPos(i / 8 + 1, i % 8 - 1),
-                            indexToPos(i / 8,  i % 8), 'Q'));
-                    moves[i] = (new Move(indexToPos(i / 8 + 1, i % 8 - 1),
-                            indexToPos(i / 8,  i % 8), 'R'));
-                    moves[i] = (new Move(indexToPos(i / 8 + 1, i % 8 - 1),
-                            indexToPos(i / 8,  i % 8), 'B'));
-                    moves[i] = (new Move(indexToPos(i / 8 + 1, i % 8 - 1),
-                            indexToPos(i / 8,  i % 8), 'N'));
-                }
-            }
-        }
-
-        if (Long.bitCount(moveBitsLeftP) > 0) {
-            int start = Long.numberOfTrailingZeros(moveBitsLeftP);
-            int end = Long.numberOfLeadingZeros(moveBitsLeftP);
-            for (int i = start; i < BOARD_SIZE * BOARD_SIZE - end; i++) {
-                if (((moveBitsLeftP >>i) & 1L) == 1) {
-                    moves[i] = (new Move(indexToPos(i / 8 + 1, i % 8),
-                            indexToPos(i / 8,  i % 8), 'Q'));
-                    moves[i] = (new Move(indexToPos(i / 8 + 1, i % 8),
-                            indexToPos(i / 8,  i % 8), 'R'));
-                    moves[i] = (new Move(indexToPos(i / 8 + 1, i % 8),
-                            indexToPos(i / 8,  i % 8), 'B'));
-                    moves[i] = (new Move(indexToPos(i / 8 + 1, i % 8),
-                            indexToPos(i / 8,  i % 8), 'N'));
-                }
-            }
-        }
-        if (Long.bitCount(moveBitsP) > 0) {
-            int start = Long.numberOfTrailingZeros(moveBitsP);
-            int end = Long.numberOfLeadingZeros(moveBitsP);
-            for (int i = start; i < BOARD_SIZE * BOARD_SIZE - end; i++) {
-                if (((moveBitsP >>i) & 1L) == 1) {
-                    moves[i] = (new Move(indexToPos(i / 8, i % 8),
-                            indexToPos(i / 8,  i % 8), 'Q'));
-                    moves[i] = (new Move(indexToPos(i / 8, i % 8),
-                            indexToPos(i / 8,  i % 8), 'R'));
-                    moves[i] = (new Move(indexToPos(i / 8, i % 8),
-                            indexToPos(i / 8,  i % 8), 'B'));
-                    moves[i] = (new Move(indexToPos(i / 8, i % 8),
-                            indexToPos(i / 8,  i % 8), 'N'));
-                }
-            }
-        }
         int s = Long.numberOfTrailingZeros(moveOccupancy);
         int e = Long.numberOfLeadingZeros(moveOccupancy);
         for (int i = s; i < 64 - e; i++) {
@@ -222,117 +136,35 @@ public class BitUtils {
 
     public static List<Move> pawnMovesWhite(long[] bits, List<Move> movesList) {
         Move[] moves = new Move[64];
-        //pawn right captures
-        long moveBitsRight = ((bits[0] >> 7) & captureBlackPieces & NOT_RANK_8 & NOT_A_FILE);
-        //pawn left captures
-        long moveBitsLeft = ((bits[0] >> 9) & captureBlackPieces & NOT_RANK_8 & NOT_H_FILE);
-        //one ahead
-        long moveBitsOneAhead = (bits[0] >> 8) & empty & NOT_RANK_8;
-        //two ahead
-        long moveBitsTwoAhead = (bits[0] >> 16) & empty & (empty>>8)&RANK_4;
-        //check capture right promotions
-        long moveBitsRightP = (bits[0] >> 7)&captureBlackPieces&RANK_8&NOT_A_FILE;
-        //check capture left promotions
-        long moveBitsLeftP = (bits[0] >> 9)&captureBlackPieces&RANK_8&NOT_H_FILE;
-        //check one ahead promotion
-        long moveBitsP = (bits[0] >> 8)&empty&RANK_8;
+        long moveBitsRight =    (bits[0] >> 7)  & captureBlackPieces & NOT_RANK_8 & NOT_A_FILE;
+        long moveBitsLeft =     (bits[0] >> 9)  & captureBlackPieces & NOT_RANK_8 & NOT_H_FILE;
+        long moveBitsOneAhead = (bits[0] >> 8)  & empty & NOT_RANK_8;
+        long moveBitsTwoAhead = (bits[0] >> 16) & empty & (empty >> 8) & RANK_4;
+        long moveBitsRightP =   (bits[0] >> 7)  & captureBlackPieces & RANK_8 & NOT_A_FILE;
+        long moveBitsLeftP =    (bits[0] >> 9)  & captureBlackPieces & RANK_8 & NOT_H_FILE;
+        long moveBitsP =        (bits[0] >> 8)  & empty & RANK_8;
 
         long moveOccupancy = moveBitsRight | moveBitsLeft
-                | moveBitsOneAhead | moveBitsTwoAhead | moveBitsRightP | moveBitsLeftP | moveBitsP;
+                        | moveBitsOneAhead | moveBitsTwoAhead
+                          | moveBitsRightP | moveBitsLeftP
+                                           | moveBitsP;
+        moves = processMoveBits(moveBitsRight, '.', 1, -1, moves);
+        moves = processMoveBits(moveBitsLeft, '.', 1, 1, moves);
+        moves = processMoveBits(moveBitsOneAhead, '.', 1, 0, moves);
+        moves = processMoveBits(moveBitsTwoAhead, '.', 2, 0, moves);
+        moves = processMoveBits(moveBitsRightP, 'Q', 1, -1, moves);
+        moves = processMoveBits(moveBitsRightP, 'R', 1, -1, moves);
+        moves = processMoveBits(moveBitsRightP, 'B', 1, -1, moves);
+        moves = processMoveBits(moveBitsRightP, 'N', 1, -1, moves);
+        moves = processMoveBits(moveBitsLeftP, 'Q', 1, 0, moves);
+        moves = processMoveBits(moveBitsLeftP, 'R', 1, 0, moves);
+        moves = processMoveBits(moveBitsLeftP, 'B', 1, 0, moves);
+        moves = processMoveBits(moveBitsLeftP, 'N', 1, 0, moves);
+        moves = processMoveBits(moveBitsP, 'Q', 0, 0, moves);
+        moves = processMoveBits(moveBitsP, 'R', 0, 0, moves);
+        moves = processMoveBits(moveBitsP, 'B', 0, 0, moves);
+        moves = processMoveBits(moveBitsP, 'N', 0, 0, moves);
 
-        if (Long.bitCount(moveBitsRight) > 0) {
-            //in the case that popCount uses 1 machine instruction this could be faster.
-            int start = Long.numberOfTrailingZeros(moveBitsRight);
-            int end = Long.numberOfLeadingZeros(moveBitsRight);
-            for (int i = start; i < BOARD_SIZE * BOARD_SIZE - end; i++) {
-                if (((moveBitsRight >>i) & 1L) == 1) {
-                    moves[i] = (new Move(indexToPos(i / 8 + 1, i % 8 - 1),
-                            indexToPos(i / 8,  i % 8), '.'));
-                }
-            }
-        }
-
-        if (Long.bitCount(moveBitsLeft) > 0) {
-            int start = Long.numberOfTrailingZeros(moveBitsLeft);
-            int end = Long.numberOfLeadingZeros(moveBitsLeft);
-            for (int i = start; i < BOARD_SIZE * BOARD_SIZE - end; i++) {
-                if (((moveBitsLeft >>i) & 1L) == 1) {
-                    moves[i] =(new Move(indexToPos(i / 8 + 1, i % 8 + 1),
-                            indexToPos(i / 8,  i % 8), '.'));
-                }
-            }
-        }
-
-        if (Long.bitCount(moveBitsOneAhead) > 0) {
-            int start = Long.numberOfTrailingZeros(moveBitsOneAhead);
-            int end = Long.numberOfLeadingZeros(moveBitsOneAhead);
-            for (int i = start; i < BOARD_SIZE * BOARD_SIZE - end; i++) {
-                if (((moveBitsOneAhead >>i) & 1L) == 1) {
-                    moves[i] = (new Move(indexToPos(i / 8 + 1, i % 8),
-                            indexToPos(i / 8,  i % 8), '.'));
-                }
-            }
-        }
-
-        if (Long.bitCount(moveBitsTwoAhead) > 0) {
-            int start = Long.numberOfTrailingZeros(moveBitsTwoAhead);
-            int end = Long.numberOfLeadingZeros(moveBitsTwoAhead);
-            for (int i = start; i < BOARD_SIZE * BOARD_SIZE - end; i++) {
-                if (((moveBitsTwoAhead >>i) & 1L) == 1) {
-                    moves[i] = (new Move(indexToPos(i / 8 + 2, i % 8),
-                            indexToPos(i / 8,  i % 8), '.'));
-                }
-            }
-        }
-        if (Long.bitCount(moveBitsRightP) > 0) {
-            int start = Long.numberOfTrailingZeros(moveBitsRightP);
-            int end = Long.numberOfLeadingZeros(moveBitsRightP);
-            for (int i = start; i < BOARD_SIZE * BOARD_SIZE - end; i++) {
-                if (((moveBitsRightP >>i) & 1L) == 1) {
-                    moves[i] = (new Move(indexToPos(i / 8 + 1, i % 8 - 1),
-                            indexToPos(i / 8,  i % 8), 'Q'));
-                    moves[i] = (new Move(indexToPos(i / 8 + 1, i % 8 - 1),
-                            indexToPos(i / 8,  i % 8), 'R'));
-                    moves[i] = (new Move(indexToPos(i / 8 + 1, i % 8 - 1),
-                            indexToPos(i / 8,  i % 8), 'B'));
-                    moves[i] = (new Move(indexToPos(i / 8 + 1, i % 8 - 1),
-                            indexToPos(i / 8,  i % 8), 'N'));
-                }
-            }
-        }
-
-        if (Long.bitCount(moveBitsLeftP) > 0) {
-            int start = Long.numberOfTrailingZeros(moveBitsLeftP);
-            int end = Long.numberOfLeadingZeros(moveBitsLeftP);
-            for (int i = start; i < BOARD_SIZE * BOARD_SIZE - end; i++) {
-                if (((moveBitsLeftP >>i) & 1L) == 1) {
-                    moves[i] = (new Move(indexToPos(i / 8 + 1, i % 8),
-                            indexToPos(i / 8,  i % 8), 'Q'));
-                    moves[i] = (new Move(indexToPos(i / 8 + 1, i % 8),
-                            indexToPos(i / 8,  i % 8), 'R'));
-                    moves[i] = (new Move(indexToPos(i / 8 + 1, i % 8),
-                            indexToPos(i / 8,  i % 8), 'B'));
-                    moves[i] = (new Move(indexToPos(i / 8 + 1, i % 8),
-                            indexToPos(i / 8,  i % 8), 'N'));
-                }
-            }
-        }
-        if (Long.bitCount(moveBitsP) > 0) {
-            int start = Long.numberOfTrailingZeros(moveBitsP);
-            int end = Long.numberOfLeadingZeros(moveBitsP);
-            for (int i = start; i < BOARD_SIZE * BOARD_SIZE - end; i++) {
-                if (((moveBitsP >>i) & 1L) == 1) {
-                    moves[i] = (new Move(indexToPos(i / 8, i % 8),
-                            indexToPos(i / 8,  i % 8), 'Q'));
-                    moves[i] = (new Move(indexToPos(i / 8, i % 8),
-                            indexToPos(i / 8,  i % 8), 'R'));
-                    moves[i] = (new Move(indexToPos(i / 8, i % 8),
-                            indexToPos(i / 8,  i % 8), 'B'));
-                    moves[i] = (new Move(indexToPos(i / 8, i % 8),
-                            indexToPos(i / 8,  i % 8), 'N'));
-                }
-            }
-        }
         int s = Long.numberOfTrailingZeros(moveOccupancy);
         int e = Long.numberOfLeadingZeros(moveOccupancy);
         for (int i = s; i < 64 - e; i++) {
@@ -341,6 +173,22 @@ public class BitUtils {
             }
         }
         return movesList;
+    }
+    private static Move[] processMoveBits(long moveBits, char pieceType, int rowOffset, int colOffset, Move[] moves) {
+        if (Long.bitCount(moveBits) > 0) {
+            int start = Long.numberOfTrailingZeros(moveBits);
+            int end = Long.numberOfLeadingZeros(moveBits);
+            for (int i = start; i < BOARD_SIZE * BOARD_SIZE - end; i++) {
+                if (((moveBits >> i) & 1L) == 1) {
+                    moves[i] = new Move(
+                            indexToPos(i / 8 + rowOffset, i % 8 + colOffset),
+                            indexToPos(i / 8, i % 8),
+                            pieceType
+                    );
+                }
+            }
+        }
+        return moves;
     }
 
     public static long[] createBitBoard(char[][] cb) {
