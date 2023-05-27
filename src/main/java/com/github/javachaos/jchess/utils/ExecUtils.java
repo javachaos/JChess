@@ -13,7 +13,7 @@ public class ExecUtils {
 
     private ExecUtils() {}
 
-    public  static <T> ExecutionResult<T> measureExecutionTime(String name, Callable<T> runnable) {
+    public static <T> ExecutionResult<T> measureExecutionTime(String name, Callable<T> runnable) {
         long startTime = System.nanoTime();
         T c;
         try {

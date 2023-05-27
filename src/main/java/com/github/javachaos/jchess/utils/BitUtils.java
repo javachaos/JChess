@@ -1,36 +1,19 @@
 package com.github.javachaos.jchess.utils;
 
+import com.github.javachaos.jchess.moves.Move;
+import com.github.javachaos.jchess.moves.Pos;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 @SuppressWarnings("all")
 public class BitUtils {
-
-    public record MoveSet(Move[] moves, long occupancy) {}
-
-    public record Pos(char file, char rank) {
-        public String toString() {
-            return "" + file + rank;
-        }
-    }
-    public record Move(Pos from, Pos to, char promotion) implements Comparable<Move> {
-        static int score;
-        public String toString() {
-            return "" + from + to + (promotion == '.' ? "" : promotion);
-        }
-
-        @Override
-        public int compareTo(Move o) {
-            return score - o.score;
-        }
-    }
+    public static final Logger LOGGER = LogManager.getLogger(BitUtils.class);
 
     private BitUtils() {}
-
-    public static final Logger LOGGER = LogManager.getLogger(BitUtils.class);
 
     private static final int BOARD_SIZE = 8;
     private static final long RANK_1  = 0b11111111_00000000_00000000_00000000_00000000_00000000_00000000_00000000L;
@@ -54,6 +37,7 @@ public class BitUtils {
     private static long captureBlackPieces = 0L;
     private static long captureWhitePieces = 0L;
     private static long empty = 0L;
+    private static List<Move> allPossibleMoves = new ArrayList<>();
     
     public static long getCaptureWhitePieces() {
     	return captureWhitePieces;
@@ -198,18 +182,35 @@ public class BitUtils {
         }
         return movesList;
     }
-    private static Move[] processMoveBits(long moveBits, char pieceType, int rowOffset, int colOffset, Move[] moves) {
-        if (Long.bitCount(moveBits) > 0) {
-            int start = Long.numberOfTrailingZeros(moveBits);
-            int end = Long.numberOfLeadingZeros(moveBits);
-            for (int i = start; i < BOARD_SIZE * BOARD_SIZE - end; i++) {
-                if (((moveBits >> i) & 1L) == 1) {
-                    moves[i] = new Move(
-                            indexToPos(i / 8 + rowOffset, i % 8 + colOffset),
-                            indexToPos(i / 8, i % 8),
-                            pieceType
-                    );
-                }
+
+    /**
+     * Process a 64-bit string of bits (moveBits) one by one
+     * starting at the first set bit and looping until we reach
+     * the last set bit.
+     * At each set bit we add the move to the array moves at i.
+     * this should be fairly efficient but not optimal.
+     * To achieve 100% optimal code we would need to create a
+     * fairly large lookup table for every single piece storing
+     * all bitmasks for each of the 64 possible positions for each piece,
+     * for our application this would be impractical.
+     *
+     * @param moveBits
+     * @param promotion
+     * @param rowOffset
+     * @param colOffset
+     * @param moves
+     * @return
+     */
+    private static Move[] processMoveBits(long moveBits, char promotion, int rowOffset, int colOffset, Move[] moves) {
+        int start = Long.numberOfTrailingZeros(moveBits);
+        int end = Long.numberOfLeadingZeros(moveBits);
+        for (int i = start; i < BOARD_SIZE * BOARD_SIZE - end; i++) {
+            if (((moveBits >> i) & 1L) == 1) {
+                moves[i] = new Move(
+                        indexToPos(i / 8 + rowOffset, i % 8 + colOffset),
+                        indexToPos(i / 8, i % 8),
+                        promotion
+                );
             }
         }
         return moves;
@@ -217,71 +218,38 @@ public class BitUtils {
 
     public static long[] createBitBoard(char[][] cb) {
         long[] bits = new long[]{
-                0L, // 0 white pawn
-                0L, // 1 white rook
-                0L, // 2 white knight
-                0L, // 3 white bishop
-                0L, // 4 white king
-                0L, // 5 white queen
-                0L, // 6 black pawn
-                0L, // 7 black rook
-                0L, // 8 black knight
-                0L, // 9 black bishop
-                0L, // 10 black king
-                0L  // 11 black queen
+                0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L
         };
 
-        long bin;
         for (int i = 0; i < BOARD_SIZE * BOARD_SIZE; i++) {
-            bin = 0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000L;
-            bin = setBit(bin, i);
-
-            switch (cb[i / BOARD_SIZE][i % BOARD_SIZE]) {
-                case 'P':
-                    bits[0] += bin;
-                    break;
-                case 'R':
-                    bits[1] += bin;
-                    break;
-                case 'N':
-                    bits[2] += bin;
-                    break;
-                case 'B':
-                    bits[3] += bin;
-                    break;
-                case 'K':
-                    bits[4] += bin;
-                    break;
-                case 'Q':
-                    bits[5] += bin;
-                    break;
-                case 'p':
-                    bits[6] += bin;
-                    break;
-                case 'r':
-                    bits[7] += bin;
-                    break;
-                case 'n':
-                    bits[8] += bin;
-                    break;
-                case 'b':
-                    bits[9] += bin;
-                    break;
-                case 'k':
-                    bits[10] += bin;
-                    break;
-                case 'q':
-                    bits[11] += bin;
-                    break;
-                case '.':
-                    break;
-                default:
-                    throw new IllegalStateException("Unexpected value: " + cb[i / BOARD_SIZE][i % BOARD_SIZE]);
+            char piece = cb[i / BOARD_SIZE][i % BOARD_SIZE];
+            if (piece != '.') {
+                long bin = 1L << i;
+                int index = getPieceIndex(piece);
+                bits[index] |= bin;
             }
         }
         updateWhites(bits);
         updateBlacks(bits);
         return bits;
+    }
+
+    private static int getPieceIndex(char piece) {
+       return switch (piece) {
+            case 'P' -> 0;
+            case 'R' -> 1;
+            case 'N' -> 2;
+            case 'B' -> 3;
+            case 'K' -> 4;
+            case 'Q' -> 5;
+            case 'p' -> 6;
+            case 'r' -> 7;
+            case 'n' -> 8;
+            case 'b' -> 9;
+            case 'k' -> 10;
+            case 'q' -> 11;
+           default -> throw new IllegalStateException("Unexpected value: " + piece);
+       };
     }
 
     public static long clearBit(long number, int bitIndex) {
@@ -295,60 +263,32 @@ public class BitUtils {
     }
 
     public static void printBoard(long[] bits) {
-        char[][] cb = bitsToCharArray(bits);
+        char[][] cb = bitsToCharArray(bits, new char[8][8]);
         for (int i = 0; i < BOARD_SIZE; i++) {
             String s = Arrays.toString(cb[i]);
             LOGGER.info(s);
         }
     }
 
-    @SuppressWarnings("all")
-    public static char[][] bitsToCharArray(long[] bits) {
-        char[][] cb = new char[BOARD_SIZE][BOARD_SIZE];
-        for (int i = 0; i < BOARD_SIZE * BOARD_SIZE; i++) {
-            cb[i / BOARD_SIZE][i % BOARD_SIZE] = '.';
+    public static char[][] bitsToCharArray(long[] bits, char[][] board) {
+        int boardSizeSquared = BOARD_SIZE * BOARD_SIZE;
+        for (int i = 0; i < boardSizeSquared; i++) {
+            board[i / BOARD_SIZE][i % BOARD_SIZE] = '.';
         }
 
-        for (int i = 0; i < BOARD_SIZE * BOARD_SIZE; i++) {
-            if (((bits[0] >> i) & 1L) == 1) {
-                cb[i / BOARD_SIZE][i % BOARD_SIZE] = 'P';
-            }
-            if (((bits[1] >> i) & 1L) == 1) {
-                cb[i / BOARD_SIZE][i % BOARD_SIZE] = 'R';
-            }
-            if (((bits[2] >> i) & 1L) == 1) {
-                cb[i / BOARD_SIZE][i % BOARD_SIZE] = 'N';
-            }
-            if (((bits[3] >> i) & 1L) == 1) {
-                cb[i / BOARD_SIZE][i % BOARD_SIZE] = 'B';
-            }
-            if (((bits[4] >> i) & 1L) == 1) {
-                cb[i / BOARD_SIZE][i % BOARD_SIZE] = 'K';
-            }
-            if (((bits[5] >> i) & 1L) == 1) {
-                cb[i / BOARD_SIZE][i % BOARD_SIZE] = 'Q';
-            }
-            if (((bits[6] >> i) & 1L) == 1) {
-                cb[i / BOARD_SIZE][i % BOARD_SIZE] = 'p';
-            }
-            if (((bits[7] >> i) & 1L) == 1) {
-                cb[i / BOARD_SIZE][i % BOARD_SIZE] = 'r';
-            }
-            if (((bits[8] >> i) & 1L) == 1) {
-                cb[i / BOARD_SIZE][i % BOARD_SIZE] = 'n';
-            }
-            if (((bits[9] >> i) & 1L) == 1) {
-                cb[i / BOARD_SIZE][i % BOARD_SIZE] = 'b';
-            }
-            if (((bits[10] >> i) & 1L) == 1) {
-                cb[i / BOARD_SIZE][i % BOARD_SIZE] = 'k';
-            }
-            if (((bits[11] >> i) & 1L) == 1) {
-                cb[i / BOARD_SIZE][i % BOARD_SIZE] = 'q';
+        char[] pieces = {'P', 'R', 'N', 'B', 'K', 'Q', 'p', 'r', 'n', 'b', 'k', 'q'};
+        int numPieces = pieces.length;
+        for (int i = 0; i < numPieces; i++) {
+            long currentBit = bits[i];
+            for (int j = 0; j < boardSizeSquared; j++) {
+                if (((currentBit >> j) & 1L) == 1) {
+                    board[j / BOARD_SIZE][j % BOARD_SIZE] = pieces[i];
+                }
             }
         }
-        return cb;
+        return board;
     }
+
 
     public static void printBitboard(long bitboard) {
         char[][] cb = new char[BOARD_SIZE][BOARD_SIZE];
@@ -429,4 +369,22 @@ public class BitUtils {
         return x < 0;
     }
 
+    public static List<Move> getAllPossibleMoves(long[] bits, boolean isWhite) {
+        if (isWhite) {
+            pawnMovesWhite(bits, allPossibleMoves);
+            //add the rest of the piece types
+        } else {
+            pawnMovesWhite(bits, allPossibleMoves);
+        }
+        return allPossibleMoves;
+    }
+
+    public static boolean doMove(long[] bits, Move m) {
+        if (getAllPossibleMoves(bits, false).contains(m)) {
+            allPossibleMoves.clear();
+            //implement, perform move m on board bits
+            return true;
+        }
+        return false;
+    }
 }

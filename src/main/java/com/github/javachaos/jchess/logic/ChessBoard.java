@@ -1,6 +1,9 @@
 package com.github.javachaos.jchess.logic;
 
+import com.github.javachaos.jchess.moves.Move;
 import com.github.javachaos.jchess.utils.BitUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -12,6 +15,7 @@ import java.util.Deque;
  */
 @SuppressWarnings("unused")
 public class ChessBoard {
+    public static final Logger LOGGER = LogManager.getLogger(ChessBoard.class);
     private static final char[][] INIT_BOARD = {
             {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},
             {'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'},
@@ -22,6 +26,7 @@ public class ChessBoard {
             {'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'},
             {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'}
     };
+    private final char[][] board = new char[8][8];
     private long[] bits;
     private long occupancy = 0L;
     private final Deque<long[]> history;
@@ -47,9 +52,12 @@ public class ChessBoard {
         this(INIT_BOARD);
     }
 
-    public void makeMove() {
+    public void makeMove(Move m) {
         history.push(bits);
         fullMoveClock++;
+        if (BitUtils.doMove(bits, m)) {
+            LOGGER.info("Move successful: {}", m);
+        }
     }
 
     public void undoMove() {
@@ -77,7 +85,10 @@ public class ChessBoard {
     }
 
     public char[][] toCharArray() {
-        return BitUtils.bitsToCharArray(bits);
+        return BitUtils.bitsToCharArray(bits, board);
     }
 
+    public long[] getBits() {
+        return bits;
+    }
 }
