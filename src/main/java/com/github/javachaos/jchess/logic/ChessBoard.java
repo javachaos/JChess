@@ -26,7 +26,7 @@ public class ChessBoard {
             {'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'},
             {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'}
     };
-    private final char[][] board = new char[8][8];
+    private final char[][] board;
     private long[] bits;
     private long occupancy = 0L;
     private final Deque<long[]> history;
@@ -36,6 +36,7 @@ public class ChessBoard {
 
     public ChessBoard(char[][] initialBoard) {
         bits = BitUtils.createBitBoard(initialBoard);
+        board = new char[8][8];
         this.history = new ArrayDeque<>();
         this.castleRights[0] = true;// K
         this.castleRights[1] = true;// Q
@@ -57,12 +58,16 @@ public class ChessBoard {
         fullMoveClock++;
         if (BitUtils.doMove(bits, m)) {
             LOGGER.info("Move successful: {}", m);
+            updateOccupancy();
+        } else {
+            LOGGER.info("Move Invalid: {}", m);
         }
     }
 
     public void undoMove() {
         bits = history.pop();
         fullMoveClock--;
+        updateOccupancy();
     }
 
     private void updateOccupancy() {

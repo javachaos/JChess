@@ -5,13 +5,60 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class BitUtilsTest {
     private static final Logger LOGGER = LogManager.getLogger(BitUtilsTest.class);
+
+    @Test
+    public void testOccupancyToCharArray() {
+        LOGGER.info("------------------   Testing OccupancyToCharArray. BEGIN   ------------------");
+        char[][] INIT_BOARD = {
+                {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},//8
+                {'p', 'p', 'p', 'p', '.', 'p', 'p', 'p'},//7
+                {'.', '.', '.', '.', 'p', '.', '.', '.'},//6
+                {'.', '.', '.', '.', '.', '.', '.', '.'},//5
+                {'.', '.', '.', '.', '.', '.', 'p', '.'},//4
+                {'P', 'P', 'P', 'P', 'P', 'P', '.', '.'},//3
+                {'.', '.', '.', '.', '.', '.', 'P', 'P'},//2
+                {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'} //1
+                //A    B    C    D    E    F    G    H
+        };
+        char[][] OCCU_BOARD = {
+                {'@', '@', '@', '@', '@', '@', '@', '@'},//8
+                {'@', '@', '@', '@', '.', '@', '@', '@'},//7
+                {'.', '.', '.', '.', '@', '.', '.', '.'},//6
+                {'.', '.', '.', '.', '.', '.', '.', '.'},//5
+                {'.', '.', '.', '.', '.', '.', '@', '.'},//4
+                {'@', '@', '@', '@', '@', '@', '.', '.'},//3
+                {'.', '.', '.', '.', '.', '.', '@', '@'},//2
+                {'@', '@', '@', '@', '@', '@', '@', '@'} //1
+                //A    B    C    D    E    F    G    H
+        };
+
+        ChessBoard cb = new ChessBoard(INIT_BOARD);
+        assertArrayEquals(cb.toCharArray(), INIT_BOARD);
+        ExecUtils.ExecutionResult<char[][]> r = ExecUtils.measureExecutionTime(
+                "OccupancyToCharArray", () -> BitUtils.occupancyToCharArray(cb.getOccupancy()), true);
+        assertArrayEquals(r.result(), OCCU_BOARD);
+
+
+        ExecUtils.ExecutionResult<char[][]> b = ExecUtils.measureExecutionTime(
+                "FastOccupancyToCharArray", () -> BitUtils.fastOccupancyToCharArray(cb.getOccupancy()), true);
+        assertArrayEquals(b.result(), OCCU_BOARD);
+
+        ExecUtils.ExecutionResult<char[][]> k = ExecUtils.measureExecutionTime(
+                "OccupancyToCharArray", () -> BitUtils.occupancyToCharArray(cb.getOccupancy()), true);
+        assertArrayEquals(k.result(), OCCU_BOARD);
+
+        ExecUtils.ExecutionResult<char[][]> j = ExecUtils.measureExecutionTime(
+                "FastOccupancyToCharArray", () -> BitUtils.fastOccupancyToCharArray(cb.getOccupancy()), true);
+        assertArrayEquals(j.result(), OCCU_BOARD);
+
+        LOGGER.info("------------------   Testing OccupancyToCharArray. END   ------------------");
+    }
 
     @Test
     public void testChessBoard() {
@@ -59,7 +106,7 @@ public class BitUtilsTest {
         };
         ChessBoard cb = new ChessBoard();
         ExecUtils.ExecutionResult<char[][]> r = ExecUtils.measureExecutionTime("bitsToCharArray",
-                () -> BitUtils.bitsToCharArray(cb.getBits(), new char[8][8]));
+                () -> BitUtils.bitsToCharArray(cb.getBits(), new char[8][8]), true);
         assertArrayEquals(r.result(), INIT_BOARD);
         LOGGER.info("------------------   Testing BitsToCharArray. END   ------------------");
     }
@@ -104,22 +151,20 @@ public class BitUtilsTest {
         LOGGER.info("");
         BitUtils.printBitboard(bits[11]);
         BitUtils.printBoard(bits);
-        List<Move> movesList = new ArrayList<>();
         BitUtils.updateBoards(bits);
         LOGGER.info("Starting white pawn move generation.");
-        ExecUtils.measureExecutionTime(
-                "White Pawn Move Generation", () -> BitUtils.pawnMovesWhite(bits, movesList));
-        LOGGER.info(movesList);
+        ExecUtils.ExecutionResult<List<Move>> r = ExecUtils.measureExecutionTime(
+                "White Pawn Move Generation", () -> BitUtils.pawnMovesWhite(bits), true);
+        LOGGER.info(r.result());
         assertEquals("[a3a4, b3b4, c3c4, d3d4, e3e4, f3f4, f3g4, h2h4, g2g3, h2h3]",
-                movesList.toString());
-        movesList.clear();
+                r.result().toString());
 
         LOGGER.info("Starting black pawn move generation.");
-        ExecUtils.measureExecutionTime(
-                "Black Pawn Move Generation", () -> BitUtils.pawnMovesBlack(bits, movesList));
-        LOGGER.info(movesList);
+        ExecUtils.ExecutionResult<List<Move>> r1 = ExecUtils.measureExecutionTime(
+                "Black Pawn Move Generation", () -> BitUtils.pawnMovesBlack(bits), true);
+        LOGGER.info(r1.result());
         assertEquals("[a7a6, b7b6, c7c6, d7d6, f7f6, g7g6, h7h6, a7a5, b7b5, c7c5, d7d5, e6e5, f7f5, h7h5, g4f3, g4g3]",
-                movesList.toString());
+                r1.result().toString());
 
         LOGGER.info("------------------   Testing PawnMoveGeneration. END   ------------------");
     }
@@ -138,11 +183,11 @@ public class BitUtilsTest {
         assertTrue(BitUtils.isOddParity(e));
 
         long od = 0b10011111_00000000_00000100_00000010_00000000_00000100_00100000_00000000L;
-        ExecUtils.measureExecutionTime("isOddParity", () -> BitUtils.isOddParity(od));
-        ExecUtils.measureExecutionTime("isOddParity", () -> BitUtils.isOddParity(o));
-        ExecUtils.measureExecutionTime("isOddParity", () -> BitUtils.isOddParity(e));
-        ExecUtils.measureExecutionTime("isOddParity", () -> BitUtils.isOddParity(odd));
-        ExecUtils.measureExecutionTime("isOddParity", () -> BitUtils.isOddParity(even));
+        ExecUtils.measureExecutionTime("isOddParity", () -> BitUtils.isOddParity(od), true);
+        ExecUtils.measureExecutionTime("isOddParity", () -> BitUtils.isOddParity(o), true);
+        ExecUtils.measureExecutionTime("isOddParity", () -> BitUtils.isOddParity(e), true);
+        ExecUtils.measureExecutionTime("isOddParity", () -> BitUtils.isOddParity(odd), true);
+        ExecUtils.measureExecutionTime("isOddParity", () -> BitUtils.isOddParity(even), true);
 
         LOGGER.info("------------------   Testing IsOddParity. END   ------------------");
 

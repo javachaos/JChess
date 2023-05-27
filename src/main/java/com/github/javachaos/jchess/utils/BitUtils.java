@@ -37,7 +37,6 @@ public class BitUtils {
     private static long captureBlackPieces = 0L;
     private static long captureWhitePieces = 0L;
     private static long empty = 0L;
-    private static List<Move> allPossibleMoves = new ArrayList<>();
     
     public static long getCaptureWhitePieces() {
     	return captureWhitePieces;
@@ -61,21 +60,39 @@ public class BitUtils {
 
     public static char[][] occupancyToCharArray(long occupancy) {
         char[][] cb = new char[BOARD_SIZE][BOARD_SIZE];
-        for (int i = 0; i < BOARD_SIZE * BOARD_SIZE; i++) {
+        for (int i = 0; i < 64; i++) {
             cb[i / BOARD_SIZE][i % BOARD_SIZE] = '.';
         }
         if (Long.bitCount(occupancy) > 0) {
             //in the case that bitCount uses 1 machine instruction this could be faster.
             int start = Long.numberOfTrailingZeros(occupancy);
             int end = Long.numberOfLeadingZeros(occupancy);
-            for (int i = start; i < BOARD_SIZE * BOARD_SIZE - end; i++) {
+            for (int i = start; i < 64 - end; i++) {
                 if (((occupancy >> i) & 1L) == 1) {
-                    cb[i/8][i%8] = '@';
+                    cb[i/BOARD_SIZE][i%BOARD_SIZE] = '@';
                 }
             }
         }
         return cb;
     }
+
+    public static char[][] fastOccupancyToCharArray(long occupancy) {
+        char[][] cb = new char[BOARD_SIZE][BOARD_SIZE];
+        for (int i = 0; i < BOARD_SIZE * BOARD_SIZE; i++) {
+            cb[i / BOARD_SIZE][i % BOARD_SIZE] = '.';
+        }
+
+        while (occupancy != 0) {
+            int square = Long.numberOfTrailingZeros(occupancy);
+            int row = square / BOARD_SIZE;
+            int col = square % BOARD_SIZE;
+            cb[row][col] = '@';
+            occupancy &= occupancy - 1; // Clear the least significant bit
+        }
+
+        return cb;
+    }
+
 
     public static void updateBoards(long[] bits) {
         updateWhites(bits);
@@ -101,7 +118,7 @@ public class BitUtils {
      * @param movesList
      * @return
      */
-    public static List<Move> pawnMovesBlack(long[] bits, List<Move> movesList) {
+    public static List<Move> pawnMovesBlack(long[] bits) {
         Move[] moves = new Move[64];
 
         long moveBitsRight =    (bits[6] << 7)  & captureWhitePieces & NOT_RANK_1 & NOT_A_FILE;
@@ -132,17 +149,18 @@ public class BitUtils {
         moves = processMoveBits(moveBitsP, 'B', 0, 0, moves);
         moves = processMoveBits(moveBitsP, 'N', 0, 0, moves);
 
+        List<Move> moveList = new ArrayList<>(Long.bitCount(moveOccupancy));
         int s = Long.numberOfTrailingZeros(moveOccupancy);
         int e = Long.numberOfLeadingZeros(moveOccupancy);
         for (int i = s; i < 64 - e; i++) {
             if (((moveOccupancy >> i) & 1L) == 1) {
-                movesList.add(moves[i]);
+                moveList.add(moves[i]);
             }
         }
-        return movesList;
+        return moveList;
     }
 
-    public static List<Move> pawnMovesWhite(long[] bits, List<Move> movesList) {
+    public static List<Move> pawnMovesWhite(long[] bits) {
         Move[] moves = new Move[64];
         long moveBitsRight =    (bits[0] >> 7)  & captureBlackPieces & NOT_RANK_8 & NOT_A_FILE;
         long moveBitsLeft =     (bits[0] >> 9)  & captureBlackPieces & NOT_RANK_8 & NOT_H_FILE;
@@ -172,15 +190,15 @@ public class BitUtils {
         moves = processMoveBits(moveBitsP, 'R', 0, 0, moves);
         moves = processMoveBits(moveBitsP, 'B', 0, 0, moves);
         moves = processMoveBits(moveBitsP, 'N', 0, 0, moves);
-
+        List<Move> moveList = new ArrayList<>(Long.bitCount(moveOccupancy));
         int s = Long.numberOfTrailingZeros(moveOccupancy);
         int e = Long.numberOfLeadingZeros(moveOccupancy);
         for (int i = s; i < 64 - e; i++) {
             if (((moveOccupancy >> i) & 1L) == 1) {
-                movesList.add(moves[i]);
+                moveList.add(moves[i]);
             }
         }
-        return movesList;
+        return moveList;
     }
 
     /**
@@ -370,18 +388,20 @@ public class BitUtils {
     }
 
     public static List<Move> getAllPossibleMoves(long[] bits, boolean isWhite) {
+        List<Move> moveList;
         if (isWhite) {
-            pawnMovesWhite(bits, allPossibleMoves);
+            moveList = pawnMovesWhite(bits);
             //add the rest of the piece types
+            //moveList.addAll(rookMovesWhite(bits));
+            //ect..
         } else {
-            pawnMovesWhite(bits, allPossibleMoves);
+            moveList = pawnMovesWhite(bits);
         }
-        return allPossibleMoves;
+        return moveList;
     }
 
     public static boolean doMove(long[] bits, Move m) {
         if (getAllPossibleMoves(bits, false).contains(m)) {
-            allPossibleMoves.clear();
             //implement, perform move m on board bits
             return true;
         }
