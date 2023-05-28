@@ -71,7 +71,7 @@ public class BitUtils {
             int start = Long.numberOfTrailingZeros(occupancy);
             int end = Long.numberOfLeadingZeros(occupancy);
             for (int i = start; i < 64 - end; i++) {
-                if (((occupancy >> i) & 1L) == 1) {
+                if ((occupancy & (1L << i)) != 0) {
                     cb[i/BOARD_SIZE][i%BOARD_SIZE] = '@';
                 }
             }
@@ -176,7 +176,7 @@ public class BitUtils {
             int s = Long.numberOfTrailingZeros(moveOccupancy);
             int e = Long.numberOfLeadingZeros(moveOccupancy);
             for (int i = s; i < 64 - e; i++) {
-                if (((moveOccupancy >> i) & 1L) == 1) {
+                if ((moveOccupancy & (1L << i)) != 0) {
                     moveList.add(moves[i]);
                 }
             }
@@ -208,7 +208,7 @@ public class BitUtils {
         int end = Long.numberOfLeadingZeros(moveBits);
         int size = BOARD_SIZE * BOARD_SIZE - end;
         for (int i = start; i < size; i++) {
-            if (((moveBits >> i) & 1L) == 1) {
+            if ((moveBits & (1L << i)) != 0) {
                 moves[i] = new Move(
                         indexToPos(i / 8 + rowOffset, i % 8 + colOffset),
                         indexToPos(i / 8, i % 8),
@@ -330,7 +330,7 @@ public class BitUtils {
         for (int i = 0; i < numPieces; i++) {
             long currentBit = bits[i];
             for (int j = 0; j < boardSizeSquared; j++) {
-                if (((currentBit >> j) & 1L) == 1) {
+                if ((currentBit & (1L << j)) != 0) {
                     board[j / BOARD_SIZE][j % BOARD_SIZE] = pieces[i];
                 }
             }
