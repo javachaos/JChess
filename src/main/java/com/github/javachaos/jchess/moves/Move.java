@@ -14,6 +14,10 @@ public record Move(Pos from, Pos to, char promotion) implements Comparable<Move>
         return 1L << to.index();
     }
 
+    public Move reverse() {
+        return new Move(to, from, '.');
+    }
+
     @Override
     public int compareTo(Move o) {
         if (promotion != '.' && o.promotion == '.') {

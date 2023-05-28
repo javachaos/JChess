@@ -8,6 +8,8 @@ import org.apache.logging.log4j.Logger;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
+import static com.github.javachaos.jchess.utils.BitUtils.updateOccupancy;
+
 /**
  * Lightweight chess board representation, using bitboards.
  *
@@ -28,21 +30,23 @@ public class ChessBoard {
     };
     private final char[][] board;
     private long[] bits;
-    private long occupancy = 0L;
-    private final Deque<long[]> history;
+    private final Deque<long[]> boardHistory;
+    private final Deque<Move> moveHistory;
     private final boolean[] castleRights = new boolean[4];
     private static final int HALFMOVECLOCK = 0;
     private int fullMoveClock = 0;
 
     public ChessBoard(char[][] initialBoard) {
         bits = BitUtils.createBitBoard(initialBoard);
+        BitUtils.clearCceo();
+        updateOccupancy(bits);
         board = new char[8][8];
-        this.history = new ArrayDeque<>();
+        this.boardHistory = new ArrayDeque<>();
+        this.moveHistory = new ArrayDeque<>();
         this.castleRights[0] = true;// K
         this.castleRights[1] = true;// Q
         this.castleRights[2] = true;// k
         this.castleRights[3] = true;// q
-        updateOccupancy();
     }
 
     public boolean[] getCastleRights() {
@@ -54,35 +58,26 @@ public class ChessBoard {
     }
 
     public void makeMove(Move m) {
-        history.push(bits);
+        boardHistory.push(bits);
+        moveHistory.push(m);
         fullMoveClock++;
         if (BitUtils.doMove(bits, m)) {
             LOGGER.info("Move successful: {}", m);
-            updateOccupancy();
+            updateOccupancy(m);
         } else {
             LOGGER.info("Move Invalid: {}", m);
         }
     }
 
     public void undoMove() {
-        bits = history.pop();
+        bits = boardHistory.pop();
+        Move m = moveHistory.pop();
         fullMoveClock--;
-        updateOccupancy();
-    }
-
-    private void updateOccupancy() {
-        for (long bit : bits) {
-            occupancy |= bit;
-        }
-    }
-
-    @SuppressWarnings("unused")
-    public long getOccupancy() {
-        return occupancy;
+        updateOccupancy(m);
     }
 
     public void printOccupancy() {
-        BitUtils.printBitboard(occupancy);
+        BitUtils.printOccupancy();
     }
 
     public void printBoard() {
@@ -99,5 +94,9 @@ public class ChessBoard {
 
     public long[] getBits() {
         return bits;
+    }
+
+    public long getOccupancy() {
+        return BitUtils.cceo()[3];
     }
 }
