@@ -2,13 +2,17 @@ package com.github.javachaos.jchess.utils;
 
 import org.junit.jupiter.api.Test;
 
-@SuppressWarnings("all")
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 public class RandUtilsTest {
 
     @Test
     void testRandUtils() {
-        long[] bits = BitUtils.createBitBoard(RandUtils.getRandomBoard());
-        BitUtils.prettyPrintBoard(bits);
-        //add some assertions
+        ExecUtils.ExecutionResult<long[]> r = ExecUtils.measureExecutionTime("Random Board",
+                () -> BitUtils.createBitBoard(RandUtils.getRandomBoard()), 10);
+        BitUtils.prettyPrintBoard(r.result());
+        assertTrue(r.nanos() < TimeUnit.MILLISECONDS.toNanos(100));
     }
 }
