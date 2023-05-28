@@ -13,7 +13,7 @@ public class Constants {
     //fancy blacks
     public static final char FANCY_B_KING =   '♚';
     public static final char FANCY_B_QUEEN =  '♛';
-    public static final char FANCY_B_ROOK =    '♜';
+    public static final char FANCY_B_ROOK =   '♜';
     public static final char FANCY_B_BISHOP = '♝';
     public static final char FANCY_B_KNIGHT = '♞';
     public static final char FANCY_B_PAWN =   '♟';

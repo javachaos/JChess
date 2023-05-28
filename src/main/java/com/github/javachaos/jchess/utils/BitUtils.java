@@ -10,6 +10,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import static java.util.Collections.EMPTY_LIST;
+
 @SuppressWarnings("all")
 public class BitUtils {
     public static final Logger LOGGER = LogManager.getLogger(BitUtils.class);
@@ -131,16 +133,7 @@ public class BitUtils {
         moves = processMoveBits(moveBitsP, 'R', 0, 0, moves);
         moves = processMoveBits(moveBitsP, 'B', 0, 0, moves);
         moves = processMoveBits(moveBitsP, 'N', 0, 0, moves);
-
-        List<Move> moveList = new ArrayList<>(Long.bitCount(moveOccupancy));
-        int s = Long.numberOfTrailingZeros(moveOccupancy);
-        int e = Long.numberOfLeadingZeros(moveOccupancy);
-        for (int i = s; i < 64 - e; i++) {
-            if (((moveOccupancy >> i) & 1L) == 1) {
-                moveList.add(moves[i]);
-            }
-        }
-        return moveList;
+        return getMoves(moves, moveOccupancy);
     }
 
     public static List<Move> pawnMovesWhite(long[] bits) {
@@ -173,15 +166,23 @@ public class BitUtils {
         moves = processMoveBits(moveBitsP, 'R', 0, 0, moves);
         moves = processMoveBits(moveBitsP, 'B', 0, 0, moves);
         moves = processMoveBits(moveBitsP, 'N', 0, 0, moves);
-        List<Move> moveList = new ArrayList<>(Long.bitCount(moveOccupancy));
-        int s = Long.numberOfTrailingZeros(moveOccupancy);
-        int e = Long.numberOfLeadingZeros(moveOccupancy);
-        for (int i = s; i < 64 - e; i++) {
-            if (((moveOccupancy >> i) & 1L) == 1) {
-                moveList.add(moves[i]);
+        return getMoves(moves, moveOccupancy);
+    }
+
+    private static List<Move> getMoves(Move[] moves, long moveOccupancy) {
+        int numMoves = Long.bitCount(moveOccupancy);
+        if (numMoves > 0) {
+            List<Move> moveList = new ArrayList<>();
+            int s = Long.numberOfTrailingZeros(moveOccupancy);
+            int e = Long.numberOfLeadingZeros(moveOccupancy);
+            for (int i = s; i < 64 - e; i++) {
+                if (((moveOccupancy >> i) & 1L) == 1) {
+                    moveList.add(moves[i]);
+                }
             }
+            return moveList;
         }
-        return moveList;
+        return EMPTY_LIST;
     }
 
     /**
