@@ -13,26 +13,19 @@ public class ExecUtils {
 
     private ExecUtils() {}
 
-    private static void jitWarmUp(Callable<?> runnable) {
+    private static void jitWarmUp(Callable<?> runnable, int warmupCount) {
         try {
-            runnable.call();
-            runnable.call();
-            runnable.call();
-            runnable.call();
-            runnable.call();
-            runnable.call();
-            runnable.call();
-            runnable.call();
-            runnable.call();
-            runnable.call();
+            for (int i = 0; i < warmupCount; i++) {
+                runnable.call();
+            }
         } catch (Exception e) {
             throw new JChessRuntimeException(e);
         }
     }
 
-    public static <T> ExecutionResult<T> measureExecutionTime(String name, Callable<T> runnable, boolean warmup) {
-        if (warmup) {
-            jitWarmUp(runnable);
+    public static <T> ExecutionResult<T> measureExecutionTime(String name, Callable<T> runnable, int warmupCount) {
+        if (warmupCount > 0) {
+            jitWarmUp(runnable, warmupCount);
         }
         long startTime = System.nanoTime();
         T c;

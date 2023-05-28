@@ -6,6 +6,7 @@ import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -41,21 +42,16 @@ public class BitUtilsTest {
         ChessBoard cb = new ChessBoard(INIT_BOARD);
         assertArrayEquals(cb.toCharArray(), INIT_BOARD);
         ExecUtils.ExecutionResult<char[][]> r = ExecUtils.measureExecutionTime(
-                "OccupancyToCharArray", () -> BitUtils.occupancyToCharArray(cb.getOccupancy()), true);
+                "OccupancyToCharArray", () -> BitUtils.occupancyToCharArray(cb.getOccupancy()), 10);
         assertArrayEquals(r.result(), OCCU_BOARD);
-
-
-        ExecUtils.ExecutionResult<char[][]> b = ExecUtils.measureExecutionTime(
-                "FastOccupancyToCharArray", () -> BitUtils.fastOccupancyToCharArray(cb.getOccupancy()), true);
-        assertArrayEquals(b.result(), OCCU_BOARD);
+        assertTrue(r.nanos() < TimeUnit.MICROSECONDS.toNanos(100));
 
         ExecUtils.ExecutionResult<char[][]> k = ExecUtils.measureExecutionTime(
-                "OccupancyToCharArray", () -> BitUtils.occupancyToCharArray(cb.getOccupancy()), true);
+                "OccupancyToCharArray", () -> BitUtils.occupancyToCharArray(cb.getOccupancy()), 10);
         assertArrayEquals(k.result(), OCCU_BOARD);
+        assertTrue(k.nanos() < TimeUnit.MICROSECONDS.toNanos(100));
 
-        ExecUtils.ExecutionResult<char[][]> j = ExecUtils.measureExecutionTime(
-                "FastOccupancyToCharArray", () -> BitUtils.fastOccupancyToCharArray(cb.getOccupancy()), true);
-        assertArrayEquals(j.result(), OCCU_BOARD);
+        cb.prettyPrintBoard();
 
         LOGGER.info("------------------   Testing OccupancyToCharArray. END   ------------------");
     }
@@ -106,7 +102,8 @@ public class BitUtilsTest {
         };
         ChessBoard cb = new ChessBoard();
         ExecUtils.ExecutionResult<char[][]> r = ExecUtils.measureExecutionTime("bitsToCharArray",
-                () -> BitUtils.bitsToCharArray(cb.getBits(), new char[8][8]), true);
+                () -> BitUtils.bitsToCharArray(cb.getBits(), new char[8][8]), 10);
+        assertTrue(r.nanos() < TimeUnit.MICROSECONDS.toNanos(100));
         assertArrayEquals(r.result(), INIT_BOARD);
         LOGGER.info("------------------   Testing BitsToCharArray. END   ------------------");
     }
@@ -154,17 +151,19 @@ public class BitUtilsTest {
         BitUtils.updateBoards(bits);
         LOGGER.info("Starting white pawn move generation.");
         ExecUtils.ExecutionResult<List<Move>> r = ExecUtils.measureExecutionTime(
-                "White Pawn Move Generation", () -> BitUtils.pawnMovesWhite(bits), true);
+                "White Pawn Move Generation", () -> BitUtils.pawnMovesWhite(bits), 10);
         LOGGER.info(r.result());
         assertEquals("[a3a4, b3b4, c3c4, d3d4, e3e4, f3f4, f3g4, h2h4, g2g3, h2h3]",
                 r.result().toString());
+        assertTrue(r.nanos() < TimeUnit.MICROSECONDS.toNanos(100));
 
         LOGGER.info("Starting black pawn move generation.");
         ExecUtils.ExecutionResult<List<Move>> r1 = ExecUtils.measureExecutionTime(
-                "Black Pawn Move Generation", () -> BitUtils.pawnMovesBlack(bits), true);
+                "Black Pawn Move Generation", () -> BitUtils.pawnMovesBlack(bits), 10);
         LOGGER.info(r1.result());
         assertEquals("[a7a6, b7b6, c7c6, d7d6, f7f6, g7g6, h7h6, a7a5, b7b5, c7c5, d7d5, e6e5, f7f5, h7h5, g4f3, g4g3]",
                 r1.result().toString());
+        assertTrue(r1.nanos() < TimeUnit.MICROSECONDS.toNanos(100));
 
         LOGGER.info("------------------   Testing PawnMoveGeneration. END   ------------------");
     }
@@ -183,11 +182,11 @@ public class BitUtilsTest {
         assertTrue(BitUtils.isOddParity(e));
 
         long od = 0b10011111_00000000_00000100_00000010_00000000_00000100_00100000_00000000L;
-        ExecUtils.measureExecutionTime("isOddParity", () -> BitUtils.isOddParity(od), true);
-        ExecUtils.measureExecutionTime("isOddParity", () -> BitUtils.isOddParity(o), true);
-        ExecUtils.measureExecutionTime("isOddParity", () -> BitUtils.isOddParity(e), true);
-        ExecUtils.measureExecutionTime("isOddParity", () -> BitUtils.isOddParity(odd), true);
-        ExecUtils.measureExecutionTime("isOddParity", () -> BitUtils.isOddParity(even), true);
+        ExecUtils.measureExecutionTime("isOddParity", () -> BitUtils.isOddParity(od), 10);
+        ExecUtils.measureExecutionTime("isOddParity", () -> BitUtils.isOddParity(o), 10);
+        ExecUtils.measureExecutionTime("isOddParity", () -> BitUtils.isOddParity(e), 10);
+        ExecUtils.measureExecutionTime("isOddParity", () -> BitUtils.isOddParity(odd), 10);
+        ExecUtils.measureExecutionTime("isOddParity", () -> BitUtils.isOddParity(even), 10);
 
         LOGGER.info("------------------   Testing IsOddParity. END   ------------------");
 

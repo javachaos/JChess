@@ -89,6 +89,10 @@ public class ChessBoard {
         BitUtils.printBoard(bits);
     }
 
+    public void prettyPrintBoard() {
+        BitUtils.prettyPrintBoard(bits);
+    }
+
     public char[][] toCharArray() {
         return BitUtils.bitsToCharArray(bits, board);
     }
