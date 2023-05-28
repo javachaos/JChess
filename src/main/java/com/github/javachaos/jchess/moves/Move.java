@@ -1,8 +1,17 @@
 package com.github.javachaos.jchess.moves;
 
+@SuppressWarnings("unused")
 public record Move(Pos from, Pos to, char promotion) implements Comparable<Move> {
     public String toString() {
         return String.valueOf(from) + to + (promotion == '.' ? "" : promotion);
+    }
+
+    public long fromBitboard() {
+        return 1L << from.index();
+    }
+
+    public long toBitboard() {
+        return 1L << to.index();
     }
 
     @Override

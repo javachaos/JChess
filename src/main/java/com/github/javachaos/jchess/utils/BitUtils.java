@@ -221,8 +221,8 @@ public class BitUtils {
         for (int i = start; i < size; i++) {
             if ((moveBits & (1L << i)) != 0) {
                 moves[i] = new Move(
-                        indexToPos(i / 8 + rowOffset, i % 8 + colOffset),
-                        indexToPos(i / 8, i % 8),
+                        indexToPos(i / 8 + rowOffset, i % 8 + colOffset, i),
+                        indexToPos(i / 8, i % 8, i),
                         promotion
                 );
             }
@@ -407,11 +407,11 @@ public class BitUtils {
         return s;
     }
 
-    public static Pos indexToPos(int rank, int file) {
+    public static Pos indexToPos(int rank, int file, int index) {
         if (rank < 0 || file < 0) {
             throw new IllegalArgumentException("Cannot have a negative index!");
         }
-        return new Pos((char) ('a' + file), (char) ('8' - rank));
+        return new Pos((char) ('a' + file), (char) ('8' - rank), index);
     }
 
     /**
@@ -445,6 +445,8 @@ public class BitUtils {
     public static boolean doMove(long[] bits, Move m) {
         if (getAllPossibleMoves(bits, false).contains(m)) {
             //implement, perform move m on board bits
+            updateEmpty(m.fromBitboard());//Empty the from square
+
             return true;
         }
         return false;
