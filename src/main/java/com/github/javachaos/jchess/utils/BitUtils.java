@@ -61,6 +61,17 @@ public class BitUtils {
         empty = ~(bits[0]|bits[1]|bits[2]|bits[3]|bits[4]|bits[5]|bits[6]|bits[7]|bits[8]|bits[9]|bits[10]|bits[11]);
     }
 
+    /**
+     * Remove empty squares from the empty bitboard, any bit set it both
+     * squares and empty will be zero'd. (XOR)
+     * Much faster than updating with the entire set of bit boards. (~10x faster)
+     *
+     * @param squares bitboard of squares to set empty
+     */
+    public static void updateEmpty(long squares) {
+        empty ^= squares;
+    }
+
     public static char[][] occupancyToCharArray(long occupancy) {
         char[][] cb = new char[BOARD_SIZE][BOARD_SIZE];
         for (int i = 0; i < 64; i++) {
