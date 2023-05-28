@@ -442,8 +442,11 @@ public class BitUtils {
     }
 
     public static Pos indexToPos(int rank, int file, int index) {
-        if (rank < 0 || file < 0) {
-            throw new IllegalArgumentException("Cannot have a negative index!");
+        if (rank < 0) {
+            rank = 0;
+        }
+        if (file < 0) {
+            file = 0;
         }
         return new Pos((char) ('a' + file), (char) ('8' - rank), index);
     }
