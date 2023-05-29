@@ -28,8 +28,14 @@ public class BitUtils {
     private static final long RANK_7  = 0b00000000_00000000_00000000_00000000_00000000_00000000_11111111_00000000L;
     private static final long RANK_8  = 0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_11111111L;
     private static final long FILE_A  = 0b10000000_10000000_10000000_10000000_10000000_10000000_10000000_10000000L;
-    private static final long FILE_AB = 0b11000000_11000000_11000000_11000000_11000000_11000000_11000000_11000000L;
+    private static final long FILE_B  = 0b01000000_01000000_01000000_01000000_01000000_01000000_01000000_01000000L;
+    private static final long FILE_C  = 0b00100000_00100000_00100000_00100000_00100000_00100000_00100000_00100000L;
+    private static final long FILE_D  = 0b00010000_00010000_00010000_00010000_00010000_00010000_00010000_00010000L;
+    private static final long FILE_E  = 0b00001000_00001000_00001000_00001000_00001000_00001000_00001000_00001000L;
+    private static final long FILE_F  = 0b00000100_00000100_00000100_00000100_00000100_00000100_00000100_00000100L;
+    private static final long FILE_G  = 0b00000010_00000010_00000010_00000010_00000010_00000010_00000010_00000010L;
     private static final long FILE_H  = 0b00000001_00000001_00000001_00000001_00000001_00000001_00000001_00000001L;
+    private static final long FILE_AB = 0b11000000_11000000_11000000_11000000_11000000_11000000_11000000_11000000L;
     private static final long FILE_GH = 0b00000011_00000011_00000011_00000011_00000011_00000011_00000011_00000011L;
     private static final long KING_SIDE = 0b00001111_00001111_00001111_00001111_00001111_00001111_00001111_00001111L;
     private static final long QUEEN_SIDE = 0b11110000_11110000_11110000_11110000_11110000_11110000_11110000_11110000L;
@@ -38,32 +44,30 @@ public class BitUtils {
     private static final long NOT_RANK_8 = ~RANK_8;
     private static final long NOT_RANK_1 = ~RANK_1;
     private static long[] FileMasks = {
-            0x101010101010101L, //A
-            0x101010101010101L, //B
-            0x404040404040404L, //C
-            0x808080808080808L, //D
-            0x1010101010101010L,//E
-            0x1010101010101010L,//F
-            0x4040404040404040L,//G
-            0x8080808080808080L //H
+        FILE_A,
+        FILE_B,
+        FILE_C,
+        FILE_D,
+        FILE_E,
+        FILE_F,
+        FILE_G,
+        FILE_H
     };
 
     private static long[] RankMasks = {
-            0xFFL,
-            0xFF00L,
-            0xFF0000L,
-            0xFF000000L,
-            0xFF00000000L,
-            0xFF0000000000L,
-            0xFF000000000000L,
-            0xFF00000000000000L,
+    	RANK_1,
+    	RANK_2,
+    	RANK_3,
+    	RANK_4,
+    	RANK_5,
+    	RANK_6,
+    	RANK_7,
+    	RANK_8
     };
     private static long captureBlackPieces = 0L;
     private static long captureWhitePieces = 0L;
     private static long empty = 0L;
     private static long occupancy = 0L;
-
-    private static int moveIndex = 0;
 
     public static void clearCceo() {
         captureBlackPieces = 0L;
@@ -141,7 +145,6 @@ public class BitUtils {
         updateEmpty(bits);
     }
 
-
     /**
      * Piece Index
      *  0 white pawn
@@ -160,7 +163,7 @@ public class BitUtils {
      * @param movesList
      * @return
      */
-    public static List<Move> pawnMovesBlack(long[] bits, Move m) {
+    public static List<Move> pawnMovesBlack(long[] bits, Move lastMove) {
         Move[] moves = new Move[64];
 
         long moveBitsRight =    (bits[6] << 7)  & captureWhitePieces & NOT_RANK_1 & NOT_A_FILE;
@@ -170,34 +173,29 @@ public class BitUtils {
         long moveBitsRightP =   (bits[6] << 7)  & captureWhitePieces & RANK_1 & NOT_A_FILE;
         long moveBitsLeftP =    (bits[6] << 9)  & captureWhitePieces & RANK_1 & NOT_H_FILE;
         long moveBitsP =        (bits[6] << 8)  & empty & RANK_1;
-        long enpassantLeft = 0L;
-        long enpassantRight = 0L;
-        //If the last move was a 2-square move.
-        if (Math.abs(m.to().rank() - m.from().rank()) == 2) {
-            //right enpassant
-            long move = (bits[6] << 1L)&captureWhitePieces&RANK_4&NOT_H_FILE&FileMasks[m.to().rank() - '0'];
-            long enpass = move&~(move-1);
-            if (enpass != 0) {
-                enpassantRight |= move;
-            }
-            //left enpassant
-            move = (bits[6] >> 1L)&captureWhitePieces&RANK_4&NOT_A_FILE&FileMasks[m.to().rank() - '0'];
-            enpass = move&~(move-1);
-            if (enpass != 0) {
-                enpassantLeft |= move;
-            }
-        }
 
         long moveOccupancy = moveBitsRight | moveBitsLeft
                 | moveBitsOneAhead | moveBitsTwoAhead | moveBitsRightP | moveBitsLeftP
-                | moveBitsP | enpassantLeft | enpassantRight;
+                | moveBitsP;
+
+        //If the last move was a 2-square move.
+        if (Math.abs(lastMove.to().rank() - lastMove.from().rank()) == 2) {
+        	int file = 'h' - lastMove.from().file();
+            long enpassantRight = (bits[6] >> 1) & bits[0] & RANK_4 & NOT_A_FILE & FileMasks[file];
+            long enpassantLeft =  (bits[6] << 1) & bits[0] & RANK_4 & NOT_H_FILE & FileMasks[file];
+            if (enpassantRight != 0 || enpassantLeft != 0) {
+            	enpassantLeft  <<= 8;
+            	enpassantRight <<= 8;
+	            moveOccupancy |= enpassantRight | enpassantLeft;
+	            moves = processMoveBits(enpassantRight, '.', -1, 1, moves);
+	            moves = processMoveBits(enpassantLeft, '.', -1, -1, moves);
+            }
+        }
 
         moves = processMoveBits(moveBitsRight, '.', -1, 1, moves);
         moves = processMoveBits(moveBitsLeft, '.', -1, -1, moves);
         moves = processMoveBits(moveBitsOneAhead, '.', -1, 0, moves);
         moves = processMoveBits(moveBitsTwoAhead, '.', -2, 0, moves);
-        moves = processMoveBits(enpassantRight, '.', -1, 1, moves);
-        moves = processMoveBits(enpassantLeft, '.', -1, -1, moves);
         moves = processMoveBits(moveBitsRightP, 'Q', -1, 1, moves);
         moves = processMoveBits(moveBitsRightP, 'R', -1, 1, moves);
         moves = processMoveBits(moveBitsRightP, 'B', -1, 1, moves);
@@ -210,6 +208,7 @@ public class BitUtils {
         moves = processMoveBits(moveBitsP, 'R', 0, 0, moves);
         moves = processMoveBits(moveBitsP, 'B', 0, 0, moves);
         moves = processMoveBits(moveBitsP, 'N', 0, 0, moves);
+
         return getMoves(moves, moveOccupancy);
     }
 
@@ -354,11 +353,16 @@ public class BitUtils {
     }
 
     public static void printBoard(long[] bits) {
+        LOGGER.info(toString(bits));
+    }
+
+    public static String toString(long[] bits) {
         char[][] cb = bitsToCharArray(bits, new char[8][8]);
+        String s = System.lineSeparator();
         for (int i = 0; i < BOARD_SIZE; i++) {
-            String s = Arrays.toString(cb[i]);
-            LOGGER.info(s);
+            s += Arrays.toString(cb[i]) + System.lineSeparator();
         }
+        return s;
     }
 
     /**
@@ -427,6 +431,10 @@ public class BitUtils {
     }
 
     public static void printBitboard(long bitboard) {
+        LOGGER.info(toString(bitboard));
+    }
+
+    public static String toString(long bitboard) {
         char[][] cb = new char[BOARD_SIZE][BOARD_SIZE];
         for (char[] row : cb) {
             Arrays.fill(row, '.');
@@ -437,11 +445,11 @@ public class BitUtils {
                 cb[i / BOARD_SIZE][i % BOARD_SIZE] = '@';
             }
         }
+        String s = System.lineSeparator();
         for (int i = 0; i < BOARD_SIZE; i++) {
-            String s = Arrays.toString(cb[i]);
-            LOGGER.info(s);
+            s += Arrays.toString(cb[i]) + System.lineSeparator();
         }
-        LOGGER.info("");
+        return s;
     }
 
     public static long southOne(long b) {
