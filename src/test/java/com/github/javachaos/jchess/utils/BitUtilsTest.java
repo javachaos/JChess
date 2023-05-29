@@ -150,7 +150,6 @@ public class BitUtilsTest {
                 Move.fromString("c4b3"),
                 Move.fromString("c4d3"),
                 Move.fromString("g4g3")), r1.result());
-
     }
 
     @Test

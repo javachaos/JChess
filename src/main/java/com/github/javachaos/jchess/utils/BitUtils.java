@@ -43,7 +43,7 @@ public class BitUtils {
     private static final long NOT_H_FILE = ~FILE_H;
     private static final long NOT_RANK_8 = ~RANK_8;
     private static final long NOT_RANK_1 = ~RANK_1;
-    private static long[] FileMasks = {
+    private static long[] Files = {
         FILE_A,
         FILE_B,
         FILE_C,
@@ -54,7 +54,7 @@ public class BitUtils {
         FILE_H
     };
 
-    private static long[] RankMasks = {
+    private static long[] Ranks = {
     	RANK_1,
     	RANK_2,
     	RANK_3,
@@ -181,8 +181,8 @@ public class BitUtils {
         //If the last move was a 2-square move.
         if (Math.abs(lastMove.to().rank() - lastMove.from().rank()) == 2) {
         	int file = 'h' - lastMove.from().file();
-            long enpassantRight = (bits[6] >> 1) & bits[0] & RANK_4 & NOT_A_FILE & FileMasks[file];
-            long enpassantLeft =  (bits[6] << 1) & bits[0] & RANK_4 & NOT_H_FILE & FileMasks[file];
+            long enpassantRight = (bits[6] >> 1) & bits[0] & RANK_4 & NOT_A_FILE & Files[file];
+            long enpassantLeft =  (bits[6] << 1) & bits[0] & RANK_4 & NOT_H_FILE & Files[file];
             if (enpassantRight != 0 || enpassantLeft != 0) {
             	enpassantLeft  <<= 8;
             	enpassantRight <<= 8;
