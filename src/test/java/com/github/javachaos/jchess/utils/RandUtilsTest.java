@@ -17,7 +17,7 @@ public class RandUtilsTest {
     @Test
     void testRandUtils() {
         ExecUtils.ExecutionResult<List<Move>> r = ExecUtils.measureExecutionTime("Random Board",
-                () -> BitUtils.pawnMovesWhite(BitUtils.createBitBoard(RandUtils.getRandomBoard())), 10000);
+                () -> BitUtils.pawnMovesWhite(BitUtils.createBitBoard(RandUtils.getRandomBoard())), 1000000);
         LOGGER.info(r.result());
         assertTrue(r.nanos() < TimeUnit.MILLISECONDS.toNanos(10));
     }

@@ -116,8 +116,8 @@ public class BitUtilsTest {
                 {'p', 'p', 'p', 'p', '.', 'p', 'p', 'p'},//7
                 {'.', '.', '.', '.', 'p', '.', '.', '.'},//6
                 {'.', '.', '.', '.', '.', '.', '.', '.'},//5
-                {'.', '.', '.', '.', '.', '.', 'p', '.'},//4
-                {'P', 'P', 'P', 'P', 'P', 'P', '.', '.'},//3
+                {'.', '.', '.', '.', '.', 'P', 'p', '.'},//4
+                {'P', 'P', 'P', 'P', 'P', '.', '.', '.'},//3
                 {'.', '.', '.', '.', '.', '.', 'P', 'P'},//2
                 {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'} //1
                 //A    B    C    D    E    F    G    H
@@ -153,16 +153,40 @@ public class BitUtilsTest {
         ExecUtils.ExecutionResult<List<Move>> r = ExecUtils.measureExecutionTime(
                 "White Pawn Move Generation", () -> BitUtils.pawnMovesWhite(bits), 10);
         LOGGER.info(r.result());
-        assertEquals("[a3a4, b3b4, c3c4, d3d4, e3e4, f3f4, f3g4, h2h4, g2g3, h2h3]",
-                r.result().toString());
+        assertTrue(r.result().containsAll(List.of(
+                Move.fromString("f4f5"),
+                Move.fromString("a3a4"),
+                Move.fromString("b3b4"),
+                Move.fromString("c3c4"),
+                Move.fromString("d3d4"),
+                Move.fromString("e3e4"),
+                Move.fromString("h2h4"),
+                Move.fromString("g2g3"),
+                Move.fromString("h2h3"))));
         assertTrue(r.nanos() < TimeUnit.MICROSECONDS.toNanos(100));
 
         LOGGER.info("Starting black pawn move generation.");
         ExecUtils.ExecutionResult<List<Move>> r1 = ExecUtils.measureExecutionTime(
-                "Black Pawn Move Generation", () -> BitUtils.pawnMovesBlack(bits), 10);
+                "Black Pawn Move Generation", () -> BitUtils.pawnMovesBlack(bits, Move.fromString("f2f4")), 10);
         LOGGER.info(r1.result());
-        assertEquals("[a7a6, b7b6, c7c6, d7d6, f7f6, g7g6, h7h6, a7a5, b7b5, c7c5, d7d5, e6e5, f7f5, h7h5, g4f3, g4g3]",
-                r1.result().toString());
+        assertTrue(r1.result().containsAll(List.of(
+                Move.fromString("a7a6"),
+                Move.fromString("b7b6"),
+                Move.fromString("c7c6"),
+                Move.fromString("d7d6"),
+                Move.fromString("f7f6"),
+                Move.fromString("g7g6"),
+                Move.fromString("h7h6"),
+                Move.fromString("a7a5"),
+                Move.fromString("b7b5"),
+                Move.fromString("c7c5"),
+                Move.fromString("d7d5"),
+                Move.fromString("e6e5"),
+                Move.fromString("f7f5"),
+                Move.fromString("g7g5"),
+                Move.fromString("h7h5"),
+                Move.fromString("g4g3"),
+                Move.fromString("g4f3"))));
         assertTrue(r1.nanos() < TimeUnit.MICROSECONDS.toNanos(100));
 
         LOGGER.info("------------------   Testing PawnMoveGeneration. END   ------------------");

@@ -37,10 +37,33 @@ public class BitUtils {
     private static final long NOT_H_FILE = ~FILE_H;
     private static final long NOT_RANK_8 = ~RANK_8;
     private static final long NOT_RANK_1 = ~RANK_1;
+    private static long[] FileMasks = {
+            0x101010101010101L, //A
+            0x101010101010101L, //B
+            0x404040404040404L, //C
+            0x808080808080808L, //D
+            0x1010101010101010L,//E
+            0x1010101010101010L,//F
+            0x4040404040404040L,//G
+            0x8080808080808080L //H
+    };
+
+    private static long[] RankMasks = {
+            0xFFL,
+            0xFF00L,
+            0xFF0000L,
+            0xFF000000L,
+            0xFF00000000L,
+            0xFF0000000000L,
+            0xFF000000000000L,
+            0xFF00000000000000L,
+    };
     private static long captureBlackPieces = 0L;
     private static long captureWhitePieces = 0L;
     private static long empty = 0L;
     private static long occupancy = 0L;
+
+    private static int moveIndex = 0;
 
     public static void clearCceo() {
         captureBlackPieces = 0L;
@@ -48,7 +71,7 @@ public class BitUtils {
         empty = 0L;
         occupancy = 0L;
     }
-    public static long[] cceo() {
+    public static long[] infoBoards() {
         return new long[] {captureWhitePieces, captureBlackPieces, empty, occupancy};
     }
     
@@ -137,24 +160,44 @@ public class BitUtils {
      * @param movesList
      * @return
      */
-    public static List<Move> pawnMovesBlack(long[] bits) {
+    public static List<Move> pawnMovesBlack(long[] bits, Move m) {
         Move[] moves = new Move[64];
 
         long moveBitsRight =    (bits[6] << 7)  & captureWhitePieces & NOT_RANK_1 & NOT_A_FILE;
         long moveBitsLeft =     (bits[6] << 9)  & captureWhitePieces & NOT_RANK_1 & NOT_H_FILE;
         long moveBitsOneAhead = (bits[6] << 8)  & empty & NOT_RANK_1;
-        long moveBitsTwoAhead = (bits[6] << 16) & empty & (empty >> 8) & RANK_5;
+        long moveBitsTwoAhead = (bits[6] << 16) & empty & (empty << 8) & RANK_5;
         long moveBitsRightP =   (bits[6] << 7)  & captureWhitePieces & RANK_1 & NOT_A_FILE;
         long moveBitsLeftP =    (bits[6] << 9)  & captureWhitePieces & RANK_1 & NOT_H_FILE;
         long moveBitsP =        (bits[6] << 8)  & empty & RANK_1;
+        long enpassantLeft = 0L;
+        long enpassantRight = 0L;
+        //If the last move was a 2-square move.
+        if (Math.abs(m.to().rank() - m.from().rank()) == 2) {
+            //right enpassant
+            long move = (bits[6] << 1L)&captureWhitePieces&RANK_4&NOT_H_FILE&FileMasks[m.to().rank() - '0'];
+            long enpass = move&~(move-1);
+            if (enpass != 0) {
+                enpassantRight |= move;
+            }
+            //left enpassant
+            move = (bits[6] >> 1L)&captureWhitePieces&RANK_4&NOT_A_FILE&FileMasks[m.to().rank() - '0'];
+            enpass = move&~(move-1);
+            if (enpass != 0) {
+                enpassantLeft |= move;
+            }
+        }
 
         long moveOccupancy = moveBitsRight | moveBitsLeft
-                | moveBitsOneAhead | moveBitsTwoAhead | moveBitsRightP | moveBitsLeftP | moveBitsP;
+                | moveBitsOneAhead | moveBitsTwoAhead | moveBitsRightP | moveBitsLeftP
+                | moveBitsP | enpassantLeft | enpassantRight;
 
         moves = processMoveBits(moveBitsRight, '.', -1, 1, moves);
         moves = processMoveBits(moveBitsLeft, '.', -1, -1, moves);
         moves = processMoveBits(moveBitsOneAhead, '.', -1, 0, moves);
         moves = processMoveBits(moveBitsTwoAhead, '.', -2, 0, moves);
+        moves = processMoveBits(enpassantRight, '.', -1, 1, moves);
+        moves = processMoveBits(enpassantLeft, '.', -1, -1, moves);
         moves = processMoveBits(moveBitsRightP, 'Q', -1, 1, moves);
         moves = processMoveBits(moveBitsRightP, 'R', -1, 1, moves);
         moves = processMoveBits(moveBitsRightP, 'B', -1, 1, moves);
@@ -383,7 +426,6 @@ public class BitUtils {
         return board;
     }
 
-
     public static void printBitboard(long bitboard) {
         char[][] cb = new char[BOARD_SIZE][BOARD_SIZE];
         for (char[] row : cb) {
@@ -484,7 +526,6 @@ public class BitUtils {
             //implement, perform move m on board bits
             updateEmpty(m);//Empty the from square
             updateOccupancy(m);//update the occupancy board
-
             return true;
         }
         return false;

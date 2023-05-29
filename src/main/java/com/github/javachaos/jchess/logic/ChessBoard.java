@@ -97,6 +97,6 @@ public class ChessBoard {
     }
 
     public long getOccupancy() {
-        return BitUtils.cceo()[3];
+        return BitUtils.infoBoards()[3];
     }
 }
