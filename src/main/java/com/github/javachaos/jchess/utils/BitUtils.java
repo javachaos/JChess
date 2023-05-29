@@ -99,26 +99,10 @@ public class BitUtils {
         empty = ~(bits[0]|bits[1]|bits[2]|bits[3]|bits[4]|bits[5]|bits[6]|bits[7]|bits[8]|bits[9]|bits[10]|bits[11]);
     }
 
-    public static void updateOccupancy(Move m) {
-        occupancy ^= m.toBitboard();
-        occupancy |= m.fromBitboard();
-    }
-
     public static void updateOccupancy(long[] bits) {
         for (long bit : bits) {
             occupancy |= bit;
         }
-    }
-
-    /**
-     * Remove empty squares from the empty bitboard, any bit set it both
-     * squares and empty will be zero'd. (XOR)
-     * Much faster than updating with the entire set of bit boards. (~10x faster)
-     *
-     * @param squares bitboard of squares to set empty
-     */
-    public static void updateEmpty(Move m) {
-        empty ^= m.fromBitboard();
     }
 
     public static char[][] occupancyToCharArray(long occupancy) {
@@ -127,13 +111,11 @@ public class BitUtils {
             cb[i / BOARD_SIZE][i % BOARD_SIZE] = '.';
         }
         if (Long.bitCount(occupancy) > 0) {
-            //in the case that bitCount uses 1 machine instruction this could be faster.
-            int start = Long.numberOfTrailingZeros(occupancy);
-            int end = Long.numberOfLeadingZeros(occupancy);
-            for (int i = start; i < 64 - end; i++) {
-                if ((occupancy & (1L << i)) != 0) {
-                    cb[i/BOARD_SIZE][i%BOARD_SIZE] = '@';
-                }
+            while (occupancy != 0) {
+                long bit = occupancy & -occupancy;  // Get the least significant set bit
+                int index = Long.numberOfTrailingZeros(bit);
+                occupancy ^= bit;  // Clear the least significant set bit
+                cb[index/BOARD_SIZE][index%BOARD_SIZE] = '@';
             }
         }
         return cb;
@@ -212,7 +194,7 @@ public class BitUtils {
         return getMoves(moves, moveOccupancy);
     }
 
-    public static List<Move> pawnMovesWhite(long[] bits) {
+    public static List<Move> pawnMovesWhite(long[] bits, Move lastMove) {
         Move[] moves = new Move[64];
         long moveBitsRight =    (bits[0] >> 7)  & captureBlackPieces & NOT_RANK_8 & NOT_A_FILE;
         long moveBitsLeft =     (bits[0] >> 9)  & captureBlackPieces & NOT_RANK_8 & NOT_H_FILE;
@@ -226,6 +208,20 @@ public class BitUtils {
                         | moveBitsOneAhead | moveBitsTwoAhead
                           | moveBitsRightP | moveBitsLeftP
                                            | moveBitsP;
+
+        //If the last move was a 2-square move.
+        if (lastMove != null && Math.abs(lastMove.to().rank() - lastMove.from().rank()) == 2) {
+            int file = 'h' - lastMove.from().file();
+            long enpassantRight = (bits[6] << 1) & bits[0] & RANK_5 & NOT_A_FILE & Files[file];
+            long enpassantLeft =  (bits[6] >> 1) & bits[0] & RANK_5 & NOT_H_FILE & Files[file];
+            if (enpassantRight != 0 || enpassantLeft != 0) {
+                enpassantLeft  >>= 8;
+                enpassantRight >>= 8;
+                moveOccupancy |= enpassantRight | enpassantLeft;
+                moves = processMoveBits(enpassantRight, '.', 1, 1, moves);
+                moves = processMoveBits(enpassantLeft, '.', 1, -1, moves);
+            }
+        }
         moves = processMoveBits(moveBitsRight, '.', 1, -1, moves);
         moves = processMoveBits(moveBitsLeft, '.', 1, 1, moves);
         moves = processMoveBits(moveBitsOneAhead, '.', 1, 0, moves);
@@ -260,12 +256,11 @@ public class BitUtils {
         int numMoves = Long.bitCount(moveOccupancy);
         if (numMoves > 0) {
             List<Move> moveList = new ArrayList<>();
-            int s = Long.numberOfTrailingZeros(moveOccupancy);
-            int e = Long.numberOfLeadingZeros(moveOccupancy);
-            for (int i = s; i < 64 - e; i++) {
-                if ((moveOccupancy & (1L << i)) != 0) {
-                    moveList.add(moves[i]);
-                }
+            while (moveOccupancy != 0) {
+                long bit = moveOccupancy & -moveOccupancy;  // Get the least significant set bit
+                int index = Long.numberOfTrailingZeros(bit);
+                moveOccupancy ^= bit;  // Clear the least significant set bit
+                moveList.add(moves[index]);
             }
             return moveList;
         }
@@ -342,16 +337,6 @@ public class BitUtils {
        };
     }
 
-    public static long clearBit(long number, int bitIndex) {
-        long mask = ~(1L << bitIndex);
-        return number & mask;
-    }
-
-    public static long setBit(long number, int bitIndex) {
-        long mask = 1L << bitIndex;
-        return number | mask;
-    }
-
     public static void printBoard(long[] bits) {
         LOGGER.info(toString(bits));
     }
@@ -421,10 +406,11 @@ public class BitUtils {
         int numPieces = pieces.length;
         for (int i = 0; i < numPieces; i++) {
             long currentBit = bits[i];
-            for (int j = 0; j < boardSizeSquared; j++) {
-                if ((currentBit & (1L << j)) != 0) {
-                    board[j / BOARD_SIZE][j % BOARD_SIZE] = pieces[i];
-                }
+            while (currentBit != 0) {
+                long bit = currentBit & -currentBit;  // Get the least significant set bit
+                int index = Long.numberOfTrailingZeros(bit);
+                currentBit ^= bit;  // Clear the least significant set bit
+                board[index / BOARD_SIZE][index % BOARD_SIZE] = pieces[i];
             }
         }
         return board;
@@ -440,10 +426,11 @@ public class BitUtils {
             Arrays.fill(row, '.');
         }
 
-        for (int i = 0; i < BOARD_SIZE * BOARD_SIZE; i++) {
-            if (((bitboard >> i) & 1L) == 1) {
-                cb[i / BOARD_SIZE][i % BOARD_SIZE] = '@';
-            }
+        while (bitboard != 0) {
+            long bit = bitboard & -bitboard;  // Get the least significant set bit
+            int i = Long.numberOfTrailingZeros(bit);
+            bitboard ^= bit;  // Clear the least significant set bit
+            cb[i / BOARD_SIZE][i % BOARD_SIZE] = '@';
         }
         String s = System.lineSeparator();
         for (int i = 0; i < BOARD_SIZE; i++) {
@@ -516,31 +503,79 @@ public class BitUtils {
         return x < 0;
     }
 
-    public static List<Move> getAllPossibleMoves(long[] bits, boolean isWhite) {
+    public static List<Move> getAllPossibleMoves(long[] bits, Move lastMove, boolean isWhite) {
         List<Move> moveList;
         if (isWhite) {
-            moveList = pawnMovesWhite(bits);
+            moveList = pawnMovesWhite(bits, lastMove);
             //add the rest of the piece types
             //moveList.addAll(rookMovesWhite(bits));
             //ect..
         } else {
-            moveList = pawnMovesWhite(bits);
+            moveList = pawnMovesWhite(bits, lastMove);
         }
         return moveList;
     }
 
-    public static boolean doMove(long[] bits, Move m) {
-        if (getAllPossibleMoves(bits, false).contains(m)) {
+    private static void updateBoards(long[] bits, Move m, boolean turn) {
+        int piece = getPiece(m, turn);
+        int captive = getCapture(m, turn);
+        long fromBB = m.fromBitboard();
+        long toBB = m.toBitboard();
+        long fromToBB = fromBB ^ toBB;
+        if (piece > -1) {
+            bits[piece] ^= fromToBB;
+            if (captive > -1) {
+                bits[captive] ^= toBB;
+            }
+            occupancy ^= m.fromBitboard();
+            empty ^= m.fromBitboard();
+        }
+    }
+
+    /**
+     * Given a move, get the piece on the board the the to square.
+     * -1 if there is no piece.
+     * @param m the move
+     * @return piece index [0-11]
+     */
+    private static int getCapture(Move m, boolean turn) {
+        return 0;
+    }
+
+    /**
+     * Given a move, get the piece on the board at the from square.
+     * -1 if there is no piece.
+     * @param m the move
+     * @return piece index [0-11]
+     */
+    private static int getPiece(Move m, boolean turn) {
+        return 0;
+    }
+
+    /**
+     * Perform a move m on a board bits.
+     *
+     * @param bits the bitboard array for each differnt piece [0-11]
+     * @param m the current move
+     * @param lastMove the last move
+     * @param turn is it whites turn (true for white, false for black)
+     * @return true if the move is valid false otherwise
+     */
+    public static boolean doMove(long[] bits, Move m, Move lastMove, boolean turn) {
+        if (getAllPossibleMoves(bits, lastMove, false).contains(m)) {
             //implement, perform move m on board bits
-            updateEmpty(m);//Empty the from square
-            updateOccupancy(m);//update the occupancy board
+            updateBoards(bits, m, turn);
             return true;
         }
         return false;
     }
 
+    public static void undoMove(Move m) {
+    }
+
     public static void printOccupancy() {
         printBitboard(occupancy);
     }
+
 
 }

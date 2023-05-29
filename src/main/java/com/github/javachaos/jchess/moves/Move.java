@@ -4,6 +4,10 @@ import com.github.javachaos.jchess.utils.BitUtils;
 
 @SuppressWarnings("unused")
 public record Move(Pos from, Pos to, char promotion) implements Comparable<Move> {
+    public static Move random() {
+        return new Move(Pos.random(), Pos.random(), '.');
+    }
+
     public String toString() {
         return String.valueOf(from) + to + (promotion == '.' ? "" : promotion);
     }

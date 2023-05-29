@@ -4,9 +4,14 @@ import java.util.*;
 
 @SuppressWarnings("unused")
 public class RandUtils {
-    private static final Random random = Random.from(new SplittableRandom());
+    public static final Random random = Random.from(new SplittableRandom());
+    private static final char[] pieces = {'K', 'Q', 'R', 'B', 'N', 'P', 'k', 'q', 'r', 'b', 'n', 'p'};
 
     private RandUtils() {}
+
+    public static char getRandomPiece() {
+        return pieces[random.nextInt(pieces.length)];
+    }
 
     public static char[][] getRandomBoard() {
         char[][] board = new char[8][8];

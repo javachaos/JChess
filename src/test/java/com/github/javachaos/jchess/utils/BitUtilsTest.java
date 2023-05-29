@@ -127,7 +127,7 @@ public class BitUtilsTest {
 
         LOGGER.info("Starting white pawn move generation.");
         ExecUtils.ExecutionResult<List<Move>> r = ExecUtils.measureExecutionTime(
-                "White Pawn Move Generation", () -> BitUtils.pawnMovesWhite(bits), 10);
+                "White Pawn Move Generation", () -> BitUtils.pawnMovesWhite(bits, Move.fromString("e7e6")), 10);
         LOGGER.info(r.result());
         LOGGER.info("Starting black pawn move generation.");
         ExecUtils.ExecutionResult<List<Move>> r1 = ExecUtils.measureExecutionTime(
@@ -195,7 +195,7 @@ public class BitUtilsTest {
         BitUtils.updateBoards(bits);
         LOGGER.info("Starting white pawn move generation.");
         ExecUtils.ExecutionResult<List<Move>> r = ExecUtils.measureExecutionTime(
-                "White Pawn Move Generation", () -> BitUtils.pawnMovesWhite(bits), 10);
+                "White Pawn Move Generation", () -> BitUtils.pawnMovesWhite(bits, Move.fromString("e7e6")), 10);
         LOGGER.info(r.result());
         assertEquals(List.of(
                 Move.fromString("f4f5"),

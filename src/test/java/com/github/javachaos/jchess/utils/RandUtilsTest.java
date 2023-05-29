@@ -15,9 +15,9 @@ public class RandUtilsTest {
     private static final Logger LOGGER = LogManager.getLogger(RandUtils.class);
 
     @Test
-    void testRandUtils() {
+    public void testRandUtils() {
         ExecUtils.ExecutionResult<List<Move>> r = ExecUtils.measureExecutionTime("Random Board",
-                () -> BitUtils.pawnMovesWhite(BitUtils.createBitBoard(RandUtils.getRandomBoard())), 1000000);
+                () -> BitUtils.pawnMovesWhite(BitUtils.createBitBoard(RandUtils.getRandomBoard()), null), 1000000);
         LOGGER.info(r.result());
         assertTrue(r.nanos() < TimeUnit.MILLISECONDS.toNanos(10));
     }
