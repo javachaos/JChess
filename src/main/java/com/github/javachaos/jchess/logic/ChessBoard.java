@@ -35,7 +35,7 @@ public class ChessBoard {
     private final boolean[] castleRights = new boolean[4];
     private static final int HALFMOVECLOCK = 0;
     private int fullMoveClock = 0;
-    private boolean turn;//true for white, false for black
+    private int turn = 1;//1 for white, -1 for black
 
     public ChessBoard(char[][] initialBoard) {
         bits = BitUtils.createBitBoard(initialBoard);
@@ -64,7 +64,7 @@ public class ChessBoard {
         fullMoveClock++;
         if (BitUtils.doMove(bits, moveHistory.peek(), m, turn)) {
             LOGGER.info("Move successful: {}", m);
-            turn = !turn;
+            turn *= -1;
             moveHistory.push(m);
         } else {
             LOGGER.info("Move Invalid: {}", m);
@@ -75,7 +75,7 @@ public class ChessBoard {
         bits = boardHistory.pop();
         Move m = moveHistory.pop();
         fullMoveClock--;
-        BitUtils.undoMove(m);
+        BitUtils.undoMove(bits, m);
     }
 
     public void printOccupancy() {

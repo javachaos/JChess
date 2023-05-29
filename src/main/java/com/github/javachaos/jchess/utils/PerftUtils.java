@@ -5,7 +5,7 @@ import com.github.javachaos.jchess.moves.Move;
 import java.util.List;
 @SuppressWarnings("unused")
 public class PerftUtils {
-    private static boolean isWhitesTurn = true;
+    private static int isWhitesTurn = 1;
 
     private PerftUtils() {}
 
@@ -20,10 +20,10 @@ public class PerftUtils {
 
         for (Move m : moves) {
             BitUtils.doMove(bits, m, lastMove, isWhitesTurn);
-            isWhitesTurn = !isWhitesTurn;
+            isWhitesTurn *= -1;
             lastMove = m;
             numMoves += perft(depth - 1, bits);
-            BitUtils.undoMove(m);
+            BitUtils.undoMove(bits, m);
         }
         return numMoves;
     }

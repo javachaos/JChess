@@ -503,9 +503,9 @@ public class BitUtils {
         return x < 0;
     }
 
-    public static List<Move> getAllPossibleMoves(long[] bits, Move lastMove, boolean isWhite) {
+    public static List<Move> getAllPossibleMoves(long[] bits, Move lastMove, int turn) {
         List<Move> moveList;
-        if (isWhite) {
+        if (turn == 1) {
             moveList = pawnMovesWhite(bits, lastMove);
             //add the rest of the piece types
             //moveList.addAll(rookMovesWhite(bits));
@@ -516,9 +516,13 @@ public class BitUtils {
         return moveList;
     }
 
-    private static void updateBoards(long[] bits, Move m, boolean turn) {
-        int piece = getPiece(m, turn);
-        int captive = getCapture(m, turn);
+    public static List<Move> getAllCaptures(long[] bits, int turn) {
+        return EMPTY_LIST;
+    }
+
+    private static void updateBoards(long[] bits, Move m, int turn) {
+        int piece = getPiece(bits, m, turn);
+        int captive = getCapture(bits, m, turn);
         long fromBB = m.fromBitboard();
         long toBB = m.toBitboard();
         long fromToBB = fromBB ^ toBB;
@@ -538,7 +542,8 @@ public class BitUtils {
      * @param m the move
      * @return piece index [0-11]
      */
-    private static int getCapture(Move m, boolean turn) {
+    private static int getCapture(long[] bits, Move m, int turn) {
+        //implement/test
         return 0;
     }
 
@@ -548,7 +553,8 @@ public class BitUtils {
      * @param m the move
      * @return piece index [0-11]
      */
-    private static int getPiece(Move m, boolean turn) {
+    private static int getPiece(long[] bits, Move m, int turn) {
+        //implement/test
         return 0;
     }
 
@@ -561,21 +567,87 @@ public class BitUtils {
      * @param turn is it whites turn (true for white, false for black)
      * @return true if the move is valid false otherwise
      */
-    public static boolean doMove(long[] bits, Move m, Move lastMove, boolean turn) {
-        if (getAllPossibleMoves(bits, lastMove, false).contains(m)) {
-            //implement, perform move m on board bits
+    public static boolean doMove(long[] bits, Move m, Move lastMove, int turn) {
+        if (getAllPossibleMoves(bits, lastMove, -1).contains(m)) {
+            //implement/test
             updateBoards(bits, m, turn);
             return true;
         }
         return false;
     }
 
-    public static void undoMove(Move m) {
+    private static int qscore = 0;
+    private static Move lastMove;
+
+    public static int quiensce(List<Move> moves, long[] bits, int turn, int a, int b) {
+        int s = evaluation(bits, turn);
+        if (s >= b) {
+            return b;
+        }
+        if (a < s) {
+            a = s;
+        }
+        for (Move m : moves) {
+            doMove(bits, m, lastMove, turn);
+            lastMove = m;
+            qscore = -quiensce(moves.subList(moves.indexOf(m), moves.indexOf(m)+1), bits, turn, -a, -b);
+            undoMove(bits, m);
+            if (qscore >= b) {
+                return b;
+            }
+            if (qscore > a) {
+                a = qscore;
+            }
+        }
+        return a;
+    }
+
+    public static int evaluation(long[] bits, int turn) {
+        //implement/test
+        int numWhitePieces = 0;
+        int numBlackPieces = 0;
+        int materialWeight = 0;
+        return materialWeight * (numWhitePieces - numBlackPieces) * turn;
+    }
+
+    /**
+     * Simple negaMax implementation, at the end of this algorithm the best move will be
+     * stored in lastMove.
+     *
+     * Must test this!
+     *
+     * @param bits
+     * @param turn
+     * @param a
+     * @param b
+     * @param depth
+     * @return
+     */
+    public static int negaMaxABHelper(long[] bits, int turn, int a, int b, int depth) {
+        int score = 0;
+        if (depth == 0) {
+            return quiensce(getAllCaptures(bits, turn), bits, turn, a, b);
+        }
+        int max = Integer.MIN_VALUE;
+        for (Move m : getAllPossibleMoves(bits, lastMove, turn)) {
+            score = -negaMaxABHelper(bits, -turn, -b, -a, depth - 1);
+            if (score >= b) {
+                lastMove = m;
+                return b;
+            }
+            if (score > a) {
+                lastMove = m;
+                a = score;
+            }
+        }
+        return a;
+    }
+
+    public static void undoMove(long[] bits, Move m) {
+        //implement/test
     }
 
     public static void printOccupancy() {
         printBitboard(occupancy);
     }
-
-
 }
