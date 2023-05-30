@@ -8,8 +8,9 @@ import org.apache.logging.log4j.Logger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
+import static com.github.javachaos.jchess.utils.MoveUtils.*;
+import static com.github.javachaos.jchess.utils.PrintUtils.printBitboard;
 import static java.util.Collections.EMPTY_LIST;
 
 @SuppressWarnings("all")
@@ -18,79 +19,52 @@ public class BitUtils {
 
     private BitUtils() {}
 
-    private static final int BOARD_SIZE = 8;
-    private static final long RANK_1  = 0b11111111_00000000_00000000_00000000_00000000_00000000_00000000_00000000L;
-    private static final long RANK_2  = 0b00000000_11111111_00000000_00000000_00000000_00000000_00000000_00000000L;
-    private static final long RANK_3  = 0b00000000_00000000_11111111_00000000_00000000_00000000_00000000_00000000L;
-    private static final long RANK_4  = 0b00000000_00000000_00000000_11111111_00000000_00000000_00000000_00000000L;
-    private static final long RANK_5  = 0b00000000_00000000_00000000_00000000_11111111_00000000_00000000_00000000L;
-    private static final long RANK_6  = 0b00000000_00000000_00000000_00000000_00000000_11111111_00000000_00000000L;
-    private static final long RANK_7  = 0b00000000_00000000_00000000_00000000_00000000_00000000_11111111_00000000L;
-    private static final long RANK_8  = 0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_11111111L;
-    private static final long FILE_A  = 0b10000000_10000000_10000000_10000000_10000000_10000000_10000000_10000000L;
-    private static final long FILE_B  = 0b01000000_01000000_01000000_01000000_01000000_01000000_01000000_01000000L;
-    private static final long FILE_C  = 0b00100000_00100000_00100000_00100000_00100000_00100000_00100000_00100000L;
-    private static final long FILE_D  = 0b00010000_00010000_00010000_00010000_00010000_00010000_00010000_00010000L;
-    private static final long FILE_E  = 0b00001000_00001000_00001000_00001000_00001000_00001000_00001000_00001000L;
-    private static final long FILE_F  = 0b00000100_00000100_00000100_00000100_00000100_00000100_00000100_00000100L;
-    private static final long FILE_G  = 0b00000010_00000010_00000010_00000010_00000010_00000010_00000010_00000010L;
-    private static final long FILE_H  = 0b00000001_00000001_00000001_00000001_00000001_00000001_00000001_00000001L;
-    private static final long FILE_AB = 0b11000000_11000000_11000000_11000000_11000000_11000000_11000000_11000000L;
-    private static final long FILE_GH = 0b00000011_00000011_00000011_00000011_00000011_00000011_00000011_00000011L;
-    private static final long KING_SIDE = 0b00001111_00001111_00001111_00001111_00001111_00001111_00001111_00001111L;
-    private static final long QUEEN_SIDE = 0b11110000_11110000_11110000_11110000_11110000_11110000_11110000_11110000L;
-    private static final long NOT_A_FILE = ~FILE_A;
-    private static final long NOT_H_FILE = ~FILE_H;
-    private static final long NOT_RANK_8 = ~RANK_8;
-    private static final long NOT_RANK_1 = ~RANK_1;
-    private static long[] Files = {
-        FILE_A,
-        FILE_B,
-        FILE_C,
-        FILE_D,
-        FILE_E,
-        FILE_F,
-        FILE_G,
-        FILE_H
+    private static final long[] FILES = {
+            FILE_A,
+            FILE_B,
+            FILE_C,
+            FILE_D,
+            FILE_E,
+            FILE_F,
+            FILE_G,
+            FILE_H
     };
 
-    private static long[] Ranks = {
-    	RANK_1,
-    	RANK_2,
-    	RANK_3,
-    	RANK_4,
-    	RANK_5,
-    	RANK_6,
-    	RANK_7,
-    	RANK_8
+    private static final long[] RANKS = {
+            RANK_1,
+            RANK_2,
+            RANK_3,
+            RANK_4,
+            RANK_5,
+            RANK_6,
+            RANK_7,
+            RANK_8
     };
     private static long captureBlackPieces = 0L;
     private static long captureWhitePieces = 0L;
     private static long empty = 0L;
     private static long occupancy = 0L;
+    private static Move lastMove;
+    private static int qscore = 0;
 
-    public static void clearCceo() {
-        captureBlackPieces = 0L;
-        captureWhitePieces = 0L;
-        empty = 0L;
-        occupancy = 0L;
-    }
+    private record MoveScore(Move m, int score) {}
+
     public static long[] infoBoards() {
         return new long[] {captureWhitePieces, captureBlackPieces, empty, occupancy};
     }
-    
+
     public static long getCaptureWhitePieces() {
     	return captureWhitePieces;
     }
-    
+
     public static long getCaptureBlackPieces() {
     	return captureBlackPieces;
     }
-    
+
     public static void updateWhites(long[] bits) {
     	captureWhitePieces = bits[0] | bits[1] | bits[2] | bits[3] | bits[5];
     }
-    
+
     public static void updateBlacks(long[] bits) {
     	captureBlackPieces = bits[11] | bits[9] | bits[8] | bits[7] | bits[6];
     }
@@ -105,20 +79,11 @@ public class BitUtils {
         }
     }
 
-    public static char[][] occupancyToCharArray(long occupancy) {
-        char[][] cb = new char[BOARD_SIZE][BOARD_SIZE];
-        for (int i = 0; i < 64; i++) {
-            cb[i / BOARD_SIZE][i % BOARD_SIZE] = '.';
-        }
-        if (Long.bitCount(occupancy) > 0) {
-            while (occupancy != 0) {
-                long bit = occupancy & -occupancy;  // Get the least significant set bit
-                int index = Long.numberOfTrailingZeros(bit);
-                occupancy ^= bit;  // Clear the least significant set bit
-                cb[index/BOARD_SIZE][index%BOARD_SIZE] = '@';
-            }
-        }
-        return cb;
+    public static void clearCceo() {
+        captureBlackPieces = 0L;
+        captureWhitePieces = 0L;
+        empty = 0L;
+        occupancy = 0L;
     }
 
     public static void updateBoards(long[] bits) {
@@ -163,8 +128,8 @@ public class BitUtils {
         //If the last move was a 2-square move.
         if (Math.abs(lastMove.to().rank() - lastMove.from().rank()) == 2) {
         	int file = 'h' - lastMove.from().file();
-            long enpassantRight = (bits[6] >> 1) & bits[0] & RANK_4 & NOT_A_FILE & Files[file];
-            long enpassantLeft =  (bits[6] << 1) & bits[0] & RANK_4 & NOT_H_FILE & Files[file];
+            long enpassantRight = (bits[6] >> 1) & bits[0] & RANK_4 & NOT_A_FILE & FILES[file];
+            long enpassantLeft =  (bits[6] << 1) & bits[0] & RANK_4 & NOT_H_FILE & FILES[file];
             if (enpassantRight != 0 || enpassantLeft != 0) {
             	enpassantLeft  <<= 8;
             	enpassantRight <<= 8;
@@ -212,8 +177,8 @@ public class BitUtils {
         //If the last move was a 2-square move.
         if (lastMove != null && Math.abs(lastMove.to().rank() - lastMove.from().rank()) == 2) {
             int file = 'h' - lastMove.from().file();
-            long enpassantRight = (bits[6] << 1) & bits[0] & RANK_5 & NOT_A_FILE & Files[file];
-            long enpassantLeft =  (bits[6] >> 1) & bits[0] & RANK_5 & NOT_H_FILE & Files[file];
+            long enpassantRight = (bits[6] << 1) & bits[0] & RANK_5 & NOT_A_FILE & FILES[file];
+            long enpassantLeft =  (bits[6] >> 1) & bits[0] & RANK_5 & NOT_H_FILE & FILES[file];
             if (enpassantRight != 0 || enpassantLeft != 0) {
                 enpassantLeft  >>= 8;
                 enpassantRight >>= 8;
@@ -337,140 +302,6 @@ public class BitUtils {
        };
     }
 
-    public static void printBoard(long[] bits) {
-        LOGGER.info(toString(bits));
-    }
-
-    public static String toString(long[] bits) {
-        char[][] cb = bitsToCharArray(bits, new char[8][8]);
-        String s = System.lineSeparator();
-        for (int i = 0; i < BOARD_SIZE; i++) {
-            s += Arrays.toString(cb[i]) + System.lineSeparator();
-        }
-        return s;
-    }
-
-    /**
-     * Pretty print the chess board bits.
-     *
-     * @param bits
-     */
-    public static void prettyPrintBoard(long[] bits) {
-        char[][] cb = bitsToCharArray(bits, new char[8][8]);
-        for (int i = 0; i < BOARD_SIZE; i++) {
-            for (int j = 0; j < BOARD_SIZE; j++) {
-                cb[i][j] = charToFancyMap.get(cb[i][j]);
-            }
-        }
-        String s = "";
-        LOGGER.info("┏━━━━━━━━┓");
-        for (int i = 0; i < BOARD_SIZE; i++) {
-            for (int j = 0; j < BOARD_SIZE; j++) {
-                char piece = cb[i][j];
-                if ((i + j) % 2 == 0) {
-                    s += (Character.toString(piece) );
-                } else {
-                    s += ("\u001B[47m" + Character.toString(piece) + "\u001B[0m");
-                }
-            }
-            LOGGER.info("┃{}┃", s);
-            s = "";
-        }
-        LOGGER.info("┗━━━━━━━━┛");
-    }
-
-    private static Map<Character, Character> charToFancyMap = Map.ofEntries(
-            Map.entry('K', Constants.FANCY_W_KING),
-            Map.entry('Q', Constants.FANCY_W_QUEEN),
-            Map.entry('R', Constants.FANCY_W_ROOK),
-            Map.entry('B', Constants.FANCY_W_BISHOP),
-            Map.entry('N', Constants.FANCY_W_KNIGHT),
-            Map.entry('P', Constants.FANCY_W_PAWN),
-
-            Map.entry('k', Constants.FANCY_B_KING),
-            Map.entry('q', Constants.FANCY_B_QUEEN),
-            Map.entry('r', Constants.FANCY_B_ROOK),
-            Map.entry('b', Constants.FANCY_B_BISHOP),
-            Map.entry('n', Constants.FANCY_B_KNIGHT),
-            Map.entry('p', Constants.FANCY_B_PAWN),
-            Map.entry('.', ' ')
-    );
-
-    public static char[][] bitsToCharArray(long[] bits, char[][] board) {
-        int boardSizeSquared = BOARD_SIZE * BOARD_SIZE;
-        for (int i = 0; i < boardSizeSquared; i++) {
-            board[i / BOARD_SIZE][i % BOARD_SIZE] = '.';
-        }
-
-        char[] pieces = {'P', 'R', 'N', 'B', 'K', 'Q', 'p', 'r', 'n', 'b', 'k', 'q'};
-        int numPieces = pieces.length;
-        for (int i = 0; i < numPieces; i++) {
-            long currentBit = bits[i];
-            while (currentBit != 0) {
-                long bit = currentBit & -currentBit;  // Get the least significant set bit
-                int index = Long.numberOfTrailingZeros(bit);
-                currentBit ^= bit;  // Clear the least significant set bit
-                board[index / BOARD_SIZE][index % BOARD_SIZE] = pieces[i];
-            }
-        }
-        return board;
-    }
-
-    public static void printBitboard(long bitboard) {
-        LOGGER.info(toString(bitboard));
-    }
-
-    public static String toString(long bitboard) {
-        char[][] cb = new char[BOARD_SIZE][BOARD_SIZE];
-        for (char[] row : cb) {
-            Arrays.fill(row, '.');
-        }
-
-        while (bitboard != 0) {
-            long bit = bitboard & -bitboard;  // Get the least significant set bit
-            int i = Long.numberOfTrailingZeros(bit);
-            bitboard ^= bit;  // Clear the least significant set bit
-            cb[i / BOARD_SIZE][i % BOARD_SIZE] = '@';
-        }
-        String s = System.lineSeparator();
-        for (int i = 0; i < BOARD_SIZE; i++) {
-            s += Arrays.toString(cb[i]) + System.lineSeparator();
-        }
-        return s;
-    }
-
-    public static long southOne(long b) {
-        return b >> 8;
-    }
-
-    public static long northOne(long b) {
-        return b << 8;
-    }
-
-    public static long eastOne(long b) {
-        return (b << 1) & NOT_A_FILE;
-    }
-
-    public static long noEaOne(long b) {
-        return (b << 9) & NOT_A_FILE;
-    }
-
-    public static long soEaOne(long b) {
-        return (b >> 7) & NOT_A_FILE;
-    }
-
-    public static long westOne(long b) {
-        return (b >> 1) & NOT_H_FILE;
-    }
-
-    public static long soWeOne(long b) {
-        return (b >> 9) & NOT_H_FILE;
-    }
-
-    public static long noWeOne(long b) {
-        return (b << 7) & NOT_H_FILE;
-    }
-
     public static int getIndex(char file, char rank) {
         int s;
         s = (Character.toUpperCase(file)) - 65;
@@ -546,7 +377,6 @@ public class BitUtils {
         //implement/test
         return 0;
     }
-
     /**
      * Given a move, get the piece on the board at the from square.
      * -1 if there is no piece.
@@ -557,7 +387,6 @@ public class BitUtils {
         //implement/test
         return 0;
     }
-
     /**
      * Perform a move m on a board bits.
      *
@@ -568,16 +397,19 @@ public class BitUtils {
      * @return true if the move is valid false otherwise
      */
     public static boolean doMove(long[] bits, Move m, Move lastMove, int turn) {
-        if (getAllPossibleMoves(bits, lastMove, -1).contains(m)) {
-            //implement/test
+        if (getAllPossibleMoves(bits, lastMove, turn).contains(m)) {
+            //test
             updateBoards(bits, m, turn);
             return true;
         }
         return false;
     }
 
-    private static int qscore = 0;
-    private static Move lastMove;
+    public static void undoMove(long[] bits, Move m) {
+        doMove(bits, m.reverse(), null, -1);
+        //implement/test
+    }
+
 
     public static MoveScore quiensce(List<Move> captures, long[] bits, int turn, int a, int b) {
         int s = evaluation(bits, turn);
@@ -592,7 +424,7 @@ public class BitUtils {
             doMove(bits, m, lastMove, turn);
             lastMove = m;
             qscore = -quiensce(captures.subList(captures.indexOf(m), captures.indexOf(m)+1), bits, turn, -a, -b).score;
-            undoMove(bits, m, turn);
+            undoMove(bits, m);
             if (qscore >= b) {
                 return new MoveScore(m, b);
             }
@@ -659,12 +491,6 @@ public class BitUtils {
             }
         }
         return ms;
-    }
-
-    private record MoveScore(Move m, int score) {}
-
-    public static void undoMove(long[] bits, Move m, int turn) {
-        //implement/test
     }
 
     public static void printOccupancy() {

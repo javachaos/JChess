@@ -42,12 +42,12 @@ public class BitUtilsTest {
         ChessBoard cb = new ChessBoard(INIT_BOARD);
         assertArrayEquals(cb.toCharArray(), INIT_BOARD);
         ExecUtils.ExecutionResult<char[][]> r = ExecUtils.measureExecutionTime(
-                "OccupancyToCharArray", () -> BitUtils.occupancyToCharArray(cb.getOccupancy()), 10);
+                "OccupancyToCharArray", () -> PrintUtils.occupancyToCharArray(cb.getOccupancy()), 10);
         assertArrayEquals(r.result(), OCCU_BOARD);
         assertTrue(r.nanos() < TimeUnit.MICROSECONDS.toNanos(100));
 
         ExecUtils.ExecutionResult<char[][]> k = ExecUtils.measureExecutionTime(
-                "OccupancyToCharArray", () -> BitUtils.occupancyToCharArray(cb.getOccupancy()), 10);
+                "OccupancyToCharArray", () -> PrintUtils.occupancyToCharArray(cb.getOccupancy()), 10);
         assertArrayEquals(k.result(), OCCU_BOARD);
         assertTrue(k.nanos() < TimeUnit.MICROSECONDS.toNanos(100));
 
@@ -83,7 +83,7 @@ public class BitUtilsTest {
         cb.printOccupancy();
         cb.printBoard();
         assertArrayEquals(cb.toCharArray(), INIT_BOARD);
-        assertArrayEquals(BitUtils.occupancyToCharArray(cb.getOccupancy()), OCCU_BOARD);
+        assertArrayEquals(PrintUtils.occupancyToCharArray(cb.getOccupancy()), OCCU_BOARD);
         LOGGER.info("------------------   Testing ChessBoard. END   -------------------");
     }
 
@@ -102,7 +102,7 @@ public class BitUtilsTest {
         };
         ChessBoard cb = new ChessBoard();
         ExecUtils.ExecutionResult<char[][]> r = ExecUtils.measureExecutionTime("bitsToCharArray",
-                () -> BitUtils.bitsToCharArray(cb.getBits(), new char[8][8]), 10);
+                () -> PrintUtils.bitsToCharArray(cb.getBits(), new char[8][8]), 10);
         assertTrue(r.nanos() < TimeUnit.MICROSECONDS.toNanos(100));
         assertArrayEquals(r.result(), INIT_BOARD);
         LOGGER.info("------------------   Testing BitsToCharArray. END   ------------------");
@@ -168,30 +168,30 @@ public class BitUtilsTest {
         };
 
         long[] bits = BitUtils.createBitBoard(INIT_BOARD);
-        BitUtils.printBitboard(bits[0]);
+        PrintUtils.printBitboard(bits[0]);
         LOGGER.info("");
-        BitUtils.printBitboard(bits[1]);
+        PrintUtils.printBitboard(bits[1]);
         LOGGER.info("");
-        BitUtils.printBitboard(bits[2]);
+        PrintUtils.printBitboard(bits[2]);
         LOGGER.info("");
-        BitUtils.printBitboard(bits[3]);
+        PrintUtils.printBitboard(bits[3]);
         LOGGER.info("");
-        BitUtils.printBitboard(bits[4]);
+        PrintUtils.printBitboard(bits[4]);
         LOGGER.info("");
-        BitUtils.printBitboard(bits[5]);
+        PrintUtils.printBitboard(bits[5]);
         LOGGER.info("");
-        BitUtils.printBitboard(bits[6]);
+        PrintUtils.printBitboard(bits[6]);
         LOGGER.info("");
-        BitUtils.printBitboard(bits[7]);
+        PrintUtils.printBitboard(bits[7]);
         LOGGER.info("");
-        BitUtils.printBitboard(bits[8]);
+        PrintUtils.printBitboard(bits[8]);
         LOGGER.info("");
-        BitUtils.printBitboard(bits[9]);
+        PrintUtils.printBitboard(bits[9]);
         LOGGER.info("");
-        BitUtils.printBitboard(bits[10]);
+        PrintUtils.printBitboard(bits[10]);
         LOGGER.info("");
-        BitUtils.printBitboard(bits[11]);
-        BitUtils.printBoard(bits);
+        PrintUtils.printBitboard(bits[11]);
+        PrintUtils.printBoard(bits);
         BitUtils.updateBoards(bits);
         LOGGER.info("Starting white pawn move generation.");
         ExecUtils.ExecutionResult<List<Move>> r = ExecUtils.measureExecutionTime(

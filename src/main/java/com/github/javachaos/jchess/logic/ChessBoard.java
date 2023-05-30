@@ -2,6 +2,7 @@ package com.github.javachaos.jchess.logic;
 
 import com.github.javachaos.jchess.moves.Move;
 import com.github.javachaos.jchess.utils.BitUtils;
+import com.github.javachaos.jchess.utils.PrintUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -83,15 +84,15 @@ public class ChessBoard {
     }
 
     public void printBoard() {
-        BitUtils.printBoard(bits);
+        PrintUtils.printBoard(bits);
     }
 
     public void prettyPrintBoard() {
-        BitUtils.prettyPrintBoard(bits);
+        PrintUtils.prettyPrintBoard(bits);
     }
 
     public char[][] toCharArray() {
-        return BitUtils.bitsToCharArray(bits, board);
+        return PrintUtils.bitsToCharArray(bits, board);
     }
 
     public long[] getBits() {
