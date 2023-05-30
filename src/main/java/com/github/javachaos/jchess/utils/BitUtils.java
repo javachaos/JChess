@@ -579,34 +579,49 @@ public class BitUtils {
     private static int qscore = 0;
     private static Move lastMove;
 
-    public static int quiensce(List<Move> moves, long[] bits, int turn, int a, int b) {
+    public static MoveScore quiensce(List<Move> captures, long[] bits, int turn, int a, int b) {
         int s = evaluation(bits, turn);
         if (s >= b) {
-            return b;
+            return new MoveScore(captures.get(0), b);
         }
         if (a < s) {
             a = s;
         }
-        for (Move m : moves) {
+        MoveScore ms = null;
+        for (Move m : captures) {
             doMove(bits, m, lastMove, turn);
             lastMove = m;
-            qscore = -quiensce(moves.subList(moves.indexOf(m), moves.indexOf(m)+1), bits, turn, -a, -b);
+            qscore = -quiensce(captures.subList(captures.indexOf(m), captures.indexOf(m)+1), bits, turn, -a, -b).score;
             undoMove(bits, m);
             if (qscore >= b) {
-                return b;
+                return new MoveScore(m, b);
             }
             if (qscore > a) {
                 a = qscore;
+                ms = new MoveScore(m, a);
             }
         }
-        return a;
+        return ms;
     }
 
     public static int evaluation(long[] bits, int turn) {
-        //implement/test
         int numWhitePieces = 0;
         int numBlackPieces = 0;
-        int materialWeight = 0;
+
+        // Count the number of white and black pieces
+        for (int i = 0; i < bits.length; i++) {
+            long bitboard = bits[i];
+            int count = Long.bitCount(bitboard);
+
+            if (i <= 5) {
+                // White pieces
+                numWhitePieces += count;
+            } else {
+                // Black pieces
+                numBlackPieces += count;
+            }
+        }
+        int materialWeight = 1; // Assign a weight to the material (you can adjust this as needed)
         return materialWeight * (numWhitePieces - numBlackPieces) * turn;
     }
 
@@ -623,25 +638,26 @@ public class BitUtils {
      * @param depth
      * @return
      */
-    public static int negaMaxABHelper(long[] bits, int turn, int a, int b, int depth) {
+    public static MoveScore negaMaxABHelper(long[] bits, int turn, int a, int b, int depth) {
         int score = 0;
         if (depth == 0) {
             return quiensce(getAllCaptures(bits, turn), bits, turn, a, b);
         }
-        int max = Integer.MIN_VALUE;
+        MoveScore ms = null;
         for (Move m : getAllPossibleMoves(bits, lastMove, turn)) {
-            score = -negaMaxABHelper(bits, -turn, -b, -a, depth - 1);
+            score = -negaMaxABHelper(bits, -turn, -b, -a, depth - 1).score;
             if (score >= b) {
-                lastMove = m;
-                return b;
+                return new MoveScore(m, b);
             }
             if (score > a) {
-                lastMove = m;
                 a = score;
+                ms = new MoveScore(m, a);
             }
         }
-        return a;
+        return ms;
     }
+
+    private record MoveScore(Move m, int score) {}
 
     public static void undoMove(long[] bits, Move m) {
         //implement/test
