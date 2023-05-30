@@ -15,7 +15,7 @@ public class PerformanceTest {
         ChessBoard cb = new ChessBoard();
         ExecUtils.ExecutionResult<Long> performanceTest = ExecUtils.measureExecutionTime(
                 "Performance Test",
-                () -> PerftUtils.perft(2, cb.getBits()), 0);
+                () -> PerftUtils.perft(10, cb, false), 0);
         LOGGER.info("Perft counter: {}", performanceTest.result());
         assertTrue(performanceTest.result() > 0);
     }

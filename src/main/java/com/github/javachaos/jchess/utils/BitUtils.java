@@ -19,7 +19,7 @@ public class BitUtils {
 
     private BitUtils() {}
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     private static final long[] FILES = {
             FILE_A,
@@ -290,7 +290,8 @@ public class BitUtils {
             int index = Long.numberOfTrailingZeros(bit);
             moveBits ^= bit;  // Clear the least significant set bit
             moves[index] = new Move(
-                    indexToPos(index / 8 + rowOffset, index % 8 + colOffset, index + (rowOffset * 8) + colOffset),
+                    indexToPos(index / 8 + rowOffset, index % 8 + colOffset,
+                            index + (rowOffset * 8) + colOffset),
                     indexToPos(index / 8, index % 8, index),
                     promotion
             );

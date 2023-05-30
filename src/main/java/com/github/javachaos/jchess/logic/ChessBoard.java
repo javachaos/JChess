@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.List;
 
 /**
  * Lightweight chess board representation, using bitboards.
@@ -62,7 +63,6 @@ public class ChessBoard {
         moveHistory.push(m);
         fullMoveClock++;
         if (BitUtils.doMove(bits, moveHistory.peek(), m, turn)) {
-            LOGGER.info("Move successful: {}", m);
             turn *= -1;
             moveHistory.push(m);
         } else {
@@ -72,9 +72,14 @@ public class ChessBoard {
 
     public void undoMove() {
         bits = boardHistory.pop();
+        BitUtils.updateBoards(bits);
         Move m = moveHistory.pop();
+        turn *= -1;
         fullMoveClock--;
-        BitUtils.undoMove(bits, m);
+    }
+
+    public List<Move> getAllPossibleMoves() {
+        return BitUtils.getAllPossibleMoves(bits, getLastMove(), turn);
     }
 
     public void printOccupancy() {
@@ -99,5 +104,13 @@ public class ChessBoard {
 
     public long getOccupancy() {
         return BitUtils.infoBoards()[3];
+    }
+
+    public Move getLastMove() {
+        return moveHistory.peek();
+    }
+
+    public int getTurn() {
+        return turn;
     }
 }
