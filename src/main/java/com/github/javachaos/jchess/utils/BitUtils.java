@@ -592,7 +592,7 @@ public class BitUtils {
             doMove(bits, m, lastMove, turn);
             lastMove = m;
             qscore = -quiensce(captures.subList(captures.indexOf(m), captures.indexOf(m)+1), bits, turn, -a, -b).score;
-            undoMove(bits, m);
+            undoMove(bits, m, turn);
             if (qscore >= b) {
                 return new MoveScore(m, b);
             }
@@ -626,12 +626,12 @@ public class BitUtils {
     }
 
     public static MoveScore getBestMove(long[] bits, int turn) {
-        return negaMaxABHelper(bits, turn, Integer.MIN_VALUE, Integer.MAX_VALUE, 10);
+        long[] copy = Arrays.copyOf(bits, bits.length);
+        return negaMaxABHelper(copy, turn, Integer.MIN_VALUE, Integer.MAX_VALUE, 10);
     }
 
     /**
-     * Simple negaMax implementation, at the end of this algorithm the best move will be
-     * stored in lastMove.
+     * Simple negaMax implementation.
      *
      * Must test this!
      *
@@ -663,7 +663,7 @@ public class BitUtils {
 
     private record MoveScore(Move m, int score) {}
 
-    public static void undoMove(long[] bits, Move m) {
+    public static void undoMove(long[] bits, Move m, int turn) {
         //implement/test
     }
 
