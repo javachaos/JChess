@@ -10,10 +10,9 @@ public class PerftUtils {
     private PerftUtils() {}
 
     public static long perft(int depth, long[] bits) {
-        int numMoves = 0;
         Move lastMove = null;
         List<Move> moves = BitUtils.getAllPossibleMoves(bits, lastMove, isWhitesTurn);
-
+        int numMoves = moves.size();
         if (depth == 1) {
             return numMoves;
         }

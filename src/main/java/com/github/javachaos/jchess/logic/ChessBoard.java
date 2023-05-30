@@ -9,8 +9,6 @@ import org.apache.logging.log4j.Logger;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
-import static com.github.javachaos.jchess.utils.BitUtils.updateOccupancy;
-
 /**
  * Lightweight chess board representation, using bitboards.
  *
@@ -41,7 +39,7 @@ public class ChessBoard {
     public ChessBoard(char[][] initialBoard) {
         bits = BitUtils.createBitBoard(initialBoard);
         BitUtils.clearCceo();
-        updateOccupancy(bits);
+        BitUtils.updateBoards(bits);
         board = new char[8][8];
         this.boardHistory = new ArrayDeque<>();
         this.moveHistory = new ArrayDeque<>();
