@@ -625,6 +625,10 @@ public class BitUtils {
         return materialWeight * (numWhitePieces - numBlackPieces) * turn;
     }
 
+    public static MoveScore getBestMove(long[] bits, int turn) {
+        return negaMaxABHelper(bits, turn, Integer.MIN_VALUE, Integer.MAX_VALUE, 10);
+    }
+
     /**
      * Simple negaMax implementation, at the end of this algorithm the best move will be
      * stored in lastMove.
