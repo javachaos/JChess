@@ -19,7 +19,7 @@ public class BitUtils {
 
     private BitUtils() {}
 
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
 
     private static final long[] FILES = {
             FILE_A,
@@ -290,7 +290,7 @@ public class BitUtils {
             int index = Long.numberOfTrailingZeros(bit);
             moveBits ^= bit;  // Clear the least significant set bit
             moves[index] = new Move(
-                    indexToPos(index / 8 + rowOffset, index % 8 + colOffset, index),
+                    indexToPos(index / 8 + rowOffset, index % 8 + colOffset, index + (rowOffset * 8) + colOffset),
                     indexToPos(index / 8, index % 8, index),
                     promotion
             );
@@ -413,7 +413,7 @@ public class BitUtils {
     @SuppressWarnings("unused")
     private static int getCapture(long[] bits, Move m) {
         //implement/test
-        return 0;
+        return -1;
     }
 
     /**
@@ -484,8 +484,8 @@ public class BitUtils {
         return false;
     }
 
+    @SuppressWarnings("unused")
     public static void undoMove(long[] bits, Move m) {
-        doMove(bits, m.reverse(), null, -1);
         //implement/test
     }
 
