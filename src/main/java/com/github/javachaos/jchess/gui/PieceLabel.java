@@ -1,40 +1,38 @@
 package com.github.javachaos.jchess.gui;
 
-import com.github.javachaos.jchess.utils.ImageLoader;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.Font;
 import java.io.Serial;
+
+import javax.swing.ImageIcon;
+import javax.swing.JLabel;
+
+import com.github.javachaos.jchess.utils.ImageLoader;
 
 public class PieceLabel extends JLabel {
 
     @Serial
     private static final long serialVersionUID = 2806743855183337753L;
-
-    private static final Logger LOGGER = LogManager.getLogger(PieceLabel.class);
-
     private final transient ImageLoader imgLoader;
+    private char piece = '.';
 
     public PieceLabel(ImageLoader imgLoader) {
         super();
         this.imgLoader = imgLoader;
         setFont(new Font("Lucida Grande", Font.PLAIN, 8));
-        addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                LOGGER.info("{} clicked!", getName());
-            }
-        });
     }
 
     public void setPiece(char p) {
+    	this.piece = p;
         ImageIcon originalImg;
-        originalImg = imgLoader.getImageForPiece(p);
-        setIcon(originalImg);
+        if (p == '.') {
+        	setIcon(null);
+        } else {
+	        originalImg = imgLoader.getImageForPiece(p);
+	        setIcon(originalImg);
+        }
     }
 
+	public char getPiece() {
+		return piece;
+	}
 }

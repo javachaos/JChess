@@ -33,7 +33,7 @@ public class ChessBoard {
     private final Deque<long[]> boardHistory;
     private final Deque<Move> moveHistory;
     private final boolean[] castleRights = new boolean[4];
-    private static final int HALFMOVECLOCK = 0;
+    private int halfMoveClock = 0;
     private int fullMoveClock = 0;
     private int turn = 1;//1 for white, -1 for black
 
@@ -58,16 +58,24 @@ public class ChessBoard {
         this(INIT_BOARD);
     }
 
-    public void makeMove(Move m) {
+    public boolean makeMove(Move m) {
         boardHistory.push(bits);
         moveHistory.push(m);
         fullMoveClock++;
+        halfMoveClock++;
         if (BitUtils.doMove(bits, moveHistory.peek(), m, turn)) {
             turn *= -1;
             moveHistory.push(m);
+            return true;
         } else {
             LOGGER.info("Move Invalid: {}", m);
+            LOGGER.debug("Possible Moves: {}", getAllPossibleMoves());
+            return false;
         }
+    }
+    
+    public void resetHalfMoveClock() {
+    	halfMoveClock = 0;
     }
 
     public void undoMove() {

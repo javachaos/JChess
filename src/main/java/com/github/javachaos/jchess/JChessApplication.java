@@ -1,13 +1,10 @@
 package com.github.javachaos.jchess;
 
 import com.github.javachaos.jchess.gui.SwingGui;
-import com.github.javachaos.jchess.logic.ChessBoard;
-
 import javax.swing.*;
 
 public class JChessApplication {
     private final SwingGui gui;
-    private final ChessBoard cb = new ChessBoard();
 
     JChessApplication() {
         gui = new SwingGui();
@@ -21,6 +18,5 @@ public class JChessApplication {
         gui.setSize(800, 800);
         gui.setResizable(false);
         gui.setVisible(true);
-        gui.draw(cb);
     }
 }

@@ -22,6 +22,8 @@ public class Constants {
     public static final String PNG = ".png";
     public static final String IMG_DIR = "/img/";
     public static final String CHECKERBOARD_IMG = "checker";
+	public static final int BOARD_SIZE = 8;
+	
     private Constants() {
         //Unused
     }

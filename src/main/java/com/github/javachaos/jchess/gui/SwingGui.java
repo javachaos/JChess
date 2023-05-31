@@ -1,25 +1,58 @@
 package com.github.javachaos.jchess.gui;
 
-import com.github.javachaos.jchess.logic.ChessBoard;
-import com.github.javachaos.jchess.utils.Constants;
-import com.github.javachaos.jchess.utils.ImageLoader;
+import static com.github.javachaos.jchess.utils.Constants.BOARD_SIZE;
+import static com.github.javachaos.jchess.utils.Constants.CHECKERBOARD_IMG;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.GridLayout;
+import java.awt.Image;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.Serial;
 
-public class SwingGui extends JFrame {
+import javax.swing.Box;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JProgressBar;
+import javax.swing.JToolBar;
+import javax.swing.SwingConstants;
+import javax.swing.WindowConstants;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.github.javachaos.jchess.logic.ChessBoard;
+import com.github.javachaos.jchess.moves.Move;
+import com.github.javachaos.jchess.utils.ImageLoader;
+
+public class SwingGui extends JFrame implements MouseListener {
+	
+	private static final Logger LOGGER = LogManager.getLogger(SwingGui.class);
 
     @Serial
     private static final long serialVersionUID = 2960246382559537774L;
-    private final ImagePanel board = new ImagePanel(Constants.CHECKERBOARD_IMG);
+    
+    private String nextMove = "";
+    private final ImagePanel board = new ImagePanel(CHECKERBOARD_IMG);
     private final String[] files = {"A", "B", "C", "D", "E", "F", "G", "H"};
     private final String[] ranks = {"8", "7", "6", "5", "4", "3", "2", "1"};
     private final PieceLabel[][] squares = new PieceLabel[files.length][ranks.length];
     private boolean showLabels = false;
+    private final transient ChessBoard cb;
+    private static final String GAME_STATE_LABEL = "Game State:";
+    private final JLabel gameStateLabel = new JLabel(GAME_STATE_LABEL);
 
     public SwingGui() {
+    	cb = new ChessBoard();
         ImageLoader imgLoader = new ImageLoader();
 
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -52,7 +85,6 @@ public class SwingGui extends JFrame {
         Component horizontalGlue = Box.createHorizontalGlue();
         topBar.add(horizontalGlue);
 
-        JLabel gameStateLabel = new JLabel("Game State:                                ");
         gameStateLabel.setFont(new Font("Lucida Grande", Font.PLAIN, 11));
         topBar.add(gameStateLabel);
 
@@ -62,7 +94,7 @@ public class SwingGui extends JFrame {
 
         board.setLayout(new GridLayout(8, 8, 0, 0));
         getContentPane().add(board);
-
+        addMouseListener(this);
         for (int j = 0; j < files.length; j++) {
             for (int i = 0; i < ranks.length; i++) {
                 squares[i][j] = new PieceLabel(imgLoader);
@@ -101,15 +133,22 @@ public class SwingGui extends JFrame {
         board.repaint();
         showLabels = !showLabels;
     }
+    
+    @Override
+    public void paint(Graphics g) {
+        super.paint(g);
+        draw(cb);
+    }
 
     /**
      * Given a fen string, draw the pieces on the board.
      */
     public void draw(final ChessBoard chessboard) {
         char[][] pieces = chessboard.toCharArray();
-        for (int j = 0; j < 8; j++) {
-            for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < BOARD_SIZE; j++) {
+            for (int i = 0; i < BOARD_SIZE; i++) {
                 if (pieces[j][i] == '.') {
+                    squares[i][j].setPiece(pieces[j][i]);
                     continue;
                 }
                 squares[i][j].setPiece(pieces[j][i]);
@@ -126,8 +165,82 @@ public class SwingGui extends JFrame {
                 squares[i][j].setIcon(scaledIcon);
             }
         }
-        board.revalidate();
-        board.repaint();
     }
+
+	public void mouseEvent(char piece, String name) {
+		String fromTo = name.toLowerCase();
+		LOGGER.info("{} {}", piece, fromTo);
+		gameStateLabel.setText(GAME_STATE_LABEL + " " + fromTo);
+		nextMove += fromTo;
+		if (nextMove.length() == 4) {
+			if (cb.makeMove(Move.fromString(nextMove))) {
+			  gameStateLabel.setText("Move: " + cb.getLastMove().toString());
+			} else {
+			  gameStateLabel.setText("Move invalid: " + nextMove);
+			}
+			nextMove = "";
+		}
+		highlightSquare(fromTo.substring(0,2));
+		validate();
+		repaint();
+	}
+
+	private void highlightSquare(String name) {
+        for (int j = 0; j < BOARD_SIZE; j++) {
+            for (int i = 0; i < BOARD_SIZE; i++) {
+            	squares[i][j].setOpaque(false);
+                board.repaint();
+            	if (squares[i][j].getName().equalsIgnoreCase(name)) {
+            		squares[i][j].setOpaque(true);
+            		squares[i][j].setForeground(Color.DARK_GRAY);
+                    board.repaint();
+            	}
+            }
+        }
+        
+	}
+
+	@Override
+	public void mouseClicked(MouseEvent e) {
+        //Unused
+	}
+
+	@Override
+	public void mousePressed(MouseEvent e) {
+        for (int j = 0; j < BOARD_SIZE; j++) {
+            for (int i = 0; i < BOARD_SIZE; i++) {
+            	Point p = squares[i][j].getMousePosition(true);
+            	if (p != null) {
+            		mouseEvent(squares[i][j].getPiece(), squares[i][j].getName());
+            	}
+            }
+        }
+	}
+
+	@Override
+	public void mouseReleased(MouseEvent e) {
+		LOGGER.info("released.");
+        for (int j = 0; j < BOARD_SIZE; j++) {
+            for (int i = 0; i < BOARD_SIZE; i++) {
+            	Point p = squares[i][j].getMousePosition(true);
+            	if (p != null) {
+            		squares[i][j].setOpaque(false);
+					validate();
+					repaint();
+            	}
+            }
+        }
+
+	}
+
+	@Override
+	public void mouseEntered(MouseEvent e) {
+		LOGGER.info("entered.");
+	}
+
+	@Override
+	public void mouseExited(MouseEvent e) {
+		LOGGER.info("exited.");
+	}
 
 }
