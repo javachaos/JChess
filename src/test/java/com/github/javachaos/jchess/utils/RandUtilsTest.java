@@ -21,4 +21,5 @@ public class RandUtilsTest {
         LOGGER.info(r.result());
         assertTrue(r.nanos() < TimeUnit.MILLISECONDS.toNanos(10));
     }
+
 }

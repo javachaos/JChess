@@ -14,8 +14,6 @@ import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.io.Serial;
-
 import javax.swing.Box;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -38,7 +36,6 @@ public class SwingGui extends JFrame implements MouseListener {
 	
 	private static final Logger LOGGER = LogManager.getLogger(SwingGui.class);
 
-    @Serial
     private static final long serialVersionUID = 2960246382559537774L;
     
     private String nextMove = "";
@@ -50,9 +47,20 @@ public class SwingGui extends JFrame implements MouseListener {
     private final transient ChessBoard cb;
     private static final String GAME_STATE_LABEL = "Game State:";
     private final JLabel gameStateLabel = new JLabel(GAME_STATE_LABEL);
+    char[][] bitBoard = {
+            {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},//8
+            {'p', 'p', '.', 'p', '.', 'p', 'p', 'p'},//7
+            {'.', '.', '.', '.', 'p', '.', '.', '.'},//6
+            {'.', '.', '.', '.', '.', '.', '.', '.'},//5
+            {'.', '.', 'p', 'P', '.', 'P', 'p', '.'},//4
+            {'P', 'P', 'P', '.', 'P', '.', '.', '.'},//3
+            {'.', '.', '.', '.', '.', '.', 'P', 'P'},//2
+            {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'} //1
+            //A    B    C    D    E    F    G    H
+    };
 
     public SwingGui() {
-    	cb = new ChessBoard();
+    	cb = new ChessBoard(bitBoard);
         ImageLoader imgLoader = new ImageLoader();
 
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -225,12 +233,12 @@ public class SwingGui extends JFrame implements MouseListener {
             	Point p = squares[i][j].getMousePosition(true);
             	if (p != null) {
             		squares[i][j].setOpaque(false);
-					validate();
-					repaint();
             	}
             }
         }
 
+        validate();
+        repaint();
 	}
 
 	@Override

@@ -1,6 +1,7 @@
 package com.github.javachaos.jchess.utils;
 
 import com.github.javachaos.jchess.moves.Move;
+import com.github.javachaos.jchess.moves.MoveScore;
 import com.github.javachaos.jchess.moves.Pos;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -49,8 +50,6 @@ public class BitUtils {
     private static long empty = 0L;
     private static long occupancy = 0L;
     private static Move lastMove;
-
-    private record MoveScore(Move m, int score) {}
 
     public static long[] infoBoards() {
         return new long[] {captureWhitePieces, captureBlackPieces, empty, occupancy};
@@ -252,7 +251,7 @@ public class BitUtils {
     private static List<Move> getMoves(Move[] moves, long moveOccupancy) {
         int numMoves = Long.bitCount(moveOccupancy);
         if (numMoves > 0) {
-            List<Move> moveList = new ArrayList<>();
+            List<Move> moveList = new ArrayList<>(numMoves);
             while (moveOccupancy != 0) {
                 long bit = moveOccupancy & -moveOccupancy;  // Get the least significant set bit
                 int index = Long.numberOfTrailingZeros(bit);
@@ -307,31 +306,13 @@ public class BitUtils {
             char piece = cb[i / BOARD_SIZE][i % BOARD_SIZE];
             if (piece != '.') {
                 long bin = 1L << i;
-                int index = getPieceIndex(piece);
+                int index = PrintUtils.getPieceIndex(piece);
                 bits[index] |= bin;
             }
         }
         updateWhites(bits);
         updateBlacks(bits);
         return bits;
-    }
-
-    private static int getPieceIndex(char piece) {
-       return switch (piece) {
-            case 'P' -> 0;
-            case 'R' -> 1;
-            case 'N' -> 2;
-            case 'B' -> 3;
-            case 'K' -> 4;
-            case 'Q' -> 5;
-            case 'p' -> 6;
-            case 'r' -> 7;
-            case 'n' -> 8;
-            case 'b' -> 9;
-            case 'k' -> 10;
-            case 'q' -> 11;
-           default -> throw new IllegalStateException("Unexpected value: " + piece);
-       };
     }
 
     public static int getIndex(char file, char rank) {
@@ -503,7 +484,7 @@ public class BitUtils {
         for (Move m : captures) {
             doMove(bits, m, lastMove, turn);
             lastMove = m;
-            int qScore = -quiesce(captures.subList(captures.indexOf(m), captures.indexOf(m) + 1), bits, turn, -a, -b).score;
+            int qScore = -quiesce(captures.subList(captures.indexOf(m), captures.indexOf(m) + 1), bits, turn, -a, -b).score();
             undoMove(bits, m);
             if (qScore >= b) {
                 return new MoveScore(m, b);
@@ -560,7 +541,7 @@ public class BitUtils {
         }
         MoveScore ms = null;
         for (Move m : getAllPossibleMoves(bits, lastMove, turn)) {
-            score = -negamaxABHelper(bits, -turn, -b, -a, depth - 1).score;
+            score = -negamaxABHelper(bits, -turn, -b, -a, depth - 1).score();
             if (score >= b) {
                 return new MoveScore(m, b);
             }

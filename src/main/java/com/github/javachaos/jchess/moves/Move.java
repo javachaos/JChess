@@ -2,8 +2,34 @@ package com.github.javachaos.jchess.moves;
 
 import com.github.javachaos.jchess.utils.BitUtils;
 
+import java.util.Objects;
+
 @SuppressWarnings("unused")
-public record Move(Pos from, Pos to, char promotion) implements Comparable<Move> {
+public class Move implements Comparable<Move> {
+	
+	private final Pos from;
+	private final Pos to;
+	private final char promotion;
+	
+	public Move(Pos from, Pos to, char promotion) {
+		this.from = from;
+		this.to = to;
+		this.promotion = promotion;
+	}
+	
+	
+	public Pos from() {
+		return from;
+	}
+	
+	public Pos to() {
+		return to;
+	}
+	
+	public char promotion() {
+		return promotion;
+	}
+	
     public static Move random() {
         return new Move(Pos.random(), Pos.random(), '.');
     }
@@ -56,10 +82,15 @@ public record Move(Pos from, Pos to, char promotion) implements Comparable<Move>
 
     @Override
     public boolean equals(Object o) {
-        if (o instanceof Move m) {
-            return m.toString().equals(toString());
+        if (o instanceof Move) {
+            return o.toString().equals(toString());
         } else {
             return false;
         }
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(to, from, promotion);
     }
 }

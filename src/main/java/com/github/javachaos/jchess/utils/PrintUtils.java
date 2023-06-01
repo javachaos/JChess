@@ -27,9 +27,28 @@ public class PrintUtils {
             Map.entry('p', Constants.FANCY_B_PAWN),
             Map.entry('.', ' ')
     );
+    
+    private static final Map<Character, Integer> pieceIdx = Map.ofEntries(
+    		Map.entry('P', 0),
+    		Map.entry('R', 1),
+    		Map.entry('N', 2),
+    		Map.entry('B', 3),
+    		Map.entry('K', 4),
+    		Map.entry('Q', 5),
+    		Map.entry('p', 6),
+    		Map.entry('r', 7),
+    		Map.entry('n', 8),
+    		Map.entry('b', 9),
+    		Map.entry('k', 10),
+    		Map.entry('q', 11)
+    );
 
     private PrintUtils() {
         //Unused
+    }
+
+    public static int getPieceIndex(char piece) {
+        return pieceIdx.get(piece);
     }
 
     public static char[][] occupancyToCharArray(long occupancy) {

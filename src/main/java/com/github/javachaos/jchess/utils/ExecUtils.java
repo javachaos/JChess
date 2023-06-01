@@ -7,8 +7,22 @@ import org.apache.logging.log4j.Logger;
 import java.util.concurrent.Callable;
 
 public class ExecUtils {
+    static class ExecutionResult<T> {
+        private final T result;
+        private final long nanos;
+        public ExecutionResult(T result, long nanos) {
+            this.result = result;
+            this.nanos = nanos;
+        }
 
-    public  record ExecutionResult<T>(T result, long nanos) {}
+        public long nanos() {
+            return nanos;
+        }
+
+        public T result() {
+            return result;
+        }
+    }
     private static final Logger LOGGER = LogManager.getLogger(ExecUtils.class);
 
     private ExecUtils() {}

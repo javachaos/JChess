@@ -121,17 +121,6 @@ public class BitUtilsTest {
                 {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'} //1
                 //A    B    C    D    E    F    G    H
         };
-        char[][] INIT_BOARD = {
-                {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},//8
-                {'p', 'p', 'p', '.', '.', 'p', 'p', 'p'},//7
-                {'.', '.', '.', '.', 'p', '.', '.', '.'},//6
-                {'.', '.', 'P', 'p', '.', '.', '.', '.'},//5
-                {'.', '.', '.', '.', '.', 'P', 'p', '.'},//4
-                {'P', 'P', '.', 'P', 'P', '.', '.', '.'},//3
-                {'.', '.', '.', '.', '.', '.', 'P', 'P'},//2
-                {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'} //1
-                //A    B    C    D    E    F    G    H
-        };
 
         long[] bits = BitUtils.createBitBoard(BIT_BOARD);
         BitUtils.updateBoards(bits);
@@ -140,6 +129,19 @@ public class BitUtilsTest {
         ExecUtils.ExecutionResult<List<Move>> r = ExecUtils.measureExecutionTime(
                 "White Pawn Move Generation", () -> BitUtils.pawnMovesWhite(bits, Move.fromString("e7e6")), 10);
         LOGGER.info(r.result());
+        assertEquals(List.of(
+                Move.fromString("d4d5"),
+                Move.fromString("f4f5"),
+                Move.fromString("a3a4"),
+                Move.fromString("b3b4"),
+                Move.fromString("b3c4"),
+                Move.fromString("e3e4"),
+                Move.fromString("h2h4"),
+                Move.fromString("g2g3"),
+                Move.fromString("h2h3")
+        ), r.result());
+
+
         LOGGER.info("Starting black pawn move generation.");
         ExecUtils.ExecutionResult<List<Move>> r1 = ExecUtils.measureExecutionTime(
                 "Enpassant Black Pawn Move Generation", () -> BitUtils.pawnMovesBlack(bits, Move.fromString("d2d4")), 10);
@@ -161,6 +163,18 @@ public class BitUtilsTest {
                 Move.fromString("c4b3"),
                 Move.fromString("c4d3"),
                 Move.fromString("g4g3")), r1.result());
+
+        char[][] INIT_BOARD = {
+                {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},//8
+                {'p', 'p', 'p', '.', '.', 'p', 'p', 'p'},//7
+                {'.', '.', '.', '.', 'p', '.', '.', '.'},//6
+                {'.', '.', 'P', 'p', '.', '.', '.', '.'},//5
+                {'.', '.', '.', '.', '.', 'P', 'p', '.'},//4
+                {'P', 'P', '.', 'P', 'P', '.', '.', '.'},//3
+                {'.', '.', '.', '.', '.', '.', 'P', 'P'},//2
+                {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'} //1
+                //A    B    C    D    E    F    G    H
+        };
 
         long[] bits2 = BitUtils.createBitBoard(INIT_BOARD);
         BitUtils.updateBoards(bits2);
