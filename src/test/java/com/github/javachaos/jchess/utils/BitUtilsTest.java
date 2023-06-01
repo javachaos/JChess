@@ -1,4 +1,5 @@
 package com.github.javachaos.jchess.utils;
+
 import com.github.javachaos.jchess.logic.ChessBoard;
 import com.github.javachaos.jchess.moves.Move;
 import org.apache.logging.log4j.LogManager;
@@ -8,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class BitUtilsTest {
@@ -129,7 +131,7 @@ public class BitUtilsTest {
         ExecUtils.ExecutionResult<List<Move>> r = ExecUtils.measureExecutionTime(
                 "White Pawn Move Generation", () -> BitUtils.pawnMovesWhite(bits, Move.fromString("e7e6")), 10);
         LOGGER.info(r.result());
-        assertEquals(List.of(
+        assertThat(r.result()).containsExactlyInAnyOrder(
                 Move.fromString("d4d5"),
                 Move.fromString("f4f5"),
                 Move.fromString("a3a4"),
@@ -138,15 +140,13 @@ public class BitUtilsTest {
                 Move.fromString("e3e4"),
                 Move.fromString("h2h4"),
                 Move.fromString("g2g3"),
-                Move.fromString("h2h3")
-        ), r.result());
-
+                Move.fromString("h2h3"));
 
         LOGGER.info("Starting black pawn move generation.");
         ExecUtils.ExecutionResult<List<Move>> r1 = ExecUtils.measureExecutionTime(
                 "Enpassant Black Pawn Move Generation", () -> BitUtils.pawnMovesBlack(bits, Move.fromString("d2d4")), 10);
         LOGGER.info(r1.result());
-        assertEquals(List.of(
+        assertThat(r1.result()).containsExactlyInAnyOrder(
                 Move.fromString("a7a6"),
                 Move.fromString("b7b6"),
                 Move.fromString("d7d6"),
@@ -162,7 +162,7 @@ public class BitUtilsTest {
                 Move.fromString("h7h5"),
                 Move.fromString("c4b3"),
                 Move.fromString("c4d3"),
-                Move.fromString("g4g3")), r1.result());
+                Move.fromString("g4g3"));
 
         char[][] INIT_BOARD = {
                 {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},//8
@@ -183,7 +183,7 @@ public class BitUtilsTest {
         ExecUtils.ExecutionResult<List<Move>> r2 = ExecUtils.measureExecutionTime(
                 "Enpassant White Pawn Move Generation", () -> BitUtils.pawnMovesWhite(bits2, Move.fromString("d7d5")), 10);
         LOGGER.info(r2.result());
-        assertEquals(List.of(
+        assertThat(r2.result()).containsExactlyInAnyOrder(
                 Move.fromString("c5c6"),
                 Move.fromString("c5d6"),
                 Move.fromString("f4f5"),
@@ -193,7 +193,7 @@ public class BitUtilsTest {
                 Move.fromString("e3e4"),
                 Move.fromString("h2h4"),
                 Move.fromString("g2g3"),
-                Move.fromString("h2h3")), r2.result());
+                Move.fromString("h2h3"));
     }
 
     @Test
@@ -210,7 +210,6 @@ public class BitUtilsTest {
                 {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'} //1
                 //A    B    C    D    E    F    G    H
         };
-
 
         long[] bits = BitUtils.createBitBoard(INIT_BOARD);
         PrintUtils.printBitboard(bits[0]);
@@ -242,7 +241,7 @@ public class BitUtilsTest {
         ExecUtils.ExecutionResult<List<Move>> r = ExecUtils.measureExecutionTime(
                 "White Pawn Move Generation", () -> BitUtils.pawnMovesWhite(bits, Move.fromString("d7d5")), 10);
         LOGGER.info(r.result());
-        assertEquals(List.of(
+        assertThat(r.result()).containsExactlyInAnyOrder(
                 Move.fromString("f4f5"),
                 Move.fromString("a3a4"),
                 Move.fromString("b3b4"),
@@ -251,14 +250,14 @@ public class BitUtilsTest {
                 Move.fromString("e3e4"),
                 Move.fromString("h2h4"),
                 Move.fromString("g2g3"),
-                Move.fromString("h2h3")), r.result());
+                Move.fromString("h2h3"));
         assertTrue(r.nanos() < TimeUnit.MICROSECONDS.toNanos(100));
 
         LOGGER.info("Starting black pawn move generation.");
         ExecUtils.ExecutionResult<List<Move>> r1 = ExecUtils.measureExecutionTime(
                 "Black Pawn Move Generation", () -> BitUtils.pawnMovesBlack(bits, Move.fromString("f2f4")), 10);
         LOGGER.info(r1.result());
-        assertEquals(List.of(
+        assertThat(r1.result()).containsExactlyInAnyOrder(
                 Move.fromString("a7a6"),
                 Move.fromString("b7b6"),
                 Move.fromString("c7c6"),
@@ -275,10 +274,29 @@ public class BitUtilsTest {
                 Move.fromString("g7g5"),
                 Move.fromString("h7h5"),
                 Move.fromString("g4f3"),
-                Move.fromString("g4g3")), r1.result());
+                Move.fromString("g4g3"));
         assertTrue(r1.nanos() < TimeUnit.MICROSECONDS.toNanos(100));
 
         LOGGER.info("------------------   Testing PawnMoveGeneration. END   ------------------");
+    }
+
+    @Test
+    public void testPawnCaptures() {
+        LOGGER.info("------------------   Testing PawnMoveGeneration. BEGIN   ------------------");
+        char[][] INIT_BOARD = {
+                {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},//8
+                {'p', '.', 'p', '.', '.', 'p', 'p', 'p'},//7
+                {'.', '.', '.', '.', 'p', '.', '.', '.'},//6
+                {'.', '.', '.', '.', '.', '.', '.', '.'},//5
+                {'.', 'p', '.', 'p', '.', 'p', 'p', '.'},//4
+                {'P', 'P', 'P', 'P', 'P', '.', '.', '.'},//3
+                {'.', '.', '.', '.', '.', '.', 'P', 'P'},//2
+                {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'} //1
+                //A    B    C    D    E    F    G    H
+        };
+        ChessBoard cb = new ChessBoard(INIT_BOARD);
+        LOGGER.info(cb.getAllPossibleMoves());
+        assertThat(cb.getAllPossibleMoves()).isNotEmpty();
     }
 
     @Test

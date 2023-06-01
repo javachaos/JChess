@@ -2,9 +2,6 @@ package com.github.javachaos.jchess.utils;
 
 import com.github.javachaos.jchess.moves.Move;
 import com.github.javachaos.jchess.moves.MoveScore;
-import com.github.javachaos.jchess.moves.Pos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,15 +11,25 @@ import java.util.List;
 import static com.github.javachaos.jchess.utils.MoveUtils.*;
 import static com.github.javachaos.jchess.utils.PrintUtils.printBitboard;
 
+/**
+ * 0 white pawn
+ * 1 white rook
+ * 2 white knight
+ * 3 white bishop
+ * 4 white king
+ * 5 white queen
+ * 6 black pawn
+ * 7 black rook
+ * 8 black knight
+ * 9 black bishop
+ * 10 black king
+ * 11 black queen
+ */
 public class BitUtils {
-
-    private static final Logger LOGGER = LogManager.getLogger(BitUtils.class);
 
     private BitUtils() {}
 
-    private static final boolean DEBUG = false;
-
-    private static final long[] FILES = {
+    static final long[] FILES = {
             FILE_A,
             FILE_B,
             FILE_C,
@@ -34,7 +41,7 @@ public class BitUtils {
     };
 
     @SuppressWarnings("unused")
-    private static final long[] RANKS = {
+    static final long[] RANKS = {
             RANK_1,
             RANK_2,
             RANK_3,
@@ -44,23 +51,61 @@ public class BitUtils {
             RANK_7,
             RANK_8
     };
-    private static final int NUM_PIECES = 12;
+    /**
+     * Keep track of capturable black pieces.
+     */
     private static long captureBlackPieces = 0L;
+
+    /**
+     * Keep track of capturable white pieces.
+     */
     private static long captureWhitePieces = 0L;
+
+    /**
+     * Keep track of empty squares.
+     */
     private static long empty = 0L;
+
+    /**
+     * Keep track of occupied squares.
+     */
     private static long occupancy = 0L;
-    private static Move lastMove;
+
+    /**
+     * Keep track of attacked king squares (checks)
+     */
+    private static long checkBoardWhite = 0L;
+
+    /**
+     * Keep track of attacked king squares (checks)
+     */
+    private static long checkBoardBlack = 0L;
+
+    /**
+     * Track location of all white pieces
+     */
+    private static long colorBoardWhite = 0L;
+
+    /**
+     * Track location of all black pieces
+     */
+    private static long colorBoardBlack = 0L;
+
+    static Move lastMove;
 
     public static long[] infoBoards() {
-        return new long[] {captureWhitePieces, captureBlackPieces, empty, occupancy};
+        return new long[] {captureWhitePieces, captureBlackPieces, empty, occupancy,
+        checkBoardBlack, checkBoardWhite, colorBoardBlack, colorBoardWhite};
     }
 
     public static void updateWhites(long[] bits) {
     	captureWhitePieces = bits[0] | bits[1] | bits[2] | bits[3] | bits[5];
+        colorBoardWhite = captureWhitePieces | bits[4];
     }
 
     public static void updateBlacks(long[] bits) {
     	captureBlackPieces = bits[11] | bits[9] | bits[8] | bits[7] | bits[6];
+        colorBoardBlack = captureBlackPieces |  bits[10];
     }
 
     public static void updateEmpty(long[] bits) {
@@ -85,6 +130,24 @@ public class BitUtils {
         updateWhites(bits);
         updateBlacks(bits);
         updateEmpty(bits);
+        updateCheckBoard(bits, lastMove);
+    }
+
+    private static void updateCheckBoard(long[] bits, Move lastMove) {
+        for (int i = 0; i < NUM_PIECES; i++) {
+            checkBoardWhite |= getAttackingSquares(bits, MoveUtils.indexToPiece(i), lastMove) & bits[4];
+            checkBoardBlack |= getAttackingSquares(bits, MoveUtils.indexToPiece(i), lastMove) & bits[10];
+        }
+    }
+
+    private static long getAttackingSquares(long[] bits, char type, Move lastMove) {
+        switch(type) {
+            case 'P':
+                return pawnAttacksBlack(bits, lastMove);
+            case 'p':
+                return pawnAttacksWhite(bits, lastMove);
+            default: return 0;
+        }
     }
 
     /**
@@ -105,7 +168,7 @@ public class BitUtils {
      * @return list of pawn moves for black
      */
     public static List<Move> pawnMovesBlack(long[] bits, Move lastMove) {
-        Move[] moves = new Move[64];
+        List<Move> moves = new ArrayList<>(64);
 
         long moveBitsRight =    (bits[6] << 7)  & captureWhitePieces & NOT_RANK_1 & NOT_A_FILE;
         long moveBitsLeft =     (bits[6] << 9)  & captureWhitePieces & NOT_RANK_1 & NOT_H_FILE;
@@ -115,14 +178,10 @@ public class BitUtils {
         long moveBitsLeftP =    (bits[6] << 9)  & captureWhitePieces & RANK_1 & NOT_H_FILE;
         long moveBitsP =        (bits[6] << 8)  & empty & RANK_1;
 
-        long moveOccupancy = moveBitsRight | moveBitsLeft
-                | moveBitsOneAhead | moveBitsTwoAhead | moveBitsRightP | moveBitsLeftP
-                | moveBitsP;
-
         //If the last move was a 2-square move.
         if (lastMove != null && lastMove.to().file() == lastMove.from().file()//same file
                 && Math.abs(lastMove.to().rank() - lastMove.from().rank()) == 2//last move was a 2 move advance
-                && getPieceChar(bits, lastMove) == 'P'
+                && MoveUtils.getPieceChar(bits, lastMove) == 'P'
         ) {
         	int file = 'h' - lastMove.from().file();
             long enpassantRight = (bits[6] >> 1) & bits[0] & RANK_4 & NOT_A_FILE & FILES[file];
@@ -130,8 +189,7 @@ public class BitUtils {
             if (enpassantRight != 0 || enpassantLeft != 0) {
             	enpassantLeft  <<= 8;
             	enpassantRight <<= 8;
-	            moveOccupancy |= enpassantRight | enpassantLeft;
-	            processMoveBits(enpassantRight, '.', -1, 1, moves);
+                processMoveBits(enpassantRight, '.', -1, 1, moves);
 	            processMoveBits(enpassantLeft, '.', -1, -1, moves);
             }
         }
@@ -153,12 +211,11 @@ public class BitUtils {
         processMoveBits(moveBitsP, 'B', 0, 0, moves);
         processMoveBits(moveBitsP, 'N', 0, 0, moves);
 
-        return getMoves(moves, moveOccupancy);
+        return moves;
     }
 
     @SuppressWarnings("unused")
     public static long pawnAttacksBlack(long[] bits, Move lastMove) {
-        Move[] moves = new Move[64];
 
         long moveBitsRight =    (bits[6] << 7)  & captureWhitePieces & NOT_RANK_1 & NOT_A_FILE;
         long moveBitsLeft =     (bits[6] << 9)  & captureWhitePieces & NOT_RANK_1 & NOT_H_FILE;
@@ -173,7 +230,7 @@ public class BitUtils {
                 | moveBitsP;
 
         //If the last move was a 2-square move.
-        if (lastMove.to().file() == lastMove.from().file()//same file
+        if (lastMove != null && lastMove.to().file() == lastMove.from().file()//same file
                 && Math.abs(lastMove.to().rank() - lastMove.from().rank()) == 2 &&
             getPieceChar(bits, lastMove) == 'P') {
             int file = 'h' - lastMove.from().file();
@@ -189,7 +246,7 @@ public class BitUtils {
     }
 
     public static List<Move> pawnMovesWhite(long[] bits, Move lastMove) {
-        Move[] moves = new Move[64];
+        List<Move> moves = new ArrayList<>(64);
         long moveBitsRight =    (bits[0] >> 7)  & captureBlackPieces & NOT_RANK_8 & NOT_H_FILE;
         long moveBitsLeft =     (bits[0] >> 9)  & captureBlackPieces & NOT_RANK_8 & NOT_A_FILE;
         long moveBitsOneAhead = (bits[0] >> 8)  & empty & NOT_RANK_8;
@@ -197,11 +254,6 @@ public class BitUtils {
         long moveBitsRightP =   (bits[0] >> 7)  & captureBlackPieces & RANK_8 & NOT_H_FILE;
         long moveBitsLeftP =    (bits[0] >> 9)  & captureBlackPieces & RANK_8 & NOT_A_FILE;
         long moveBitsP =        (bits[0] >> 8)  & empty & RANK_8;
-
-        long moveOccupancy = moveBitsRight | moveBitsLeft
-                        | moveBitsOneAhead | moveBitsTwoAhead
-                          | moveBitsRightP | moveBitsLeftP
-                                           | moveBitsP;
 
         //If the last move was a 2-square move.
         if (lastMove != null && lastMove.to().file() == lastMove.from().file()//same file
@@ -214,7 +266,6 @@ public class BitUtils {
             if (enpassantRight != 0 || enpassantLeft != 0) {
                 enpassantLeft  >>= 8;
                 enpassantRight >>= 8;
-                moveOccupancy |= enpassantRight | enpassantLeft;
                 processMoveBits(enpassantRight, '.', 1, -1, moves);
                 processMoveBits(enpassantLeft, '.', 1, 1, moves);
             }
@@ -235,32 +286,36 @@ public class BitUtils {
         processMoveBits(moveBitsP, 'R', 0, 0, moves);
         processMoveBits(moveBitsP, 'B', 0, 0, moves);
         processMoveBits(moveBitsP, 'N', 0, 0, moves);
-        return getMoves(moves, moveOccupancy);
+        return moves;
     }
 
-    /**
-     * Given an array of moves and the moveOccupancy bitboard
-     * return a list of all non-null moves from move array moves.
-     * All set bits in moveOccupancy correspond to index's of the moves
-     * in moves.
-     *
-     * @param moves the sparse list of moves (contains nulls)
-     * @param moveOccupancy the bitboard indexing all the moves in moves array
-     * @return the moves as a List of moves with no nulls.
-     */
-    private static List<Move> getMoves(Move[] moves, long moveOccupancy) {
-        int numMoves = Long.bitCount(moveOccupancy);
-        if (numMoves > 0) {
-            List<Move> moveList = new ArrayList<>(numMoves);
-            while (moveOccupancy != 0) {
-                long bit = moveOccupancy & -moveOccupancy;  // Get the least significant set bit
-                int index = Long.numberOfTrailingZeros(bit);
-                moveOccupancy ^= bit;  // Clear the least significant set bit
-                moveList.add(moves[index]);
+    private static long pawnAttacksWhite(long[] bits, Move lastMove) {
+        long moveBitsRight =    (bits[0] >> 7)  & captureBlackPieces & NOT_RANK_8 & NOT_A_FILE;
+        long moveBitsLeft =     (bits[0] >> 9)  & captureBlackPieces & NOT_RANK_8 & NOT_H_FILE;
+        long moveBitsOneAhead = (bits[0] >> 8)  & empty & NOT_RANK_8;
+        long moveBitsTwoAhead = (bits[0] >> 16) & empty & (empty >> 8) & RANK_4;
+        long moveBitsRightP =   (bits[0] >> 7)  & captureBlackPieces & RANK_8 & NOT_A_FILE;
+        long moveBitsLeftP =    (bits[0] >> 9)  & captureBlackPieces & RANK_8 & NOT_H_FILE;
+        long moveBitsP =        (bits[0] >> 8)  & empty & RANK_8;
+
+        long moveOccupancy = moveBitsRight | moveBitsLeft
+                | moveBitsOneAhead | moveBitsTwoAhead | moveBitsRightP | moveBitsLeftP
+                | moveBitsP;
+
+        //If the last move was a 2-square move.
+        if (lastMove != null && lastMove.to().file() == lastMove.from().file()//same file
+                && Math.abs(lastMove.to().rank() - lastMove.from().rank()) == 2 &&
+                getPieceChar(bits, lastMove) == 'p') {
+            int file = 'h' - lastMove.from().file();
+            long enpassantRight = (bits[0] << 1) & bits[6] & RANK_5 & NOT_A_FILE & FILES[file];
+            long enpassantLeft =  (bits[0] >> 1) & bits[6] & RANK_5 & NOT_H_FILE & FILES[file];
+            if (enpassantRight != 0 || enpassantLeft != 0) {
+                enpassantLeft  >>= 8;
+                enpassantRight >>= 8;
+                moveOccupancy |= enpassantRight | enpassantLeft;
             }
-            return moveList;
         }
-        return Collections.emptyList();
+        return moveOccupancy << 9 | moveOccupancy >> 7;
     }
 
     /**
@@ -283,17 +338,17 @@ public class BitUtils {
      * @param moves array of moves to add to
      *
      */
-    private static void processMoveBits(long moveBits, char promotion, int rowOffset, int colOffset, Move[] moves) {
+    private static void processMoveBits(long moveBits, char promotion, int rowOffset, int colOffset, List<Move> moves) {
         while (moveBits != 0) {
             long bit = moveBits & -moveBits;  // Get the least significant set bit
             int index = Long.numberOfTrailingZeros(bit);
             moveBits ^= bit;  // Clear the least significant set bit
-            moves[index] = new Move(
+            moves.add(new Move(
                     indexToPos(index / 8 + rowOffset, index % 8 + colOffset,
                             index + (rowOffset * 8) + colOffset),
                     indexToPos(index / 8, index % 8, index),
                     promotion
-            );
+            ));
         }
     }
 
@@ -310,26 +365,8 @@ public class BitUtils {
                 bits[index] |= bin;
             }
         }
-        updateWhites(bits);
-        updateBlacks(bits);
+        updateBoards(bits);
         return bits;
-    }
-
-    public static int getIndex(char file, char rank) {
-        int s;
-        s = (Character.toUpperCase(file)) - 65;
-        s += 8 * (56 - rank);
-        return s;
-    }
-
-    public static Pos indexToPos(int rank, int file, int index) {
-        if (rank < 0) {
-            rank = 0;
-        }
-        if (file < 0) {
-            file = 0;
-        }
-        return new Pos((char) ('a' + file), (char) ('8' - rank), index);
     }
 
     /**
@@ -370,7 +407,7 @@ public class BitUtils {
         return Collections.emptyList();
     }
 
-    private static void updateBoards(long[] bits, Move m) {
+    static void updateBoards(long[] bits, Move m) {
         int piece = getPiece(bits, m);
         int captive = getCapture(bits, m);
         long fromBB = m.fromBitboard();
@@ -384,6 +421,7 @@ public class BitUtils {
             occupancy ^= m.fromBitboard();
             empty ^= m.fromBitboard();
         }
+        updateBoards(bits);
     }
 
     /**
@@ -397,80 +435,6 @@ public class BitUtils {
         //implement/test
         return -1;
     }
-
-    /**
-     * Given a move, get the piece on the board at the from-square.
-     * -1 if there is no piece.
-     * @param m the move
-     * @return piece index [0-11]
-     */
-    private static int getPiece(long[] bits, Move m) {
-        for (int i = 0; i < NUM_PIECES; i++) {
-            long rowMaskFrom = RANKS[m.from().rank() - '1'];
-            long colMaskFrom = FILES['h' - m.from().file()];
-
-            long rowMaskTo = RANKS[m.to().rank() - '1'];
-            long colMaskTo = FILES['h' - m.to().file()];
-
-            long resultFrom = (rowMaskFrom & colMaskFrom) & bits[i];
-            long resultTo = (rowMaskTo & colMaskTo) & bits[i];
-            if (DEBUG) {
-                LOGGER.debug("{}", m);
-                LOGGER.debug("Piece: {}", indexToPiece(i));
-                PrintUtils.printBitboard(bits[i]);
-                LOGGER.debug("Board: ");
-                PrintUtils.printBoard(bits);
-            }
-            if (resultFrom != 0 || resultTo != 0) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    /**
-     * Get the character representation of the piece at the from-square of move m.
-     *
-     * @param bits the bitboard representation of the chess board
-     * @param m the move
-     * @return the character at the from-square of move m
-     */
-    private static char getPieceChar(long[] bits, Move m) {
-        int index = getPiece(bits, m);
-        if (index == -1) {
-            return '.';
-        }
-        return indexToPiece(index);
-    }
-
-    private static char indexToPiece(int index) {
-        char[] pieces = {'P', 'R', 'N', 'B', 'K', 'Q', 'p', 'r', 'n', 'b', 'k', 'q'};
-        return pieces[index];
-    }
-
-    /**
-     * Perform a move m on a board bits.
-     *
-     * @param bits the bitboard array for each differnt piece [0-11]
-     * @param m the current move
-     * @param lastMove the last move
-     * @param turn is it whites turn (true for white, false for black)
-     * @return true if the move is valid false otherwise
-     */
-    public static boolean doMove(long[] bits, Move m, Move lastMove, int turn) {
-        if (getAllPossibleMoves(bits, lastMove, turn).contains(m)) {
-            //test
-            updateBoards(bits, m);
-            return true;
-        }
-        return false;
-    }
-
-    @SuppressWarnings("unused")
-    public static void undoMove(long[] bits, Move m) {
-        //implement/test
-    }
-
 
     public static MoveScore quiesce(List<Move> captures, long[] bits, int turn, int a, int b) {
         int s = evaluation(bits, turn);

@@ -1,7 +1,6 @@
 package com.github.javachaos.jchess.moves;
 
-
-import com.github.javachaos.jchess.utils.BitUtils;
+import com.github.javachaos.jchess.utils.MoveUtils;
 import com.github.javachaos.jchess.utils.RandUtils;
 
 public class Pos {
@@ -31,7 +30,7 @@ public class Pos {
     public static Pos random() {
         char f = (char) ('a' + RandUtils.random.nextInt(8));
         char r = (char) ('1' + RandUtils.random.nextInt(8));
-        return new Pos(f, r, BitUtils.getIndex(f, r));
+        return new Pos(f, r, MoveUtils.getIndex(f, r));
     }
 
     public String toString() {

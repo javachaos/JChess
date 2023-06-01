@@ -1,6 +1,6 @@
 package com.github.javachaos.jchess.moves;
 
-import com.github.javachaos.jchess.utils.BitUtils;
+import com.github.javachaos.jchess.utils.MoveUtils;
 
 import java.util.Objects;
 
@@ -62,9 +62,9 @@ public class Move implements Comparable<Move> {
     public static Move fromString(String move) {
         return new Move(
                 new Pos(move.charAt(0), move.charAt(1),
-                        BitUtils.getIndex(move.charAt(0), move.charAt(1))),
+                        MoveUtils.getIndex(move.charAt(0), move.charAt(1))),
                 new Pos(move.charAt(2), move.charAt(3),
-                        BitUtils.getIndex(move.charAt(2), move.charAt(3))),
+                        MoveUtils.getIndex(move.charAt(2), move.charAt(3))),
                 (move.length() == 5) ? move.charAt(4) : '.');
     }
 
@@ -83,7 +83,8 @@ public class Move implements Comparable<Move> {
     @Override
     public boolean equals(Object o) {
         if (o instanceof Move) {
-            return o.toString().equals(toString());
+            Move m = (Move) o;
+            return m.toString().equals(toString());
         } else {
             return false;
         }
@@ -91,6 +92,6 @@ public class Move implements Comparable<Move> {
 
     @Override
     public int hashCode() {
-        return Objects.hash(to, from, promotion);
+        return Objects.hash(from, to, promotion);
     }
 }

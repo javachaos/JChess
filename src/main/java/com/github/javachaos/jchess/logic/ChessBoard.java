@@ -2,6 +2,7 @@ package com.github.javachaos.jchess.logic;
 
 import com.github.javachaos.jchess.moves.Move;
 import com.github.javachaos.jchess.utils.BitUtils;
+import com.github.javachaos.jchess.utils.MoveUtils;
 import com.github.javachaos.jchess.utils.PrintUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -63,7 +64,7 @@ public class ChessBoard {
         moveHistory.push(m);
         fullMoveClock++;
         halfMoveClock++;
-        if (BitUtils.doMove(bits, moveHistory.peek(), m, turn)) {
+        if (MoveUtils.doMove(bits, moveHistory.peek(), m, turn)) {
             turn *= -1;
             moveHistory.push(m);
             return true;
