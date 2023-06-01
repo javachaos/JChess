@@ -4,7 +4,8 @@ import java.util.*;
 
 @SuppressWarnings("unused")
 public class RandUtils {
-    public static final Random random = Random.from(new SplittableRandom());
+
+    public static final Random random = new Random();
     private static final char[] pieces = {'K', 'Q', 'R', 'B', 'N', 'P', 'k', 'q', 'r', 'b', 'n', 'p'};
 
     private RandUtils() {}

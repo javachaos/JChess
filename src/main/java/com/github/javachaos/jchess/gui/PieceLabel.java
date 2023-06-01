@@ -1,7 +1,6 @@
 package com.github.javachaos.jchess.gui;
 
 import java.awt.Font;
-import java.io.Serial;
 
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
@@ -10,7 +9,6 @@ import com.github.javachaos.jchess.utils.ImageLoader;
 
 public class PieceLabel extends JLabel {
 
-    @Serial
     private static final long serialVersionUID = 2806743855183337753L;
     private final transient ImageLoader imgLoader;
     private char piece = '.';

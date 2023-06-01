@@ -8,10 +8,9 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Serial;
 
 public class ImagePanel extends JPanel {
-    @Serial
+
     private static final long serialVersionUID = -1794897510906937045L;
     private transient BufferedImage backgroundImage;
 
